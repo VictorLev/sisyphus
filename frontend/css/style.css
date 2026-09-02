@@ -1,0 +1,17 @@
+:root {
+  --color-bg: #1a1816;
+  --color-stone: #3a3632;
+  --color-bronze: #b08d57;
+  --color-text: #e8e2d8;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: system-ui, sans-serif;
+}
