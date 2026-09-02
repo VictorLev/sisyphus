@@ -8,7 +8,92 @@
 </head>
 <body>
   <main id="app">
-    <!-- Push the boulder. Every day. -->
+    <section data-view="home" class="view">
+      <h1 class="title">SISYPHUS</h1>
+      <p class="tagline">Push the boulder. Every day.</p>
+
+      <div class="panel">
+        <button id="connect-btn" type="button">Connect Trainer</button>
+        <p id="connection-status" class="status">Not connected</p>
+      </div>
+
+      <div class="panel">
+        <button id="free-ride-btn" type="button" disabled>Start Free Ride</button>
+      </div>
+
+      <div class="panel">
+        <h2>Workouts</h2>
+        <ul id="workout-list" class="workout-list"></ul>
+        <button id="new-workout-btn" type="button">Build a Workout</button>
+      </div>
+    </section>
+
+    <section data-view="builder" class="view">
+      <h1 class="title">Build a Workout</h1>
+
+      <label class="field">
+        Name
+        <input id="workout-name" type="text" placeholder="Sweet Spot 3x10" />
+      </label>
+
+      <ol id="segment-list" class="segment-list"></ol>
+
+      <div class="panel segment-form">
+        <label class="field">
+          Label
+          <input id="segment-label" type="text" placeholder="Warmup" />
+        </label>
+        <label class="field">
+          Duration (sec)
+          <input id="segment-duration" type="number" min="1" value="300" />
+        </label>
+        <label class="field">
+          Target Watts
+          <input id="segment-watts" type="number" min="0" value="150" />
+        </label>
+        <button id="add-segment-btn" type="button">Add Segment</button>
+      </div>
+
+      <div class="panel">
+        <button id="save-workout-btn" type="button">Save Workout</button>
+        <button id="cancel-builder-btn" type="button" class="secondary">Cancel</button>
+      </div>
+    </section>
+
+    <section data-view="live" class="view">
+      <div class="readout">
+        <div class="metric">
+          <span class="metric-value" id="power-value">--</span>
+          <span class="metric-label">watts (10s)</span>
+        </div>
+        <div class="metric">
+          <span class="metric-value" id="cadence-value">--</span>
+          <span class="metric-label">rpm</span>
+        </div>
+        <div class="metric">
+          <span class="metric-value" id="speed-value">--</span>
+          <span class="metric-label">km/h</span>
+        </div>
+      </div>
+
+      <div id="segment-info" class="segment-info" hidden>
+        <p class="segment-label" id="segment-label-value">--</p>
+        <p class="segment-target">Target: <span id="segment-target-value">--</span> W</p>
+        <p class="segment-remaining"><span id="segment-remaining-value">--</span> remaining</p>
+        <canvas id="boulder-canvas" width="160" height="60"></canvas>
+      </div>
+
+      <div class="panel live-controls">
+        <button id="lap-btn" type="button">Lap</button>
+        <button id="end-ride-btn" type="button" class="secondary">End Ride</button>
+      </div>
+    </section>
+
+    <section data-view="summary" class="view">
+      <h1 class="title">Push Complete</h1>
+      <dl class="summary-stats" id="summary-stats"></dl>
+      <button id="summary-home-btn" type="button">Back to Home</button>
+    </section>
   </main>
   <script type="module" src="js/app.js"></script>
 </body>

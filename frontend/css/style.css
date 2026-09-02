@@ -1,8 +1,13 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
 :root {
   --color-bg: #1a1816;
   --color-stone: #3a3632;
+  --color-stone-light: #57514a;
   --color-bronze: #b08d57;
+  --color-bronze-bright: #e0c088;
   --color-text: #e8e2d8;
+  --font-pixel: 'Press Start 2P', 'Courier New', monospace;
 }
 
 * {
@@ -14,4 +19,222 @@ body {
   background: var(--color-bg);
   color: var(--color-text);
   font-family: system-ui, sans-serif;
+}
+
+#app {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem;
+}
+
+.view[hidden] {
+  display: none;
+}
+
+.title {
+  font-family: var(--font-pixel);
+  font-size: 1.5rem;
+  color: var(--color-bronze-bright);
+  letter-spacing: 0.05em;
+  margin: 0 0 0.25rem;
+}
+
+.tagline {
+  color: var(--color-bronze);
+  margin: 0 0 1.5rem;
+  font-style: italic;
+}
+
+.panel {
+  background: var(--color-stone);
+  border: 2px solid var(--color-bronze);
+  border-radius: 4px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+button {
+  font-family: inherit;
+  font-size: 0.9rem;
+  background: var(--color-bronze);
+  color: var(--color-bg);
+  border: none;
+  border-radius: 3px;
+  padding: 0.6rem 1rem;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+button.secondary {
+  background: transparent;
+  color: var(--color-bronze-bright);
+  border: 2px solid var(--color-bronze);
+}
+
+.status {
+  margin: 0.5rem 0 0;
+  color: var(--color-bronze-bright);
+}
+
+.workout-list {
+  list-style: none;
+  margin: 0 0 1rem;
+  padding: 0;
+}
+
+.workout-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--color-stone-light);
+}
+
+.workout-list li.empty {
+  color: var(--color-stone-light);
+  display: block;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.85rem;
+}
+
+.field input {
+  font-family: inherit;
+  background: var(--color-bg);
+  color: var(--color-text);
+  border: 2px solid var(--color-stone-light);
+  border-radius: 3px;
+  padding: 0.5rem;
+}
+
+.segment-list {
+  list-style: decimal;
+  padding-left: 1.25rem;
+  margin: 0 0 1rem;
+}
+
+.segment-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid var(--color-stone-light);
+}
+
+.segment-row-label {
+  font-weight: bold;
+}
+
+.segment-row-detail {
+  color: var(--color-bronze);
+  flex: 1;
+  text-align: right;
+  margin-right: 0.5rem;
+}
+
+.segment-form {
+  display: flex;
+  flex-direction: column;
+}
+
+.readout {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin: 1.5rem 0;
+}
+
+.metric {
+  flex: 1;
+  text-align: center;
+  background: var(--color-stone);
+  border: 2px solid var(--color-bronze);
+  border-radius: 4px;
+  padding: 1rem 0.25rem;
+}
+
+.metric-value {
+  display: block;
+  font-family: var(--font-pixel);
+  font-size: 2rem;
+  color: var(--color-bronze-bright);
+}
+
+.metric-label {
+  display: block;
+  margin-top: 0.5rem;
+  font-size: 0.7rem;
+  color: var(--color-bronze);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.segment-info {
+  background: var(--color-stone);
+  border: 2px solid var(--color-bronze);
+  border-radius: 4px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.segment-label {
+  font-family: var(--font-pixel);
+  font-size: 1rem;
+  color: var(--color-bronze-bright);
+  margin: 0 0 0.5rem;
+}
+
+.segment-target,
+.segment-remaining {
+  margin: 0.25rem 0;
+  color: var(--color-text);
+}
+
+#boulder-canvas {
+  image-rendering: pixelated;
+  margin-top: 0.75rem;
+  background: var(--color-bg);
+  border: 2px solid var(--color-stone-light);
+  border-radius: 3px;
+}
+
+.live-controls {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+}
+
+.live-controls button {
+  flex: 1;
+}
+
+.summary-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem 1rem;
+  margin: 1.5rem 0;
+}
+
+.summary-stats dt {
+  color: var(--color-bronze);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+}
+
+.summary-stats dd {
+  margin: 0 0 0.75rem;
+  font-family: var(--font-pixel);
+  font-size: 1.1rem;
+  color: var(--color-bronze-bright);
 }
