@@ -27,7 +27,6 @@ initViews();
 showView('home');
 
 const liveScreen = initLiveScreen({
-  onLap: () => recorder.markLap(),
   onEndRide: () => endRide(),
 });
 
@@ -77,9 +76,13 @@ function startRide(workout) {
 
 function startLoop() {
   recordIntervalId = setInterval(() => {
+    // Record raw instantaneous power, not the smoothed value — smoothing is
+    // a display concern. Storing the 10s average here would make max_power
+    // the peak of an average (badly under-reporting sprints) and would throw
+    // away the raw series that best-effort records are computed from.
     recorder.addSample(
       {
-        power: rollingAverage.average(),
+        power: latestReading?.instantaneousPowerW ?? null,
         cadence: latestReading?.instantaneousCadenceRpm ?? null,
         speed: latestReading?.instantaneousSpeedKmh ?? null,
         heartRate: latestReading?.heartRateBpm ?? null,
@@ -112,7 +115,7 @@ async function endRide() {
   if (recorder.getSamples().length === 0) {
     recorder.addSample(
       {
-        power: rollingAverage.average(),
+        power: latestReading?.instantaneousPowerW ?? null,
         cadence: latestReading?.instantaneousCadenceRpm ?? null,
         speed: latestReading?.instantaneousSpeedKmh ?? null,
         heartRate: latestReading?.heartRateBpm ?? null,

@@ -5,7 +5,7 @@ function formatTime(totalSec) {
   return `${mm}:${String(ss).padStart(2, '0')}`;
 }
 
-export function initLiveScreen({ onLap, onEndRide }) {
+export function initLiveScreen({ onEndRide }) {
   const powerEl = document.getElementById('power-value');
   const cadenceEl = document.getElementById('cadence-value');
   const speedEl = document.getElementById('speed-value');
@@ -13,10 +13,8 @@ export function initLiveScreen({ onLap, onEndRide }) {
   const segmentLabelEl = document.getElementById('segment-label-value');
   const segmentTargetEl = document.getElementById('segment-target-value');
   const segmentRemainingEl = document.getElementById('segment-remaining-value');
-  const lapBtn = document.getElementById('lap-btn');
   const endRideBtn = document.getElementById('end-ride-btn');
 
-  lapBtn.addEventListener('click', () => onLap());
   endRideBtn.addEventListener('click', () => onEndRide());
 
   function updateRawNumbers({ powerSmoothed, cadence, speed }) {

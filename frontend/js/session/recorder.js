@@ -1,18 +1,14 @@
 // In-memory sample buffer for the ride currently in progress. No BLE/DOM
-// deps. markLap() sets a flag consumed by the *next* addSample() call
-// rather than writing a sample itself, so a lap always lands on a real
-// recorded sample instead of being lost between the fixed recording ticks.
+// deps — samples are handed to the backend as-is when the ride ends.
 export class SessionRecorder {
   constructor() {
     this.startedAtMs = null;
     this.samples = [];
-    this._pendingLap = false;
   }
 
   start(nowMs) {
     this.startedAtMs = nowMs;
     this.samples = [];
-    this._pendingLap = false;
   }
 
   addSample({ power = null, cadence = null, speed = null, heartRate = null }, nowMs) {
@@ -23,13 +19,7 @@ export class SessionRecorder {
       cadence,
       speed,
       heart_rate: heartRate,
-      lap_marker: this._pendingLap ? 1 : 0,
     });
-    this._pendingLap = false;
-  }
-
-  markLap() {
-    this._pendingLap = true;
   }
 
   getSamples() {
@@ -39,6 +29,5 @@ export class SessionRecorder {
   reset() {
     this.startedAtMs = null;
     this.samples = [];
-    this._pendingLap = false;
   }
 }
