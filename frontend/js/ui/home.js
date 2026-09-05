@@ -46,7 +46,16 @@ export function initHome({ trainerConnection, onStartRide }) {
       for (const workout of workouts) {
         const li = document.createElement('li');
         const totalSec = workout.structure.reduce((sum, s) => sum + s.duration_sec, 0);
-        li.innerHTML = `<span>${workout.name} (${workout.structure.length} segments, ${Math.round(totalSec / 60)} min)</span>`;
+        const info = document.createElement('div');
+        const name = document.createElement('span');
+        name.className = 'workout-name';
+        name.textContent = workout.name;
+        const meta = document.createElement('span');
+        meta.className = 'workout-meta';
+        meta.textContent = `${workout.structure.length} segments · ${Math.round(totalSec / 60)} min`;
+        info.appendChild(name);
+        info.appendChild(meta);
+        li.appendChild(info);
         const startBtn = document.createElement('button');
         startBtn.type = 'button';
         startBtn.textContent = 'Start';

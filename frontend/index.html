@@ -12,62 +12,87 @@
       <h1 class="title">SISYPHUS</h1>
       <p class="tagline">Push the boulder. Every day.</p>
 
-      <div class="panel">
-        <button id="connect-btn" type="button">Connect Trainer</button>
-        <p id="connection-status" class="status">Not connected</p>
-      </div>
+      <div class="home-grid">
+        <div class="home-col">
+          <div class="panel">
+            <h2>Trainer</h2>
+            <button id="connect-btn" type="button">Connect Trainer</button>
+            <p id="connection-status" class="status">Not connected</p>
+          </div>
 
-      <div class="panel">
-        <h2>Ride Mode</h2>
-        <div class="mode-select">
-          <button id="mode-gears-btn" type="button" class="mode-btn is-active">Virtual Gears</button>
-          <button id="mode-erg-btn" type="button" class="mode-btn">ERG</button>
+          <div class="panel">
+            <h2>Ride Mode</h2>
+            <div class="mode-select">
+              <button id="mode-gears-btn" type="button" class="mode-btn is-active">Virtual Gears</button>
+              <button id="mode-erg-btn" type="button" class="mode-btn">ERG</button>
+            </div>
+            <p id="mode-description" class="hint"></p>
+          </div>
+
+          <div class="panel">
+            <h2>Free Ride</h2>
+            <button id="free-ride-btn" type="button" disabled>Start Free Ride</button>
+            <p class="hint">No targets, no segments — just ride. Always uses
+              virtual gears.</p>
+          </div>
         </div>
-        <p id="mode-description" class="hint"></p>
-      </div>
 
-      <div class="panel">
-        <button id="free-ride-btn" type="button" disabled>Start Free Ride</button>
-      </div>
-
-      <div class="panel">
-        <h2>Workouts</h2>
-        <ul id="workout-list" class="workout-list"></ul>
-        <button id="new-workout-btn" type="button">Build a Workout</button>
+        <div class="home-col">
+          <div class="panel">
+            <h2>Workouts</h2>
+            <ul id="workout-list" class="workout-list"></ul>
+            <button id="new-workout-btn" type="button" class="secondary">Build a Workout</button>
+          </div>
+        </div>
       </div>
 
       <p class="tools-link"><a href="probe.html">Hardware diagnostics (probe)</a></p>
     </section>
 
     <section data-view="builder" class="view">
-      <h1 class="title">Build a Workout</h1>
+      <h1 class="title">BUILD A WORKOUT</h1>
+      <p class="tagline">An ordered list of segments. Duration and target watts.</p>
 
-      <label class="field">
-        Name
-        <input id="workout-name" type="text" placeholder="Sweet Spot 3x10" />
-      </label>
+      <div class="builder-grid">
+        <div class="home-col">
+          <div class="panel">
+            <h2>Workout</h2>
+            <label class="field">
+              Name
+              <input id="workout-name" type="text" placeholder="Sweet Spot 3x10" />
+            </label>
+          </div>
 
-      <ol id="segment-list" class="segment-list"></ol>
+          <div class="panel segment-form">
+            <h2>Add Segment</h2>
+            <label class="field">
+              Label
+              <input id="segment-label" type="text" placeholder="Warmup" />
+            </label>
+            <div class="form-row">
+              <label class="field">
+                Duration (sec)
+                <input id="segment-duration" type="number" min="1" value="300" />
+              </label>
+              <label class="field">
+                Target Watts
+                <input id="segment-watts" type="number" min="0" value="150" />
+              </label>
+            </div>
+            <button id="add-segment-btn" type="button">Add Segment</button>
+          </div>
+        </div>
 
-      <div class="panel segment-form">
-        <label class="field">
-          Label
-          <input id="segment-label" type="text" placeholder="Warmup" />
-        </label>
-        <label class="field">
-          Duration (sec)
-          <input id="segment-duration" type="number" min="1" value="300" />
-        </label>
-        <label class="field">
-          Target Watts
-          <input id="segment-watts" type="number" min="0" value="150" />
-        </label>
-        <button id="add-segment-btn" type="button">Add Segment</button>
-      </div>
-
-      <div class="panel">
-        <button id="save-workout-btn" type="button">Save Workout</button>
-        <button id="cancel-builder-btn" type="button" class="secondary">Cancel</button>
+        <div class="home-col">
+          <div class="panel">
+            <h2>Segments</h2>
+            <ol id="segment-list" class="segment-list"></ol>
+            <div class="live-controls">
+              <button id="save-workout-btn" type="button">Save Workout</button>
+              <button id="cancel-builder-btn" type="button" class="secondary">Cancel</button>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -91,12 +116,24 @@
         </div>
       </div>
 
-      <p id="ride-note" class="status" hidden></p>
+      <p id="ride-note" class="ride-note" hidden></p>
+
+      <div id="segment-timeline" class="segment-timeline" hidden></div>
 
       <div id="segment-info" class="segment-info" hidden>
-        <p class="segment-label" id="segment-label-value">--</p>
-        <p class="segment-target">Target: <span id="segment-target-value">--</span> W</p>
-        <p class="segment-remaining"><span id="segment-remaining-value">--</span> remaining</p>
+        <div>
+          <p class="segment-label" id="segment-label-value">--</p>
+          <div class="segment-figures">
+            <div class="segment-figure">
+              <span class="segment-figure-value" id="segment-target-value">--</span>
+              <span class="segment-figure-label">target watts</span>
+            </div>
+            <div class="segment-figure">
+              <span class="segment-figure-value" id="segment-remaining-value">--</span>
+              <span class="segment-figure-label">remaining</span>
+            </div>
+          </div>
+        </div>
         <canvas id="boulder-canvas" width="160" height="60"></canvas>
       </div>
 
@@ -106,7 +143,8 @@
     </section>
 
     <section data-view="summary" class="view">
-      <h1 class="title">Push Complete</h1>
+      <h1 class="title">PUSH COMPLETE</h1>
+      <p class="tagline">The boulder rests. Until tomorrow.</p>
       <dl class="summary-stats" id="summary-stats"></dl>
       <button id="summary-home-btn" type="button">Back to Home</button>
     </section>

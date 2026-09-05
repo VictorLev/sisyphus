@@ -18,10 +18,14 @@ export function initBuilder({ onSaved }) {
     segments.forEach((segment, index) => {
       const li = document.createElement('li');
       li.className = 'segment-row';
-      li.innerHTML = `
-        <span class="segment-row-label">${segment.label || '(untitled)'}</span>
-        <span class="segment-row-detail">${segment.duration_sec}s @ ${segment.target_watts}W</span>
-      `;
+      const label = document.createElement('span');
+      label.className = 'segment-row-label';
+      label.textContent = segment.label || '(untitled)';
+      const detail = document.createElement('span');
+      detail.className = 'segment-row-detail';
+      detail.textContent = `${segment.duration_sec}s @ ${segment.target_watts}W`;
+      li.appendChild(label);
+      li.appendChild(detail);
       const removeBtn = document.createElement('button');
       removeBtn.type = 'button';
       removeBtn.className = 'secondary';

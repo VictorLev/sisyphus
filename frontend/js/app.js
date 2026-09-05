@@ -235,6 +235,7 @@ function startRide(workout) {
   rideMode = workout ? preferredMode : 'gears';
   updateModeUi();
 
+  liveScreen.buildTimeline(workout ? workout.structure : null);
   liveScreen.updateWorkoutInfo(runner ? runner.state : null);
   boulder.setProgress(0);
   updateGearDisplay(gears.gearNumber);
@@ -349,12 +350,15 @@ function showSummary(session) {
     ['Avg Speed', session.avg_speed != null ? `${session.avg_speed.toFixed(1)} km/h` : '--'],
   ];
   for (const [label, value] of entries) {
+    const card = document.createElement('div');
+    card.className = 'summary-stat';
     const dt = document.createElement('dt');
     dt.textContent = label;
     const dd = document.createElement('dd');
     dd.textContent = value;
-    statsEl.appendChild(dt);
-    statsEl.appendChild(dd);
+    card.appendChild(dt);
+    card.appendChild(dd);
+    statsEl.appendChild(card);
   }
   showView('summary');
 }
