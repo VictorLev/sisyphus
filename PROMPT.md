@@ -29,8 +29,17 @@ data — this is still a bike computer, not a storybook.
 
 ## Hardware
 
-- **Trainer:** Elite Rivo (with Zwift Cog + Click), supports the standard
-  Bluetooth **FTMS** (Fitness Machine Service) profile.
+- **Trainer:** Elite Rivo, supports the standard Bluetooth **FTMS**
+  (Fitness Machine Service) profile.
+- **Drivetrain:** Zwift Cog — a *single* sprocket, so the bike has **no
+  physical gears**. The only gearing available is virtual, through the
+  Click. This is a load-bearing constraint rather than a detail: until
+  virtual shifting exists, the only way to chase a power target is to
+  change cadence, which is an awkward way to hold a steady wattage.
+- **Controller:** Zwift Click — a bar-mounted two-button BLE remote, used
+  for virtual gear changes. Speaks a proprietary Zwift service rather than
+  a standard GATT profile, and connects as a second, independent BLE
+  device alongside the trainer.
 - **Sensors:** trainer reports its own speed/cadence — no separate ANT+/BLE
   speed or cadence sensor needed.
 - **Heart rate:** not now, but design the data model so an HR strap
@@ -40,17 +49,50 @@ data — this is still a bike computer, not a storybook.
 
 ### Bluetooth detail Claude Code should know up front
 
+**Trainer — FTMS (standardised, documented)**
+
 - Service: `fitness_machine` (`0x1826`)
 - Read/notify characteristic: **Indoor Bike Data** (`0x2AD2`) — speed,
   cadence, power, all gated behind a flags bitfield (fields are only present
   if their flag bit is set, and they appear in bit order). This parser is
   fiddly — get it right first, before building anything on top of it.
-- Write characteristic: **Fitness Machine Control Point** (`0x2AD9`) — used
-  for ERG mode (opcode `0x05`, "Set Target Power"). Requires requesting
-  control (opcode `0x00`) first and handling the trainer's ack. **Treat ERG
-  auto-resistance as a phase 2 feature, not part of the MVP** — ship
-  visual-target workouts first (rider manually matches power by feel/gearing),
-  add auto-resistance once the basic app works end to end.
+- Read characteristic: **Fitness Machine Feature** (`0x2ACC`) — advertises
+  which control modes the trainer actually accepts. **Read this before
+  designing any resistance control**; not every trainer implements every
+  opcode, and it is cheap to check rather than assume.
+- Write characteristic: **Fitness Machine Control Point** (`0x2AD9`).
+  Relevant opcodes:
+  - `0x00` Request Control — required first, with the trainer's ack
+    handled, before any other write will be accepted.
+  - `0x04` Set Target Resistance Level — raw resistance, device-defined
+    units.
+  - `0x05` Set Target Power — ERG mode; trainer holds a wattage regardless
+    of cadence or gearing.
+  - `0x11` Set Indoor Bike Simulation Parameters — wind speed, **grade**
+    (signed, so downhill works), rolling resistance, wind resistance. This
+    is the mode that simulates a slope, where resistance varies with speed.
+- All Control Point work is deferred past the MVP — ship visual-target
+  workouts first, add resistance control once the basic app works end to
+  end. Note the MVP therefore ships with the bike effectively stuck in one
+  gear (see the Cog constraint above); that is a known, accepted rough edge
+  of phase 1, not a design goal.
+
+**Click — proprietary Zwift protocol (reverse-engineered, unverified)**
+
+- Not FTMS. A custom 128-bit Zwift service, a `RideOn` ASCII handshake to
+  open the session, and button events arriving as protobuf-encoded
+  notifications.
+- Everything in the previous bullet comes from community reverse
+  engineering (the QZ / zwift-play projects), **not** a published spec.
+  Treat the UUIDs and message shapes as unverified until confirmed against
+  the actual unit — probe the device and read what it really exposes before
+  writing code against assumed constants.
+- The Click reports only "shift up" / "shift down". It carries no notion of
+  a gear ratio, so **the app owns the virtual drivetrain**: hold a gear
+  index in app state and translate each shift into a resistance command to
+  the trainer. This is an approximation of Zwift's native virtual shifting
+  (which newer trainers implement in firmware); how good it feels depends
+  on how the Rivo responds, and is worth testing early.
 
 ## Architecture
 
@@ -93,8 +135,8 @@ data — this is still a bike computer, not a storybook.
   FTP auto-scaling in phase 1)
 - Run a workout: screen shows current segment, target watts, time
   remaining in segment, and progression through the workout — no
-  auto-resistance yet, just a clear visual target
-- Manual lap/interval marking (a button that timestamps a split)
+  auto-resistance and no virtual shifting yet, just a clear visual target
+  the rider chases on cadence alone
 - Boulder-incline motif fills as you progress through the current segment
 - Session (a Push) saved permanently to SQLite at the end of a ride
 
@@ -110,15 +152,31 @@ data — this is still a bike computer, not a storybook.
   parser is the highest-risk piece of code, test it thoroughly) + GitHub
   Actions CI running tests on push
 
-**Phase 3**
-- ERG mode: write to the Control Point characteristic so the trainer
-  auto-adjusts resistance to hit each segment's target watts
+**Phase 3 — Trainer control + virtual shifting**
+
+Ordered deliberately: each step de-risks the next, and virtual shifting
+comes before ERG because it fixes a real usability problem (one fixed
+gear) rather than adding a convenience.
+
+- Probe and record what the hardware supports: trainer feature bits from
+  `0x2ACC`, and the Click's actual advertised services/characteristics
+- Control Point groundwork: Request Control (`0x00`) plus ack handling
+- Connect the Click as a second BLE device; decode its button events
+- **Virtual shifting:** app-side gear model driven by Click button presses,
+  translated into trainer resistance (via `0x04` or a grade offset through
+  `0x11` — whichever the feature bits support and the Rivo responds to
+  best). Needs a sensible gear count and ratio spread, tuned by feel.
+- ERG mode: hold each segment's target watts automatically (`0x05`)
+
+**Phase 4**
 - Strava export: OAuth connect flow, upload completed sessions as
   activities
 
 ## Explicit non-goals
 
-- No 3D graphics, avatars, or virtual routes
+- No 3D graphics, avatars, or virtual routes. Using FTMS simulation mode
+  (`0x11`) as the *mechanism* behind virtual shifting is fine — what's
+  ruled out is route/course content, not the opcode.
 - No calorie tracking
 - No multi-device sync — single machine, local SQLite is the source of truth
 - No failure states or penalties in workouts — additive/informational only
