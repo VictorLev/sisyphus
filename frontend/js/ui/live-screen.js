@@ -13,12 +13,23 @@ export function initLiveScreen({ onEndRide }) {
   const segmentLabelEl = document.getElementById('segment-label-value');
   const segmentTargetEl = document.getElementById('segment-target-value');
   const segmentRemainingEl = document.getElementById('segment-remaining-value');
+  const segmentTargetLabelEl = document.getElementById('segment-target-label');
   const timelineEl = document.getElementById('segment-timeline');
   const endRideBtn = document.getElementById('end-ride-btn');
 
   endRideBtn.addEventListener('click', () => onEndRide());
 
   let timelineSegments = [];
+  let riderFtp = null; // when set, targets are annotated with %FTP
+
+  function setFtp(ftp) {
+    riderFtp = ftp > 0 ? ftp : null;
+  }
+
+  function targetLabel(watts) {
+    if (!riderFtp) return 'target watts';
+    return `target watts · ${Math.round((watts / riderFtp) * 100)}% FTP`;
+  }
 
   function updateRawNumbers({ powerSmoothed, cadence, speed }) {
     powerEl.textContent = powerSmoothed != null ? Math.round(powerSmoothed) : '--';
@@ -84,6 +95,7 @@ export function initLiveScreen({ onEndRide }) {
       segmentInfoEl.hidden = false;
       segmentLabelEl.textContent = 'PUSH COMPLETE';
       segmentTargetEl.textContent = '--';
+      segmentTargetLabelEl.textContent = 'target watts';
       segmentRemainingEl.textContent = '0:00';
       return;
     }
@@ -94,10 +106,11 @@ export function initLiveScreen({ onEndRide }) {
     segmentInfoEl.hidden = false;
     segmentLabelEl.textContent = runnerState.currentSegment.label || `Segment ${runnerState.segmentIndex + 1}`;
     segmentTargetEl.textContent = runnerState.currentSegment.target_watts;
+    segmentTargetLabelEl.textContent = targetLabel(runnerState.currentSegment.target_watts);
     segmentRemainingEl.textContent = formatTime(runnerState.remainingInSegmentSec);
   }
 
   updateWorkoutInfo(null);
 
-  return { updateRawNumbers, updateWorkoutInfo, buildTimeline };
+  return { updateRawNumbers, updateWorkoutInfo, buildTimeline, setFtp };
 }

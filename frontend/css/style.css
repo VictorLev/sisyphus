@@ -171,6 +171,33 @@ button.secondary:hover:not(:disabled) {
   color: #17140f;
 }
 
+.nav-panel {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.nav-panel button {
+  flex: 1;
+}
+
+.field select {
+  font-family: inherit;
+  font-size: 1rem;
+  text-transform: none;
+  letter-spacing: normal;
+  background: var(--color-bg);
+  color: var(--color-text);
+  border: var(--border);
+  border-radius: 2px;
+  padding: 0.7rem 0.8rem;
+}
+
+.field select:focus {
+  outline: none;
+  border-color: var(--color-bronze);
+}
+
 /* ------------------------------------------------------------ status/hint */
 
 .status {

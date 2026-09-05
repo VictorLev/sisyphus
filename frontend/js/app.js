@@ -10,7 +10,8 @@ import { initHome } from './ui/home.js';
 import { initBuilder } from './workout/builder.js';
 import { initLiveScreen } from './ui/live-screen.js';
 import { createBoulder } from './ui/boulder.js';
-import { createSession } from './api/client.js';
+import { createSession, getSettings, getProfile } from './api/client.js';
+import { initProfile, initSettings } from './ui/config-forms.js';
 
 const trainerConnection = new TrainerConnection();
 const gears = new GearModel();
@@ -33,6 +34,8 @@ let latestReading = null;
 let rideStartedAt = null;
 let rafId = null;
 let recordIntervalId = null;
+let sampleIntervalMs = 1000; // overridden by saved settings
+let riderFtp = null; // shows targets as %FTP when set
 
 initViews();
 showView('home');
@@ -47,7 +50,49 @@ initHome({
 });
 
 initBuilder({});
+initProfile();
+initSettings({ onSaved: (saved) => applySettings(saved) });
 updateModeUi();
+
+// Settings are stored server-side, so the objects are built with defaults and
+// reconfigured once the saved values arrive.
+function applySettings(settings) {
+  gears.configure({
+    gearCount: settings.gear_count,
+    minResistance: settings.min_resistance,
+    maxResistance: settings.max_resistance,
+    startGear: settings.start_gear,
+  });
+  rollingAverage.windowMs = Math.max(1, settings.power_smoothing_sec) * 1000;
+  sampleIntervalMs = Math.max(1, settings.sample_interval_sec) * 1000;
+  if (settings.default_mode === 'gears' || settings.default_mode === 'erg') {
+    preferredMode = settings.default_mode;
+    rideMode = preferredMode;
+  }
+  updateModeUi();
+}
+
+async function loadConfig() {
+  try {
+    applySettings(await getSettings());
+  } catch (err) {
+    console.warn('[app] using default settings:', err.message);
+  }
+  try {
+    const profile = await getProfile();
+    riderFtp = profile.ftp > 0 ? profile.ftp : null;
+    liveScreen.setFtp(riderFtp);
+  } catch { /* %FTP display is optional */ }
+}
+loadConfig();
+
+document.addEventListener('profilechange', (event) => {
+  riderFtp = event.detail.ftp > 0 ? event.detail.ftp : null;
+  liveScreen.setFtp(riderFtp);
+});
+
+document.getElementById('open-profile-btn').addEventListener('click', () => showView('profile'));
+document.getElementById('open-settings-btn').addEventListener('click', () => showView('settings'));
 
 document.getElementById('summary-home-btn').addEventListener('click', () => {
   rideMode = preferredMode; // the ride is over; show what's chosen for next time
@@ -260,7 +305,7 @@ function startLoop() {
       },
       performance.now()
     );
-  }, 1000);
+  }, sampleIntervalMs);
 
   function frame(now) {
     if (runner) {

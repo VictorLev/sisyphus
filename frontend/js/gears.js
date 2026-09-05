@@ -19,6 +19,17 @@ export class GearModel extends EventTarget {
     this.index = Math.max(0, Math.min(gearCount - 1, startGear));
   }
 
+  // Applied from saved settings at startup. Rebuilding the model would lose
+  // the rider's current gear, so reconfigure in place and clamp the index
+  // into the new range.
+  configure({ gearCount, minResistance, maxResistance, startGear } = {}) {
+    if (Number.isFinite(gearCount) && gearCount >= 1) this.gearCount = Math.round(gearCount);
+    if (Number.isFinite(minResistance)) this.minResistance = minResistance;
+    if (Number.isFinite(maxResistance)) this.maxResistance = maxResistance;
+    if (Number.isFinite(startGear)) this.index = Math.round(startGear) - 1; // 1-based in settings
+    this.index = Math.max(0, Math.min(this.gearCount - 1, this.index));
+  }
+
   get gearNumber() {
     return this.index + 1; // 1-based for display
   }

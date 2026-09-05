@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import db from './db/index.js';
 import workoutsRouter from './routes/workouts.js';
 import sessionsRouter from './routes/sessions.js';
+import configRouter from './routes/config.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const frontendDir = path.join(__dirname, '..', '..', 'frontend');
@@ -21,6 +22,7 @@ app.get('/api/health', (req, res) => {
 
 app.use('/api/workouts', workoutsRouter);
 app.use('/api/sessions', sessionsRouter);
+app.use('/api', configRouter);
 
 app.listen(port, () => {
   console.log(`Sisyphus server listening on http://localhost:${port}`);

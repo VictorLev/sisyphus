@@ -41,3 +41,12 @@ CREATE TABLE IF NOT EXISTS strava_tokens (
   refresh_token TEXT,
   expires_at INTEGER
 );
+
+-- Rider profile and app settings, each stored as a single JSON document
+-- under a well-known key. Key/value rather than typed columns so new
+-- settings never need a migration.
+CREATE TABLE IF NOT EXISTS app_config (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL, -- JSON
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);

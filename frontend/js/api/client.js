@@ -30,3 +30,27 @@ export function createSession(body) {
     body: JSON.stringify(body),
   });
 }
+
+export function getProfile() {
+  return request('/api/profile');
+}
+
+export function saveProfile(body) {
+  return request('/api/profile', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+
+export function getSettings() {
+  return request('/api/settings');
+}
+
+export function saveSettings(body) {
+  return request('/api/settings', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}

@@ -114,6 +114,12 @@ data — this is still a bike computer, not a storybook.
 - `records`: metric name, value, session_id (for "longest ride", "highest
   avg power", etc., recomputed or updated as sessions complete)
 - `strava_tokens`: access_token, refresh_token, expires_at
+- `app_config`: key/value, each value a JSON document. Two keys today —
+  `profile` (name, ftp, weight_kg, max_hr) and `settings` (gear_count,
+  min/max_resistance, start_gear, power_smoothing_sec,
+  sample_interval_sec, default_mode). Key/value rather than typed columns
+  so adding a setting never needs a migration; the server merges stored
+  values over its defaults, so new settings appear with sane values.
 
 ## Features by phase
 
@@ -152,6 +158,15 @@ ERG blocks gear writes, which would otherwise fight the trainer's target.
   than discarded.
 - Ending a ride sends Reset (`0x01`) so ERG stops forcing a target on the
   rider once they stop.
+
+**Profile and Settings pages (BUILT)**
+- **Profile**: name, FTP, weight, max HR. FTP annotates live workout
+  targets as `% FTP`; weight and max HR are stored for later use.
+- **Settings**: everything previously hardcoded — gear count, min/max
+  resistance, starting gear, power-smoothing window, sample interval, and
+  default ride mode. Applied at startup and on save without a reload.
+- Both persist to SQLite (`app_config`) rather than browser storage, so
+  they live with the training log and survive a browser reset.
 
 **Phase 2**
 - FTP estimator (short guided test or manual entry) — used only to help

@@ -46,7 +46,117 @@
         </div>
       </div>
 
+      <div class="panel nav-panel">
+        <button id="open-profile-btn" type="button" class="secondary">Profile</button>
+        <button id="open-settings-btn" type="button" class="secondary">Settings</button>
+      </div>
+
       <p class="tools-link"><a href="probe.html">Hardware diagnostics (probe)</a></p>
+    </section>
+
+    <section data-view="profile" class="view">
+      <h1 class="title">PROFILE</h1>
+      <p class="tagline">Who is pushing the boulder.</p>
+
+      <div class="builder-grid">
+        <div class="home-col">
+          <div class="panel">
+            <h2>Rider</h2>
+            <label class="field">
+              Name
+              <input id="profile-name" type="text" placeholder="Your name" />
+            </label>
+            <div class="form-row">
+              <label class="field">
+                FTP (watts)
+                <input id="profile-ftp" type="number" min="0" step="1" />
+              </label>
+              <label class="field">
+                Weight (kg)
+                <input id="profile-weight-kg" type="number" min="0" step="0.1" />
+              </label>
+            </div>
+            <label class="field">
+              Max heart rate (bpm)
+              <input id="profile-max-hr" type="number" min="0" step="1" />
+            </label>
+            <p class="hint">FTP is used to show workout targets as a percentage
+              of threshold. Weight and max HR are stored for later use (power-to-weight,
+              heart-rate zones) and change nothing today.</p>
+            <p id="profile-status" class="status"></p>
+            <div class="live-controls" style="margin-top:1.25rem">
+              <button id="save-profile-btn" type="button">Save Profile</button>
+              <button id="profile-back-btn" type="button" class="secondary">Back</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section data-view="settings" class="view">
+      <h1 class="title">SETTINGS</h1>
+      <p class="tagline">The knobs behind the ride.</p>
+
+      <div class="builder-grid">
+        <div class="home-col">
+          <div class="panel">
+            <h2>Virtual Gears</h2>
+            <div class="form-row">
+              <label class="field">
+                Gear count
+                <input id="setting-gear-count" type="number" min="1" max="40" step="1" />
+              </label>
+              <label class="field">
+                Starting gear
+                <input id="setting-start-gear" type="number" min="1" step="1" />
+              </label>
+            </div>
+            <div class="form-row">
+              <label class="field">
+                Min resistance
+                <input id="setting-min-resistance" type="number" min="0" max="20" step="0.5" />
+              </label>
+              <label class="field">
+                Max resistance
+                <input id="setting-max-resistance" type="number" min="0" max="20" step="0.5" />
+              </label>
+            </div>
+            <p class="hint">Gears are spread evenly between min and max. The
+              trainer accepts 0–20; lower the max if the top gears feel too hard.</p>
+          </div>
+        </div>
+
+        <div class="home-col">
+          <div class="panel">
+            <h2>Ride</h2>
+            <div class="form-row">
+              <label class="field">
+                Power smoothing (sec)
+                <input id="setting-power-smoothing-sec" type="number" min="1" max="60" step="1" />
+              </label>
+              <label class="field">
+                Sample interval (sec)
+                <input id="setting-sample-interval-sec" type="number" min="1" max="10" step="1" />
+              </label>
+            </div>
+            <label class="field">
+              Default ride mode
+              <select id="setting-default-mode">
+                <option value="gears">Virtual Gears</option>
+                <option value="erg">ERG</option>
+              </select>
+            </label>
+            <p class="hint">Smoothing affects the live watts display only —
+              recorded samples are always raw. Sample interval sets how often a
+              data point is written to the ride log.</p>
+            <p id="settings-status" class="status"></p>
+            <div class="live-controls" style="margin-top:1.25rem">
+              <button id="save-settings-btn" type="button">Save Settings</button>
+              <button id="settings-back-btn" type="button" class="secondary">Back</button>
+            </div>
+          </div>
+        </div>
+      </div>
     </section>
 
     <section data-view="builder" class="view">
@@ -126,7 +236,7 @@
           <div class="segment-figures">
             <div class="segment-figure">
               <span class="segment-figure-value" id="segment-target-value">--</span>
-              <span class="segment-figure-label">target watts</span>
+              <span class="segment-figure-label" id="segment-target-label">target watts</span>
             </div>
             <div class="segment-figure">
               <span class="segment-figure-value" id="segment-remaining-value">--</span>
