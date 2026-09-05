@@ -31,6 +31,16 @@ function validateStructure(structure) {
     ) {
       return 'each segment requires integer duration_sec > 0, numeric target_watts >= 0, and a string label';
     }
+    // Optional terrain. Signed: positive climbs, negative descends. Older
+    // workouts have no grade at all, which reads as flat.
+    if (segment.grade_percent !== undefined) {
+      if (typeof segment.grade_percent !== 'number' || !Number.isFinite(segment.grade_percent)) {
+        return 'grade_percent must be a number';
+      }
+      if (segment.grade_percent < -20 || segment.grade_percent > 20) {
+        return 'grade_percent must be between -20 and 20';
+      }
+    }
   }
   return null;
 }

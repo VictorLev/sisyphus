@@ -38,6 +38,7 @@ let rafId = null;
 let recordIntervalId = null;
 let sampleIntervalMs = 1000; // overridden by saved settings
 let riderFtp = null; // shows targets as %FTP when set
+let resistancePerGrade = 0.4; // resistance units added per +1% of grade
 
 initViews();
 showView('home');
@@ -68,6 +69,9 @@ function applySettings(settings) {
     startGear: settings.start_gear,
   });
   rollingAverage.windowMs = Math.max(1, settings.power_smoothing_sec) * 1000;
+  if (Number.isFinite(settings.resistance_per_grade)) {
+    resistancePerGrade = settings.resistance_per_grade;
+  }
   sampleIntervalMs = Math.max(1, settings.sample_interval_sec) * 1000;
   if (settings.default_mode === 'gears' || settings.default_mode === 'erg') {
     preferredMode = settings.default_mode;
@@ -112,7 +116,7 @@ trainerConnection.addEventListener('connected', () => {
   // ensureTrainerControl) so a failure surfaces on the visible live screen
   // rather than into the hidden home view.
   ensureTrainerControl().then((ok) => {
-    if (ok) trainerControl.setResistance(gears.resistance).catch(() => {});
+    if (ok) trainerControl.setResistance(terrainResistance()).catch(() => {});
   });
 });
 
@@ -183,7 +187,7 @@ async function applyRideMode() {
       flashRideNote(`ERG failed: ${err.message}`);
     }
   } else {
-    applyResistance(gears.resistance);
+    applyResistance(terrainResistance());
   }
 }
 
@@ -208,10 +212,24 @@ function updateModeUi() {
 document.getElementById('mode-gears-btn').addEventListener('click', () => setRideMode('gears'));
 document.getElementById('mode-erg-btn').addEventListener('click', () => setRideMode('erg'));
 
+// The trainer only has one resistance dial, so terrain and gearing are
+// composed into it: the segment's grade sets the load, the gear is the
+// rider's lever against it. Clamped to the device's 0..20 domain, so a
+// descent bottoms out at freewheel rather than going negative.
+function currentGrade() {
+  if (rideMode !== 'gears') return 0; // ERG holds watts; terrain is irrelevant
+  return runner?.state.currentSegment?.grade_percent ?? 0;
+}
+
+function terrainResistance() {
+  const withGrade = gears.resistance + currentGrade() * resistancePerGrade;
+  return Math.max(0, Math.min(20, withGrade));
+}
+
 // A gear change updates the display and writes the new resistance.
 gears.addEventListener('change', (event) => {
   updateGearDisplay(event.detail.gear);
-  applyResistance(event.detail.resistance);
+  applyResistance(terrainResistance());
 });
 
 // Writes resistance, re-acquiring control if the trainer dropped it (FTMS
@@ -275,9 +293,9 @@ function startRide(workout) {
     runner.start(performance.now());
     // In ERG each segment's target has to be pushed to the trainer as it
     // begins; in gears mode this is a no-op.
-    runner.addEventListener('segment-change', () => {
-      if (rideMode === 'erg') applyRideMode();
-    });
+    // Every segment boundary changes the load: a new ERG target, or new
+    // terrain to push the gears against.
+    runner.addEventListener('segment-change', () => applyRideMode());
   }
 
   // ERG needs a workout's targets, so free rides always run in gears — but
@@ -318,6 +336,7 @@ function startLoop() {
       liveScreen.updateWorkoutInfo(state);
       // On completion currentSegment is null and progressFraction resets to
       // 0; keep the boulder at the summit instead of letting it drop.
+      boulder.setGrade(state.currentSegment?.grade_percent ?? 0);
       boulder.setProgress(state.isComplete ? 1 : state.progressFraction);
     }
     rafId = requestAnimationFrame(frame);

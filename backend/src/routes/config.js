@@ -21,6 +21,10 @@ const DEFAULTS = {
     power_smoothing_sec: 10, // live display smoothing window
     sample_interval_sec: 1, // how often a session sample is recorded
     default_mode: 'gears', // 'gears' | 'erg'
+    // Resistance units added per +1% of grade. The trainer's usable range is
+    // small (0..20), so a climb has to cost only a couple of units to leave
+    // room for the gears to matter.
+    resistance_per_grade: 0.4,
   },
 };
 

@@ -7,6 +7,7 @@ export function initBuilder({ onSaved }) {
   const labelInput = document.getElementById('segment-label');
   const durationInput = document.getElementById('segment-duration');
   const wattsInput = document.getElementById('segment-watts');
+  const gradeInput = document.getElementById('segment-grade');
   const addBtn = document.getElementById('add-segment-btn');
   const saveBtn = document.getElementById('save-workout-btn');
   const cancelBtn = document.getElementById('cancel-builder-btn');
@@ -23,7 +24,9 @@ export function initBuilder({ onSaved }) {
       label.textContent = segment.label || '(untitled)';
       const detail = document.createElement('span');
       detail.className = 'segment-row-detail';
-      detail.textContent = `${segment.duration_sec}s @ ${segment.target_watts}W`;
+      const grade = segment.grade_percent ?? 0;
+      const terrain = grade > 0 ? ` ▲${grade}%` : grade < 0 ? ` ▼${Math.abs(grade)}%` : '';
+      detail.textContent = `${segment.duration_sec}s @ ${segment.target_watts}W${terrain}`;
       li.appendChild(label);
       li.appendChild(detail);
       const removeBtn = document.createElement('button');
@@ -45,6 +48,7 @@ export function initBuilder({ onSaved }) {
     labelInput.value = '';
     durationInput.value = '300';
     wattsInput.value = '150';
+    gradeInput.value = '0';
     render();
   }
 
@@ -62,7 +66,12 @@ export function initBuilder({ onSaved }) {
       return;
     }
 
-    segments.push({ duration_sec, target_watts, label });
+    const grade_percent = Number(gradeInput.value) || 0;
+    if (grade_percent < -20 || grade_percent > 20) {
+      alert('Grade must be between -20% and 20%.');
+      return;
+    }
+    segments.push({ duration_sec, target_watts, label, grade_percent });
     labelInput.value = '';
     render();
   });

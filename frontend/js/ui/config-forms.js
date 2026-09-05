@@ -69,6 +69,7 @@ export function initSettings({ onSaved }) {
       'setting-min-resistance',
       'setting-max-resistance',
       'setting-start-gear',
+      'setting-resistance-per-grade',
       'setting-power-smoothing-sec',
       'setting-sample-interval-sec',
       'setting-default-mode',

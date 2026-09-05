@@ -106,7 +106,9 @@ data — this is still a bike computer, not a storybook.
 ## Data model (rough)
 
 - `workouts`: id, name, created_at, structure (JSON: ordered list of
-  segments, each `{ duration_sec, target_watts, label }`)
+  segments, each `{ duration_sec, target_watts, label, grade_percent? }`).
+  `grade_percent` is optional and signed (-20..20): positive climbs,
+  negative descends, absent reads as flat, so older workouts still load.
 - `sessions`: id, workout_id (nullable — free rides have none), started_at,
   ended_at, distance_m, avg_power, max_power, avg_cadence, avg_speed.
   Averages are computed server-side over **moving** samples (cadence > 0)
@@ -151,7 +153,14 @@ They are mutually exclusive because both drive the same Control Point —
 ERG blocks gear writes, which would otherwise fight the trainer's target.
 
 - **Virtual Gears** — resistance is fixed per gear and the rider chases
-  the target. GearModel: 12 gears mapped linearly over resistance 0–8
+  the target. **Terrain**: a segment's `grade_percent` composes into the
+  same resistance write — the grade sets the load, the gear stays the
+  rider's lever against it (`resistance = gear + grade x
+  resistance_per_grade`, clamped to the device's 0..20, so a descent
+  bottoms out at freewheel). FTMS simulation mode (`0x11`) was rejected
+  for this: it takes no gear input, so it would have made gearing
+  meaningless. The ride boulder's incline steepens on climbs and tips
+  down on descents. GearModel: 12 gears mapped linearly over resistance 0–8
   (tuned down from 2–18 after ride feel; the two numbers in
   `frontend/js/gears.js` are the tuning knobs), starting gear 5. Keyboard
   `+`/`=` up, `-` down — live-view only, one shift per press, `▲/▼`

@@ -14,6 +14,9 @@ export function initLiveScreen({ onEndRide }) {
   const segmentTargetEl = document.getElementById('segment-target-value');
   const segmentRemainingEl = document.getElementById('segment-remaining-value');
   const segmentTargetLabelEl = document.getElementById('segment-target-label');
+  const gradeFigureEl = document.getElementById('segment-grade-figure');
+  const gradeValueEl = document.getElementById('segment-grade-value');
+  const gradeLabelEl = document.getElementById('segment-grade-label');
   const timelineEl = document.getElementById('segment-timeline');
   const endRideBtn = document.getElementById('end-ride-btn');
 
@@ -97,6 +100,7 @@ export function initLiveScreen({ onEndRide }) {
       segmentTargetEl.textContent = '--';
       segmentTargetLabelEl.textContent = 'target watts';
       segmentRemainingEl.textContent = '0:00';
+      gradeFigureEl.hidden = true;
       return;
     }
     if (!runnerState.currentSegment) {
@@ -108,6 +112,14 @@ export function initLiveScreen({ onEndRide }) {
     segmentTargetEl.textContent = runnerState.currentSegment.target_watts;
     segmentTargetLabelEl.textContent = targetLabel(runnerState.currentSegment.target_watts);
     segmentRemainingEl.textContent = formatTime(runnerState.remainingInSegmentSec);
+
+    // Terrain only shows when the segment actually has any.
+    const grade = runnerState.currentSegment.grade_percent ?? 0;
+    gradeFigureEl.hidden = grade === 0;
+    if (grade !== 0) {
+      gradeValueEl.textContent = `${grade > 0 ? '▲' : '▼'}${Math.abs(grade)}%`;
+      gradeLabelEl.textContent = grade > 0 ? 'climbing' : 'descending';
+    }
   }
 
   updateWorkoutInfo(null);

@@ -28,8 +28,18 @@ const FRAME_B = [
   [0, 1, 1, 1, 1, 0],
 ];
 
+// Slope multiplier, driven by the segment's grade: the incline Sisyphus
+// pushes up literally steepens on a climb and tips downward on a descent.
+let slope = 0.55;
+
+function setSlopeFromGrade(gradePercent) {
+  slope = Math.max(-0.35, Math.min(1, 0.55 + gradePercent * 0.045));
+}
+
 function inclineY(x) {
-  return Math.round((GRID_H - 1) - (x * (GRID_H - 1)) / (GRID_W - 1));
+  const rise = (GRID_H - 1) * slope;
+  const y = Math.round((GRID_H - 1) - (x * rise) / (GRID_W - 1));
+  return Math.max(0, Math.min(GRID_H - 1, y));
 }
 
 export function createBoulder(canvasEl) {
@@ -79,5 +89,10 @@ export function createBoulder(canvasEl) {
   }
 
   setProgress(0);
-  return { setProgress };
+  return {
+    setProgress,
+    setGrade(gradePercent) {
+      setSlopeFromGrade(gradePercent ?? 0);
+    },
+  };
 }
