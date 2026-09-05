@@ -75,6 +75,8 @@ export class ZwiftClickConnection extends EventTarget {
     this._plusPressed = false;
     this._minusPressed = false;
     this._prevMask = 0; // Ride-protocol pressed-bit mask, previous frame
+    this._intentionalDisconnect = false;
+    this._reconnectTimer = null;
     this._onAsyncValue = this._onAsyncValue.bind(this);
     this._onDisconnected = this._onDisconnected.bind(this);
   }
@@ -94,7 +96,14 @@ export class ZwiftClickConnection extends EventTarget {
       optionalServices: [SERVICE_FC82, SERVICE_LEGACY, 'battery_service', 'device_information'],
     });
     this.device.addEventListener('gattserverdisconnected', this._onDisconnected);
+    this._intentionalDisconnect = false;
+    await this._openAndSetup();
+  }
 
+  // Everything after device selection — reused by both connect() and the
+  // auto-reconnect path (a known device's gatt.connect() needs no gesture).
+  async _openAndSetup() {
+    this._prevMask = 0; // don't carry a stale pressed-state across a reconnect
     const server = await this.device.gatt.connect();
 
     let service = null;
@@ -145,7 +154,28 @@ export class ZwiftClickConnection extends EventTarget {
   }
 
   disconnect() {
+    this._intentionalDisconnect = true;
+    clearTimeout(this._reconnectTimer);
     if (this.device?.gatt?.connected) this.device.gatt.disconnect();
+  }
+
+  // On an unexpected drop, retry the connection a handful of times with a
+  // short backoff. The units sleep/drop occasionally; this keeps shifting
+  // alive without the rider re-picking the device.
+  async _attemptReconnect(attempt = 1) {
+    const MAX_ATTEMPTS = 6;
+    if (this._intentionalDisconnect || attempt > MAX_ATTEMPTS) {
+      if (attempt > MAX_ATTEMPTS) {
+        this.dispatchEvent(new CustomEvent('reconnect-failed', { detail: { deviceName: this.device?.name } }));
+      }
+      return;
+    }
+    this.dispatchEvent(new CustomEvent('reconnecting', { detail: { attempt, deviceName: this.device?.name } }));
+    try {
+      await this._openAndSetup();
+    } catch {
+      this._reconnectTimer = setTimeout(() => this._attemptReconnect(attempt + 1), 1500);
+    }
   }
 
   _onAsyncValue(event) {
@@ -225,7 +255,8 @@ export class ZwiftClickConnection extends EventTarget {
   }
 
   _onDisconnected() {
-    this.dispatchEvent(new CustomEvent('disconnected'));
+    this.dispatchEvent(new CustomEvent('disconnected', { detail: { intentional: this._intentionalDisconnect } }));
+    if (!this._intentionalDisconnect) this._attemptReconnect();
   }
 }
 

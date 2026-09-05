@@ -8,7 +8,10 @@
 // ground. The device resistance domain is 0.0–20.0 (per 0x2AD6).
 export class GearModel extends EventTarget {
   // gearCount gears spread linearly from minResistance to maxResistance.
-  constructor({ gearCount = 12, minResistance = 2, maxResistance = 18, startGear = 4 } = {}) {
+  // Gentle default range: resistance 0–8 across 12 gears (gear 7 ≈ 4.4),
+  // tuned down from an initial 2–18 that made the middle gears too hard.
+  // These are the two numbers to adjust for feel.
+  constructor({ gearCount = 12, minResistance = 0, maxResistance = 8, startGear = 4 } = {}) {
     super();
     this.gearCount = gearCount;
     this.minResistance = minResistance;

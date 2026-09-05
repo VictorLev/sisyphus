@@ -13,11 +13,22 @@ const insertSample = db.prepare(
    VALUES (@session_id, @timestamp_offset_sec, @power, @cadence, @speed, @heart_rate, @lap_marker)`
 );
 const updateAggregates = db.prepare(
+  // Averages are computed over MOVING samples (cadence > 0) so idle time —
+  // setup, coasting, resting between efforts — doesn't drag them down. Max
+  // power stays over all samples. If a ride somehow had no moving samples,
+  // COALESCE falls back to the all-sample average so a real ride never
+  // reports null.
   `UPDATE sessions SET
-     avg_power = (SELECT AVG(power) FROM session_samples WHERE session_id = @id),
+     avg_power = COALESCE(
+       (SELECT AVG(power) FROM session_samples WHERE session_id = @id AND cadence > 0),
+       (SELECT AVG(power) FROM session_samples WHERE session_id = @id)),
      max_power = (SELECT MAX(power) FROM session_samples WHERE session_id = @id),
-     avg_cadence = (SELECT AVG(cadence) FROM session_samples WHERE session_id = @id),
-     avg_speed = (SELECT AVG(speed) FROM session_samples WHERE session_id = @id)
+     avg_cadence = COALESCE(
+       (SELECT AVG(cadence) FROM session_samples WHERE session_id = @id AND cadence > 0),
+       (SELECT AVG(cadence) FROM session_samples WHERE session_id = @id)),
+     avg_speed = COALESCE(
+       (SELECT AVG(speed) FROM session_samples WHERE session_id = @id AND cadence > 0),
+       (SELECT AVG(speed) FROM session_samples WHERE session_id = @id))
    WHERE id = @id`
 );
 const selectSessionById = db.prepare('SELECT * FROM sessions WHERE id = ?');
