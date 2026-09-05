@@ -132,9 +132,10 @@ data — this is still a bike computer, not a storybook.
 
 **Ride modes (BUILT — pulled forward from phase 3)**
 
-Two modes, chosen on the home screen and switchable mid-ride. They are
-mutually exclusive because both drive the same Control Point — ERG blocks
-gear writes, which would otherwise fight the trainer's target.
+Two modes, **chosen on the home screen before a ride starts** — never
+switchable mid-ride, so a ride is one committed mode from start to finish.
+They are mutually exclusive because both drive the same Control Point —
+ERG blocks gear writes, which would otherwise fight the trainer's target.
 
 - **Virtual Gears** — resistance is fixed per gear and the rider chases
   the target. GearModel: 12 gears mapped linearly over resistance 0–8

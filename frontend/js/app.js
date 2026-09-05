@@ -137,12 +137,12 @@ async function applyRideMode() {
   }
 }
 
-function setRideMode(mode, { announce = true } = {}) {
+// Mode is chosen before a ride starts, never during one — so this only
+// records the choice. The trainer is written to in startRide.
+function setRideMode(mode) {
   preferredMode = mode;
   rideMode = mode;
   updateModeUi();
-  if (announce) flashRideNote(mode === 'erg' ? 'ERG mode' : 'Virtual gears', 1500);
-  applyRideMode();
 }
 
 function updateModeUi() {
@@ -152,19 +152,11 @@ function updateModeUi() {
   document.getElementById('mode-description').textContent = erg
     ? 'ERG: the trainer forces each segment\'s target watts on you. Gearing does nothing — just pedal. Workouts only; free rides use gears.'
     : 'Virtual gears: resistance is fixed per gear and you chase the target yourself. + / − to shift during a ride.';
-  document.getElementById('toggle-mode-btn').textContent = erg ? 'Switch to Gears' : 'Switch to ERG';
   updateGearDisplay(gears.gearNumber);
 }
 
-document.getElementById('mode-gears-btn').addEventListener('click', () => setRideMode('gears', { announce: false }));
-document.getElementById('mode-erg-btn').addEventListener('click', () => setRideMode('erg', { announce: false }));
-document.getElementById('toggle-mode-btn').addEventListener('click', () => {
-  if (!activeWorkout && rideMode === 'gears') {
-    flashRideNote('ERG needs a workout target — free rides use gears', 2500);
-    return;
-  }
-  setRideMode(rideMode === 'erg' ? 'gears' : 'erg');
-});
+document.getElementById('mode-gears-btn').addEventListener('click', () => setRideMode('gears'));
+document.getElementById('mode-erg-btn').addEventListener('click', () => setRideMode('erg'));
 
 // A gear change updates the display and writes the new resistance.
 gears.addEventListener('change', (event) => {
