@@ -64,13 +64,32 @@
       <h1 class="title">THE CHRONICLE</h1>
       <p class="tagline" id="chronicle-summary">&nbsp;</p>
 
-      <div class="panel" style="margin-bottom:1.5rem">
-        <h2>Weekly Minutes</h2>
-        <canvas id="weekly-chart" class="chart chart-short"></canvas>
+      <div class="chronicle-grid">
+        <div class="panel">
+          <div class="calendar-header">
+            <h2 id="calendar-month">Month</h2>
+            <div class="row-actions">
+              <button id="calendar-prev" type="button" class="secondary">&lsaquo;</button>
+              <button id="calendar-today" type="button" class="secondary">Today</button>
+              <button id="calendar-next" type="button" class="secondary">&rsaquo;</button>
+            </div>
+          </div>
+          <div class="calendar-weekdays" id="calendar-weekdays"></div>
+          <div class="calendar-grid" id="calendar-grid"></div>
+          <p id="calendar-totals" class="status"></p>
+        </div>
+
+        <div class="panel">
+          <h2>Weekly Minutes</h2>
+          <canvas id="weekly-chart" class="chart chart-short"></canvas>
+        </div>
       </div>
 
       <div class="panel">
-        <h2>Pushes</h2>
+        <div class="calendar-header">
+          <h2>Pushes</h2>
+          <button id="clear-day-filter" type="button" class="secondary" hidden>Show all</button>
+        </div>
         <ul id="chronicle-list" class="workout-list"></ul>
         <button id="chronicle-back-btn" type="button" class="secondary">Back</button>
       </div>

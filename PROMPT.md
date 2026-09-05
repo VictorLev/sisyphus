@@ -178,8 +178,10 @@ ERG blocks gear writes, which would otherwise fight the trainer's target.
 **Phase 2**
 - FTP: manual entry is BUILT (Profile page; annotates targets as %FTP).
   A short guided estimator test is still outstanding.
-- History view (**the Chronicle**) — BUILT: every Push newest-first with
-  date/duration/distance/avg power, a weekly-minutes bar chart, and a
+- History view (**the Chronicle**) — BUILT: a month calendar where ridden
+  days fill with bronze scaled by volume (with per-month Push/minute/km
+  totals, and clicking a day filters the list), every Push newest-first
+  with date/duration/distance/avg power, a weekly-minutes bar chart, and a
   per-ride power trace. When the ride followed a workout, the workout's
   target steps are overlaid on the trace so effort can be read against
   what was being chased. Pushes can be deleted (samples cascade), since a
