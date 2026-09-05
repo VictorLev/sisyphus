@@ -1,6 +1,6 @@
 // Virtual drivetrain. The Zwift Cog gives the bike one physical gear, so
 // "gears" live here: the app holds a gear index and maps it to a trainer
-// resistance level. The Click's shift events step the index; the resulting
+// resistance level. The keyboard's +/- keys step the index; the resulting
 // resistance is written to the trainer.
 //
 // Resistance mode (FTMS 0x04) holds a fixed brake level regardless of speed,

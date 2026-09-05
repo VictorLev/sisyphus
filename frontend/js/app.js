@@ -1,6 +1,5 @@
 import { TrainerConnection } from './ble/connection.js';
 import { TrainerControl } from './ble/trainer-control.js';
-import { ZwiftClickConnection } from './ble/zwift-click.js';
 import { GearModel } from './gears.js';
 import { RollingAverage } from './metrics/rolling-average.js';
 import { DistanceTracker } from './metrics/distance.js';
@@ -14,7 +13,6 @@ import { createBoulder } from './ui/boulder.js';
 import { createSession } from './api/client.js';
 
 const trainerConnection = new TrainerConnection();
-const clickConnections = []; // one per physical unit (left '-' and right '+')
 const gears = new GearModel();
 let trainerControl = null; // created once the trainer's GATT service is up
 const rollingAverage = new RollingAverage(10000);
@@ -38,8 +36,6 @@ const liveScreen = initLiveScreen({
 
 initHome({
   trainerConnection,
-  createClickConnection,
-  anyClickConnected,
   onStartRide: (workout) => startRide(workout),
 });
 
@@ -78,10 +74,8 @@ async function ensureTrainerControl() {
   }
 }
 
-// One shift path shared by every input (keyboard, Click). Always confirms
-// the press on screen — even at an end stop, where the gear number can't
-// change — so "nothing happened" means "not received" rather than "already
-// at the limit".
+// Applies a shift and confirms it on screen — even at an end stop, where
+// the gear number can't change — so a press is always visibly acknowledged.
 function handleShift(direction) {
   const up = direction === 'up';
   const moved = up ? gears.shiftUp() : gears.shiftDown();
@@ -91,10 +85,8 @@ function handleShift(direction) {
   else flashRideNote(`${arrow} ${up ? 'top' : 'lowest'} gear`, 1500);
 }
 
-// Keyboard shifting — the primary input. Any Bluetooth/USB keyboard mounted
-// on the bars works: + (or =, so no Shift needed on the main row) shifts up,
-// - shifts down. Plain HID, so unlike the Click v2 there are no proprietary
-// locks, session expiries, or sleep timers to fight.
+// Keyboard shifting. Any Bluetooth/USB keyboard mounted on the bars works:
+// + (or =, so no Shift needed on the main row) shifts up, - shifts down.
 const liveViewEl = document.querySelector('[data-view="live"]');
 document.addEventListener('keydown', (event) => {
   if (event.repeat) return; // one shift per physical press
@@ -109,20 +101,6 @@ document.addEventListener('keydown', (event) => {
   event.preventDefault();
   handleShift(direction);
 });
-
-// Optional Zwift Click support (works when the units are unlocked — see the
-// home-screen hint). Each physical unit gets one connection; all feed the
-// same shift path as the keyboard.
-function createClickConnection() {
-  const click = new ZwiftClickConnection();
-  click.addEventListener('shift', (event) => handleShift(event.detail.direction));
-  clickConnections.push(click);
-  return click;
-}
-
-function anyClickConnected() {
-  return clickConnections.some((c) => c.device?.gatt?.connected);
-}
 
 // A gear change updates the display and writes the new resistance.
 gears.addEventListener('change', (event) => {
@@ -269,8 +247,7 @@ async function endRide() {
 function updateGearDisplay(gear) {
   const metric = document.getElementById('gear-metric');
   const value = document.getElementById('gear-value');
-  // Keyboard shifting is always available, so the tile always shows.
-  metric.hidden = false;
+  metric.hidden = false; // shifting is always available via the keyboard
   value.textContent = gear;
 }
 

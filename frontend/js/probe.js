@@ -1,8 +1,7 @@
 // Dev-only hardware probe. Not part of the app — it exists to replace the
 // assumptions in PROMPT.md's Bluetooth section with facts read off the
-// actual devices, before any Control Point or Click code gets written.
+// actual trainer, and to exercise the Control Point write path directly.
 
-import { ZwiftClickConnection } from './ble/zwift-click.js';
 import { TrainerControl } from './ble/trainer-control.js';
 
 const logEl = document.getElementById('log');
@@ -113,61 +112,6 @@ async function probeTrainer() {
   log('\ntrainer probe done.');
 }
 
-// ------------------------------------------------------------------ click
-
-// Constants now confirmed against OpenBikeControl's implementation, so this
-// drives the real module rather than guessing at UUIDs.
-let click = null;
-
-let clickSawData = false;
-let clickWatchdog = null;
-
-async function probeClick() {
-  log('\n=== CLICK PROBE ===');
-
-  // Drop any previous connection first — re-probing without this leaves a
-  // stale handle holding the device, which then reads as silent.
-  if (click) {
-    try { click.disconnect(); } catch { /* already gone */ }
-  }
-  clearTimeout(clickWatchdog);
-  clickSawData = false;
-
-  click = new ZwiftClickConnection();
-
-  click.addEventListener('connected', (e) => log('connected:', e.detail.deviceName || '(unnamed)'));
-  click.addEventListener('disconnected', () => log('disconnected.'));
-  click.addEventListener('battery', (e) => { clickSawData = true; log('battery:', e.detail.level + '%'); });
-  click.addEventListener('unknown-message', (e) => {
-    log(`unknown msg type 0x${e.detail.type.toString(16)}: ${hex(e.detail.bytes.buffer ?? e.detail.bytes)}`);
-  });
-  click.addEventListener('button', (e) => {
-    clickSawData = true;
-    log(`  BUTTON: ${e.detail.name}  (bit ${e.detail.bit})`);
-  });
-  click.addEventListener('unknown-message', () => { clickSawData = true; });
-  click.addEventListener('shift', (e) => {
-    log(`  >>> SHIFT ${e.detail.direction.toUpperCase()}`);
-  });
-
-  await click.connect();
-  log('handshake sent (RideOn).');
-
-  // If nothing arrives within a few seconds, the connection is silent.
-  clickWatchdog = setTimeout(() => {
-    if (clickSawData) return;
-    log('\n  !! NO DATA after handshake.');
-    log('  !! This is almost always a STALE rotated address: the Click');
-    log('  !! changes its Bluetooth id, and you connected to an old one.');
-    log('  !! Fix: Windows Settings > Bluetooth, REMOVE every "Zwift Click"');
-    log('  !! entry, toggle Bluetooth off/on, press a Click button to wake');
-    log('  !! it, then re-probe and pick the freshly-listed device.');
-  }, 3000);
-  log('\n>>> Press the + (plus) button a few times, then the - (minus).');
-  log('>>> Each press now prints a BUTTON name. Tell me which name the +');
-  log('>>> button shows and which the - shows, and I lock the mapping.');
-}
-
 // ------------------------------------------------------- resistance test
 
 // Keeps the trainer connected, takes control, and sweeps resistance so the
@@ -221,7 +165,6 @@ function wire(id, fn) {
 }
 
 wire('probe-trainer-btn', probeTrainer);
-wire('probe-click-btn', probeClick);
 wire('test-resistance-btn', testResistance);
 
 document.getElementById('copy-btn').addEventListener('click', () => {
@@ -231,4 +174,4 @@ document.getElementById('clear-btn').addEventListener('click', () => {
   logEl.textContent = '';
 });
 
-log('Ready. Chrome only. Probe the trainer first, then the Click.');
+log('Ready. Chrome only. Trainer diagnostics.');

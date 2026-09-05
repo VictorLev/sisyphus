@@ -37,14 +37,11 @@ data — this is still a bike computer, not a storybook.
   Put the chain on whichever front ring gives the straightest line to the
   Cog and leave it there; the ring never changes effective gearing.
 - **Shifting input:** a **Bluetooth keyboard** mounted on the bars — `+`
-  (or `=`) shifts up, `-` shifts down. Chosen over the Zwift Click v2
-  after fighting its daily hardware lock: a keyboard is plain HID with no
-  proprietary locks, session expiries, or sleep timers.
-- **Controller (optional):** Zwift Click v2 — still supported when
-  unlocked (see the daily-lock note below), feeding the same gear model
-  as the keyboard. Speaks a proprietary Zwift service rather than a
-  standard GATT profile, and connects as a second, independent BLE device
-  alongside the trainer.
+  (or `=`) shifts up, `-` shifts down. A Zwift Click v2 was built and
+  working first, but its firmware carries a daily hardware lock that only
+  the official Zwift app can clear, so it was removed in favour of plain
+  HID: no proprietary locks, session expiries, or sleep timers. (The Click
+  implementation is in git history if it is ever wanted back.)
 - **Sensors:** trainer reports its own speed/cadence — no separate ANT+/BLE
   speed or cadence sensor needed.
 - **Heart rate:** not now, but design the data model so an HR strap
@@ -81,40 +78,6 @@ data — this is still a bike computer, not a storybook.
   - `0x11` Set Indoor Bike Simulation Parameters — wind speed, **grade**
     (signed), rolling/wind resistance. Supported by the Rivo; unused so
     far (fallback option if resistance-mode gears ever feel wrong).
-
-**Zwift Click v2 — optional input (proprietary protocol, verified on
-hardware)**
-
-- Not FTMS. It speaks the Zwift *Ride* protocol, confirmed against
-  OpenBikeControl, the makinolo teardown
-  (makinolo.com/blog/2024/07/26/zwift-ride-protocol/), and the actual
-  units:
-  - Service is `0xFC82` on current firmware (legacy 128-bit UUID on older).
-  - Buttons arrive as `0x23` frames: a 32-bit little-endian bitmap where a
-    **cleared** bit = pressed. `+` = SHIFT_UP_R (bit 12), `-` = SHIFT_UP_L
-    (bit 8). One unit reports the whole button grid, so a single connected
-    unit gives both shifters.
-  - Handshake is `RideOn` then a `0xFF 0x04 0x00` start command; the unit
-    otherwise streams only telemetry. It also sends an unanswered public-key
-    handshake (`0xFF 0x03 …`) but streams buttons in plaintext regardless —
-    no crypto needed.
-  - **It sleeps after ~1 min idle** and needs a physical button press to
-    wake; nothing over BLE keeps it awake. The app handles this by
-    auto-reconnecting when the wake-press brings it back, and by re-sending
-    the start command if a fresh connection stays silent.
-  - **Daily hardware lock (the big one).** Zwift locks the v2 so it only
-    streams to third-party apps after being unlocked, and the unlock expires
-    daily. Rather than implement Zwift's challenge-response crypto (what
-    OpenBikeControl's unlock flow does — large and fragile), we use the same
-    workaround as QZ: **pair the controllers with the official Zwift app for
-    2+ minutes once a day to unlock them, then wake them (button press)
-    before connecting here.** This is an operational step, surfaced as a hint
-    on the home screen, not something the app performs.
-- The app's connection layer works around all of this where software can:
-  a continuous stream monitor re-sends the start command every 25 s and on
-  silence, and reconnects persist until the rider's wake-press is caught.
-  What software cannot fix is the daily lock itself — which is why the
-  keyboard became the primary input.
 
 ## Architecture
 
@@ -171,9 +134,8 @@ hardware)**
 - GearModel: 12 gears mapped linearly over resistance 0–8 (tuned down
   from 2–18 after ride feel; the two numbers in `frontend/js/gears.js`
   are the tuning knobs), starting gear 5
-- **Keyboard is the primary input**: `+`/`=` up, `-` down, live-view only,
-  one shift per press, on-screen `▲/▼` confirmation of every press
-- Zwift Click v2 optional, same shift path, subject to its daily lock
+- **Keyboard input**: `+`/`=` up, `-` down, live-view only, one shift per
+  press, on-screen `▲/▼` confirmation of every press
 - Each shift writes `0x04` with control auto-re-request on failure
 
 **Phase 2**
@@ -191,8 +153,7 @@ hardware)**
 **Phase 3 — remaining trainer control**
 
 Most of the original phase 3 (hardware probe, Control Point groundwork,
-Click decoding, virtual shifting) was pulled forward and is built. What
-remains:
+virtual shifting) was pulled forward and is built. What remains:
 
 - ERG mode: hold each segment's target watts automatically (`0x05`) —
   the TrainerControl module already implements the write; the feature
