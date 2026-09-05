@@ -87,8 +87,10 @@ export class ZwiftClickConnection extends EventTarget {
     this._prevMask = 0; // Ride-protocol pressed-bit mask, previous frame
     this._intentionalDisconnect = false;
     this._reconnectTimer = null;
-    this._streamWatchdog = null;
+    this._streamMonitor = null;
     this._lastDataAt = 0; // timestamp of the last frame received; 0 = none yet
+    this._connectedAt = 0;
+    this._silentRestarts = 0;
     this._onAsyncValue = this._onAsyncValue.bind(this);
     this._onDisconnected = this._onDisconnected.bind(this);
   }
@@ -149,15 +151,12 @@ export class ZwiftClickConnection extends EventTarget {
     await syncTx.startNotifications(); // handshake reply arrives as an indication
 
     this._lastDataAt = 0;
+    this._connectedAt = Date.now();
     await this._sendStartSequence();
 
     this.dispatchEvent(new CustomEvent('connected', { detail: { deviceName: this.device.name } }));
 
-    // These units are flaky about starting their button stream: sometimes
-    // the first RideOn + start command lands only telemetry (or nothing).
-    // If no data arrives shortly after connect, re-send the sequence a few
-    // times — this is what turns an unreliable unit into a working one.
-    this._ensureStreaming();
+    this._startStreamMonitor();
   }
 
   async _sendStartSequence() {
@@ -173,24 +172,43 @@ export class ZwiftClickConnection extends EventTarget {
     }
   }
 
-  _ensureStreaming(attempt = 1) {
-    const MAX = 5;
-    clearTimeout(this._streamWatchdog);
-    this._streamWatchdog = setTimeout(async () => {
-      const gotData = this._lastDataAt > 0;
-      if (gotData || attempt > MAX || this._intentionalDisconnect) return;
-      console.warn(`[zwift-click] no data yet, re-sending start (try ${attempt})`);
-      try {
-        if (this.device?.gatt?.connected) await this._sendStartSequence();
-      } catch { /* will retry on the next tick */ }
-      this._ensureStreaming(attempt + 1);
+  // Continuous stream monitor. A live unit chatters constantly (keepalives
+  // and idle button frames), so a few seconds of silence means the stream
+  // died — which the un-unlocked LEFT unit does roughly once a minute (see
+  // PROMPT.md on the Click v2 daily lock). Rather than requiring the daily
+  // Zwift unlock, this automates the "quick restart": re-send the start
+  // sequence, and if that doesn't revive it, cycle the connection (which
+  // hands off to the auto-reconnect path).
+  _startStreamMonitor() {
+    clearInterval(this._streamMonitor);
+    this._silentRestarts = 0;
+    this._streamMonitor = setInterval(async () => {
+      if (this._intentionalDisconnect || !this.device?.gatt?.connected) return;
+      const lastAlive = Math.max(this._lastDataAt, this._connectedAt);
+      if (Date.now() - lastAlive < 4000) return;
+
+      this._silentRestarts += 1;
+      this.dispatchEvent(new CustomEvent('stream-restart', { detail: { attempt: this._silentRestarts } }));
+      if (this._silentRestarts <= 2) {
+        console.warn(`[zwift-click] stream silent, re-sending start (try ${this._silentRestarts})`);
+        try {
+          await this._sendStartSequence();
+        } catch { /* retry on the next tick */ }
+        this._connectedAt = Date.now(); // give the re-send time to take effect
+      } else {
+        console.warn('[zwift-click] stream not reviving, cycling the connection');
+        this._silentRestarts = 0;
+        try {
+          this.device.gatt.disconnect(); // triggers the auto-reconnect path
+        } catch { /* reconnect path handles it */ }
+      }
     }, 2000);
   }
 
   disconnect() {
     this._intentionalDisconnect = true;
     clearTimeout(this._reconnectTimer);
-    clearTimeout(this._streamWatchdog);
+    clearInterval(this._streamMonitor);
     if (this.device?.gatt?.connected) this.device.gatt.disconnect();
   }
 
@@ -218,6 +236,7 @@ export class ZwiftClickConnection extends EventTarget {
     if (bytes.length === 0) return;
 
     this._lastDataAt = Date.now(); // any frame counts as "streaming"
+    this._silentRestarts = 0;
 
     const type = bytes[0];
     const payload = bytes.subarray(1);

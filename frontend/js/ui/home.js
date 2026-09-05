@@ -47,19 +47,32 @@ export function initHome({ trainerConnection, createClickConnection, anyClickCon
     clickStatusEl.textContent = 'Select a unit in the chooser…';
 
     const click = createClickConnection();
+    // 'connected' re-fires after every auto-reconnect and stream-revival
+    // cycle; count each physical unit once.
+    let counted = false;
     click.addEventListener('connected', () => {
-      connectedClicks += 1;
+      if (!counted) {
+        counted = true;
+        connectedClicks += 1;
+      }
       renderClickStatus('press + / − to shift');
     });
     click.addEventListener('reconnecting', (event) => {
       renderClickStatus(`reconnecting (try ${event.detail.attempt})…`);
     });
+    click.addEventListener('stream-restart', (event) => {
+      renderClickStatus(`reviving stream (try ${event.detail.attempt})…`);
+    });
     click.addEventListener('reconnect-failed', () => {
-      connectedClicks = Math.max(0, connectedClicks - 1);
-      renderClickStatus('a unit dropped — reconnect it');
+      if (counted) {
+        counted = false;
+        connectedClicks = Math.max(0, connectedClicks - 1);
+      }
+      renderClickStatus('a unit dropped — wake it and reconnect');
     });
     click.addEventListener('disconnected', (event) => {
-      if (event.detail?.intentional) {
+      if (event.detail?.intentional && counted) {
+        counted = false;
         connectedClicks = Math.max(0, connectedClicks - 1);
         renderClickStatus();
       }
