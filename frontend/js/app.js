@@ -133,7 +133,9 @@ function startLoop() {
     if (runner) {
       const state = runner.tick(now);
       liveScreen.updateWorkoutInfo(state);
-      boulder.setProgress(state.progressFraction);
+      // On completion currentSegment is null and progressFraction resets to
+      // 0; keep the boulder at the summit instead of letting it drop.
+      boulder.setProgress(state.isComplete ? 1 : state.progressFraction);
     }
     rafId = requestAnimationFrame(frame);
   }

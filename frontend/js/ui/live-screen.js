@@ -24,7 +24,21 @@ export function initLiveScreen({ onEndRide }) {
   }
 
   function updateWorkoutInfo(runnerState) {
-    if (!runnerState || !runnerState.currentSegment) {
+    // Free ride (no runner): no segment panel at all.
+    if (!runnerState) {
+      segmentInfoEl.hidden = true;
+      return;
+    }
+    // Workout finished: hold a completion state rather than blanking out —
+    // the boulder is at the summit and the panel says so.
+    if (runnerState.isComplete) {
+      segmentInfoEl.hidden = false;
+      segmentLabelEl.textContent = 'PUSH COMPLETE';
+      segmentTargetEl.textContent = '--';
+      segmentRemainingEl.textContent = '0:00';
+      return;
+    }
+    if (!runnerState.currentSegment) {
       segmentInfoEl.hidden = true;
       return;
     }
