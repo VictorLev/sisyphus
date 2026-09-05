@@ -36,10 +36,15 @@ data — this is still a bike computer, not a storybook.
   Click. This is a load-bearing constraint rather than a detail: until
   virtual shifting exists, the only way to chase a power target is to
   change cadence, which is an awkward way to hold a steady wattage.
-- **Controller:** Zwift Click — a bar-mounted two-button BLE remote, used
-  for virtual gear changes. Speaks a proprietary Zwift service rather than
-  a standard GATT profile, and connects as a second, independent BLE
-  device alongside the trainer.
+- **Shifting input:** a **Bluetooth keyboard** mounted on the bars — `+`
+  (or `=`) shifts up, `-` shifts down. Chosen over the Zwift Click v2
+  after fighting its daily hardware lock: a keyboard is plain HID with no
+  proprietary locks, session expiries, or sleep timers.
+- **Controller (optional):** Zwift Click v2 — still supported when
+  unlocked (see the daily-lock note below), feeding the same gear model
+  as the keyboard. Speaks a proprietary Zwift service rather than a
+  standard GATT profile, and connects as a second, independent BLE device
+  alongside the trainer.
 - **Sensors:** trainer reports its own speed/cadence — no separate ANT+/BLE
   speed or cadence sensor needed.
 - **Heart rate:** not now, but design the data model so an HR strap

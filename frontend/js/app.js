@@ -78,23 +78,44 @@ async function ensureTrainerControl() {
   }
 }
 
-// Creates a Click connection, wires its shift events into the gear model,
-// and tracks it. Each physical unit (the '-' unit and the '+' unit) gets
-// one of these; both drive the same gear model. Returns it so the caller
-// (home screen) can attach UI listeners and call connect() under a gesture.
+// One shift path shared by every input (keyboard, Click). Always confirms
+// the press on screen — even at an end stop, where the gear number can't
+// change — so "nothing happened" means "not received" rather than "already
+// at the limit".
+function handleShift(direction) {
+  const up = direction === 'up';
+  const moved = up ? gears.shiftUp() : gears.shiftDown();
+  updateGearDisplay(gears.gearNumber);
+  const arrow = up ? '▲' : '▼';
+  if (moved) flashRideNote(`${arrow} Gear ${gears.gearNumber}`, 1500);
+  else flashRideNote(`${arrow} ${up ? 'top' : 'lowest'} gear`, 1500);
+}
+
+// Keyboard shifting — the primary input. Any Bluetooth/USB keyboard mounted
+// on the bars works: + (or =, so no Shift needed on the main row) shifts up,
+// - shifts down. Plain HID, so unlike the Click v2 there are no proprietary
+// locks, session expiries, or sleep timers to fight.
+const liveViewEl = document.querySelector('[data-view="live"]');
+document.addEventListener('keydown', (event) => {
+  if (event.repeat) return; // one shift per physical press
+  if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) return;
+  if (liveViewEl.hidden) return; // only shift during a ride
+
+  let direction = null;
+  if (event.key === '+' || event.key === '=') direction = 'up';
+  else if (event.key === '-') direction = 'down';
+  if (!direction) return;
+
+  event.preventDefault();
+  handleShift(direction);
+});
+
+// Optional Zwift Click support (works when the units are unlocked — see the
+// home-screen hint). Each physical unit gets one connection; all feed the
+// same shift path as the keyboard.
 function createClickConnection() {
   const click = new ZwiftClickConnection();
-  click.addEventListener('shift', (event) => {
-    const up = event.detail.direction === 'up';
-    const moved = up ? gears.shiftUp() : gears.shiftDown();
-    updateGearDisplay(gears.gearNumber);
-    // Always confirm the press was received — even at an end stop, where the
-    // gear number can't change — so "nothing happened" means "not received"
-    // rather than "already at the limit".
-    const arrow = up ? '▲' : '▼';
-    if (moved) flashRideNote(`${arrow} Gear ${gears.gearNumber}`, 1500);
-    else flashRideNote(`${arrow} ${up ? 'top' : 'lowest'} gear`, 1500);
-  });
+  click.addEventListener('shift', (event) => handleShift(event.detail.direction));
   clickConnections.push(click);
   return click;
 }
@@ -248,8 +269,8 @@ async function endRide() {
 function updateGearDisplay(gear) {
   const metric = document.getElementById('gear-metric');
   const value = document.getElementById('gear-value');
-  // Only show the gear tile when at least one Click unit is connected.
-  metric.hidden = !anyClickConnected();
+  // Keyboard shifting is always available, so the tile always shows.
+  metric.hidden = false;
   value.textContent = gear;
 }
 
