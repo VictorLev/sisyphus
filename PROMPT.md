@@ -82,11 +82,23 @@ data — this is still a bike computer, not a storybook.
 - Not FTMS. A custom 128-bit Zwift service, a `RideOn` ASCII handshake to
   open the session, and button events arriving as protobuf-encoded
   notifications.
-- Everything in the previous bullet comes from community reverse
-  engineering (the QZ / zwift-play projects), **not** a published spec.
-  Treat the UUIDs and message shapes as unverified until confirmed against
-  the actual unit — probe the device and read what it really exposes before
-  writing code against assumed constants.
+- **Now verified against the actual hardware** (it is a Zwift Click **v2**,
+  which speaks the Zwift *Ride* protocol). Confirmed with OpenBikeControl
+  and the makinolo teardown
+  (makinolo.com/blog/2024/07/26/zwift-ride-protocol/):
+  - Service is `0xFC82` on current firmware (legacy 128-bit UUID on older).
+  - Buttons arrive as `0x23` frames: a 32-bit little-endian bitmap where a
+    **cleared** bit = pressed. `+` = SHIFT_UP_R (bit 12), `-` = SHIFT_UP_L
+    (bit 8). One unit reports the whole button grid, so a single connected
+    unit gives both shifters.
+  - Handshake is `RideOn` then a `0xFF 0x04 0x00` start command; the unit
+    otherwise streams only telemetry. It also sends an unanswered public-key
+    handshake (`0xFF 0x03 …`) but streams buttons in plaintext regardless —
+    no crypto needed.
+  - **It sleeps after ~1 min idle** and needs a physical button press to
+    wake; nothing over BLE keeps it awake. The app handles this by
+    auto-reconnecting when the wake-press brings it back, and by re-sending
+    the start command if a fresh connection stays silent.
 - The Click reports only "shift up" / "shift down". It carries no notion of
   a gear ratio, so **the app owns the virtual drivetrain**: hold a gear
   index in app state and translate each shift into a resistance command to

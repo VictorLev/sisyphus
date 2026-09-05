@@ -1,9 +1,19 @@
-// Zwift Click — proprietary Zwift BLE service, not FTMS.
+// Zwift Click v2 — proprietary Zwift BLE service, not FTMS.
 //
 // Protocol constants and framing confirmed against OpenBikeControl
-// (github.com/OpenBikeControl/bikecontrol, lib/bluetooth/devices/zwift/),
-// which is a working third-party implementation rather than a published
-// spec. Verified against real hardware: see PROMPT.md.
+// (github.com/OpenBikeControl/bikecontrol) and the makinolo teardown
+// (makinolo.com/blog/2024/07/26/zwift-ride-protocol/), and verified against
+// the actual hardware. The Click v2 uses the Zwift Ride protocol: button
+// state arrives as 0x23 frames carrying a 32-bit little-endian bitmap where
+// a CLEARED bit means pressed (see RIDE_BUTTON_BITS below).
+//
+// Two things about this hardware drive the connection logic here:
+//  - It is the "encrypted" variant: it sends a public-key handshake (0xFF
+//    0x03 …) we don't answer, yet it still streams button frames in
+//    plaintext — so no crypto is implemented.
+//  - It SLEEPS after ~1 minute idle and needs a physical button press to
+//    wake. An idle unit therefore drops mid-ride; the wake-press is what
+//    triggers our auto-reconnect. Nothing sent over BLE keeps it awake.
 
 // Two possible service UUIDs: newer Click firmware exposes 0xFC82, older
 // firmware the legacy 128-bit custom UUID. The three characteristics keep
