@@ -85,9 +85,15 @@ async function ensureTrainerControl() {
 function createClickConnection() {
   const click = new ZwiftClickConnection();
   click.addEventListener('shift', (event) => {
-    if (event.detail.direction === 'up') gears.shiftUp();
-    else gears.shiftDown();
+    const up = event.detail.direction === 'up';
+    const moved = up ? gears.shiftUp() : gears.shiftDown();
     updateGearDisplay(gears.gearNumber);
+    // Always confirm the press was received — even at an end stop, where the
+    // gear number can't change — so "nothing happened" means "not received"
+    // rather than "already at the limit".
+    const arrow = up ? '▲' : '▼';
+    if (moved) flashRideNote(`${arrow} Gear ${gears.gearNumber}`, 1500);
+    else flashRideNote(`${arrow} ${up ? 'top' : 'lowest'} gear`, 1500);
   });
   clickConnections.push(click);
   return click;
@@ -125,13 +131,13 @@ async function applyResistance(resistance) {
 }
 
 let rideNoteTimer = null;
-function flashRideNote(message) {
+function flashRideNote(message, durationMs = 6000) {
   const el = document.getElementById('ride-note');
   if (!el) return;
   el.textContent = message;
   el.hidden = false;
   clearTimeout(rideNoteTimer);
-  rideNoteTimer = setTimeout(() => { el.hidden = true; }, 6000);
+  rideNoteTimer = setTimeout(() => { el.hidden = true; }, durationMs);
 }
 
 trainerConnection.addEventListener('reading', (event) => {
