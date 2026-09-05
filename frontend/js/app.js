@@ -12,6 +12,7 @@ import { initLiveScreen } from './ui/live-screen.js';
 import { createBoulder } from './ui/boulder.js';
 import { createSession, getSettings, getProfile } from './api/client.js';
 import { initProfile, initSettings } from './ui/config-forms.js';
+import { initSisyphusAscii } from './ui/sisyphus-ascii.js';
 
 const trainerConnection = new TrainerConnection();
 const gears = new GearModel();
@@ -50,6 +51,7 @@ initHome({
 });
 
 initBuilder({});
+initSisyphusAscii();
 initProfile();
 initSettings({ onSaved: (saved) => applySettings(saved) });
 updateModeUi();

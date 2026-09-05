@@ -45,6 +45,35 @@ body {
   display: none;
 }
 
+/* -------------------------------------------------------- sisyphus loop */
+
+/* Fixed to the top-right corner, behind everything and non-interactive so it
+   can never get in the way of the app. */
+#sisyphus-ascii {
+  position: fixed;
+  top: 1.25rem;
+  right: 1.5rem;
+  margin: 0;
+  z-index: 0;
+  pointer-events: none;
+  font-family: 'Courier New', monospace;
+  font-size: 0.72rem;
+  line-height: 1.15;
+  white-space: pre;
+  color: var(--color-bronze-dim);
+  opacity: 0.75;
+}
+
+#sisyphus-ascii[hidden] {
+  display: none;
+}
+
+@media (max-width: 1100px) {
+  #sisyphus-ascii {
+    display: none; /* no room for chrome on narrow screens */
+  }
+}
+
 /* ---------------------------------------------------------------- header */
 
 .title {

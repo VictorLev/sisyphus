@@ -15,8 +15,13 @@ should touch the copy and one visual motif, but never get in the way of the
 data — this is still a bike computer, not a storybook.
 
 - **One visual motif:** a small pixel-art boulder that rolls/fills up an
-  incline as you progress through the current workout segment. That's the
-  only "game" element on screen — no other characters, scenes, or animation.
+  incline as you progress through the current workout segment. On the *ride*
+  screen that remains the only "game" element — no characters, scenes, or
+  other animation, so nothing competes with the data.
+- **Chrome outside the ride screen:** a looping ASCII Sisyphus pushes his
+  boulder up a slope in the top-right corner — it escapes near the top,
+  rolls back, and he begins again. Deliberately hidden on the live view,
+  and on narrow screens, so the ride screen keeps its no-animation rule.
 - **Palette:** stone-grey and bronze/gold rather than neon arcade colors —
   reads "ancient" while staying pixel-art and dark mode.
 - **Light naming touches**, kept legible over clever:
