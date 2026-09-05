@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sisyphus — Hardware Probe</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <main id="app">
+    <h1 class="title">HARDWARE PROBE</h1>
+    <p class="tagline">Dev tool — reads what the hardware actually exposes.</p>
+
+    <div class="panel">
+      <h2>1. Trainer (FTMS)</h2>
+      <p>Reads Fitness Machine Feature (0x2ACC) and decodes which control
+         modes the Rivo accepts.</p>
+      <button id="probe-trainer-btn" type="button">Probe Trainer</button>
+    </div>
+
+    <div class="panel">
+      <h2>2. Zwift Click</h2>
+      <p>Wake the Click first (press a button). Make sure it is not
+         connected to Zwift or anything else — BLE allows one connection
+         at a time.</p>
+      <button id="probe-click-btn" type="button">Probe Click</button>
+    </div>
+
+    <div class="panel">
+      <button id="copy-btn" type="button" class="secondary">Copy Log</button>
+      <button id="clear-btn" type="button" class="secondary">Clear</button>
+    </div>
+
+    <pre id="log" style="white-space:pre-wrap;word-break:break-word;background:var(--color-stone);border:2px solid var(--color-bronze);border-radius:4px;padding:1rem;font-size:0.75rem;max-height:60vh;overflow:auto"></pre>
+  </main>
+  <script type="module" src="js/probe.js"></script>
+</body>
+</html>
