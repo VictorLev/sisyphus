@@ -201,6 +201,14 @@ button.secondary {
   color: var(--color-text);
 }
 
+#gear-metric {
+  border-color: var(--color-bronze-bright);
+}
+
+#gear-metric .metric-value {
+  color: var(--color-bronze-bright);
+}
+
 #boulder-canvas {
   image-rendering: pixelated;
   margin-top: 0.75rem;

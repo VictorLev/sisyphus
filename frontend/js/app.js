@@ -1,4 +1,7 @@
 import { TrainerConnection } from './ble/connection.js';
+import { TrainerControl } from './ble/trainer-control.js';
+import { ZwiftClickConnection } from './ble/zwift-click.js';
+import { GearModel } from './gears.js';
 import { RollingAverage } from './metrics/rolling-average.js';
 import { DistanceTracker } from './metrics/distance.js';
 import { WorkoutRunner } from './workout/runner.js';
@@ -11,6 +14,9 @@ import { createBoulder } from './ui/boulder.js';
 import { createSession } from './api/client.js';
 
 const trainerConnection = new TrainerConnection();
+const clickConnection = new ZwiftClickConnection();
+const gears = new GearModel();
+let trainerControl = null; // created once the trainer's GATT service is up
 const rollingAverage = new RollingAverage(10000);
 const distanceTracker = new DistanceTracker();
 const recorder = new SessionRecorder();
@@ -32,12 +38,43 @@ const liveScreen = initLiveScreen({
 
 initHome({
   trainerConnection,
+  clickConnection,
   onStartRide: (workout) => startRide(workout),
 });
 
 initBuilder({});
 
 document.getElementById('summary-home-btn').addEventListener('click', () => showView('home'));
+
+// Once the trainer is connected, attach the control point (same GATT
+// connection) and take control so shifting can write resistance.
+trainerConnection.addEventListener('connected', async () => {
+  try {
+    trainerControl = new TrainerControl(trainerConnection.service);
+    await trainerControl.init();
+    await trainerControl.requestControl();
+    await trainerControl.setResistance(gears.resistance); // apply the starting gear
+  } catch (err) {
+    console.warn('[app] trainer control unavailable:', err.message);
+    trainerControl = null;
+  }
+});
+
+// Wire the Click's shift events into the gear model.
+clickConnection.addEventListener('shift', (event) => {
+  const moved = event.detail.direction === 'up' ? gears.shiftUp() : gears.shiftDown();
+  if (!moved) return; // at an end stop
+});
+
+// A gear change updates the display and writes the new resistance.
+gears.addEventListener('change', (event) => {
+  updateGearDisplay(event.detail.gear);
+  if (trainerControl) {
+    trainerControl.setResistance(event.detail.resistance).catch((err) => {
+      console.warn('[app] resistance write failed:', err.message);
+    });
+  }
+});
 
 trainerConnection.addEventListener('reading', (event) => {
   const { reading, receivedAt } = event.detail;
@@ -69,6 +106,7 @@ function startRide(workout) {
 
   liveScreen.updateWorkoutInfo(runner ? runner.state : null);
   boulder.setProgress(0);
+  updateGearDisplay(gears.gearNumber);
 
   showView('live');
   startLoop();
@@ -139,6 +177,14 @@ async function endRide() {
     alert(`Could not save the Push: ${err.message}`);
     showView('home');
   }
+}
+
+function updateGearDisplay(gear) {
+  const metric = document.getElementById('gear-metric');
+  const value = document.getElementById('gear-value');
+  // Only show the gear tile when the Click is actually connected.
+  metric.hidden = !clickConnection.device;
+  value.textContent = gear;
 }
 
 function showSummary(session) {

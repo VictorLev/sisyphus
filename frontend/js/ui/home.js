@@ -1,9 +1,11 @@
 import { listWorkouts } from '../api/client.js';
 import { showView } from './views.js';
 
-export function initHome({ trainerConnection, onStartRide }) {
+export function initHome({ trainerConnection, clickConnection, onStartRide }) {
   const connectBtn = document.getElementById('connect-btn');
   const statusEl = document.getElementById('connection-status');
+  const clickBtn = document.getElementById('connect-click-btn');
+  const clickStatusEl = document.getElementById('click-status');
   const freeRideBtn = document.getElementById('free-ride-btn');
   const workoutListEl = document.getElementById('workout-list');
   const newWorkoutBtn = document.getElementById('new-workout-btn');
@@ -28,6 +30,28 @@ export function initHome({ trainerConnection, onStartRide }) {
   trainerConnection.addEventListener('disconnected', () => {
     statusEl.textContent = 'Not connected';
     freeRideBtn.disabled = true;
+  });
+
+  clickBtn.addEventListener('click', async () => {
+    clickBtn.disabled = true;
+    clickStatusEl.textContent = 'Connecting…';
+    try {
+      await clickConnection.connect();
+    } catch (err) {
+      clickStatusEl.textContent = `Connection failed: ${err.message}`;
+    } finally {
+      clickBtn.disabled = false;
+    }
+  });
+
+  clickConnection.addEventListener('connected', (event) => {
+    clickStatusEl.textContent = `Connected: ${event.detail.deviceName || 'Click'} — + / − to shift`;
+  });
+  clickConnection.addEventListener('disconnected', () => {
+    clickStatusEl.textContent = 'Not connected';
+  });
+  clickConnection.addEventListener('battery', (event) => {
+    clickStatusEl.textContent = `Connected — battery ${event.detail.level}%`;
   });
 
   freeRideBtn.addEventListener('click', () => onStartRide(null));

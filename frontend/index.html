@@ -18,6 +18,11 @@
       </div>
 
       <div class="panel">
+        <button id="connect-click-btn" type="button">Connect Click (shifting)</button>
+        <p id="click-status" class="status">Not connected</p>
+      </div>
+
+      <div class="panel">
         <button id="free-ride-btn" type="button" disabled>Start Free Ride</button>
       </div>
 
@@ -73,6 +78,10 @@
         <div class="metric">
           <span class="metric-value" id="speed-value">--</span>
           <span class="metric-label">km/h</span>
+        </div>
+        <div class="metric" id="gear-metric" hidden>
+          <span class="metric-value" id="gear-value">--</span>
+          <span class="metric-label">gear</span>
         </div>
       </div>
 

@@ -10,6 +10,7 @@ export class TrainerConnection extends EventTarget {
     super();
     this.device = null;
     this.characteristic = null;
+    this.service = null; // exposed so TrainerControl can share this connection
     this._onCharacteristicValueChanged = this._onCharacteristicValueChanged.bind(this);
     this._onGattDisconnected = this._onGattDisconnected.bind(this);
   }
@@ -23,8 +24,8 @@ export class TrainerConnection extends EventTarget {
     this.device.addEventListener('gattserverdisconnected', this._onGattDisconnected);
 
     const server = await this.device.gatt.connect();
-    const service = await server.getPrimaryService(SERVICE_FITNESS_MACHINE);
-    this.characteristic = await service.getCharacteristic(CHAR_INDOOR_BIKE_DATA);
+    this.service = await server.getPrimaryService(SERVICE_FITNESS_MACHINE);
+    this.characteristic = await this.service.getCharacteristic(CHAR_INDOOR_BIKE_DATA);
 
     this.characteristic.addEventListener('characteristicvaluechanged', this._onCharacteristicValueChanged);
     await this.characteristic.startNotifications();

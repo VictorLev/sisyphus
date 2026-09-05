@@ -3,6 +3,7 @@
 // actual devices, before any Control Point or Click code gets written.
 
 import { ZwiftClickConnection } from './ble/zwift-click.js';
+import { TrainerControl } from './ble/trainer-control.js';
 
 const logEl = document.getElementById('log');
 
@@ -86,6 +87,29 @@ async function probeTrainer() {
     log('  could not read 0x2ACC:', err.message);
   }
 
+  // Supported ranges — needed to design gears that map to real values.
+  log('\n-- Supported Resistance Level Range (0x2AD6) --');
+  try {
+    const c = await service.getCharacteristic('supported_resistance_level_range');
+    const v = await c.readValue();
+    log('  raw:', hex(v.buffer));
+    // SINT16 min, SINT16 max, UINT16 min-increment; all 0.1 resolution.
+    log(`  min ${v.getInt16(0, true) * 0.1}  max ${v.getInt16(2, true) * 0.1}  increment ${v.getUint16(4, true) * 0.1}`);
+  } catch (err) {
+    log('  could not read 0x2AD6:', err.message);
+  }
+
+  log('\n-- Supported Power Range (0x2AD8) --');
+  try {
+    const c = await service.getCharacteristic('supported_power_range');
+    const v = await c.readValue();
+    log('  raw:', hex(v.buffer));
+    // SINT16 min watts, SINT16 max watts, UINT16 min-increment watts.
+    log(`  min ${v.getInt16(0, true)} W  max ${v.getInt16(2, true)} W  increment ${v.getUint16(4, true)} W`);
+  } catch (err) {
+    log('  could not read 0x2AD8:', err.message);
+  }
+
   log('\ntrainer probe done.');
 }
 
@@ -144,6 +168,46 @@ async function probeClick() {
   log('>>> button shows and which the - shows, and I lock the mapping.');
 }
 
+// ------------------------------------------------------- resistance test
+
+// Keeps the trainer connected, takes control, and sweeps resistance so the
+// rider can feel it change and confirm the 0x04 wire format via the acks.
+async function testResistance() {
+  log('\n=== RESISTANCE TEST ===');
+  const device = await navigator.bluetooth.requestDevice({
+    filters: [{ services: ['fitness_machine'] }],
+  });
+  const server = await device.gatt.connect();
+  const service = await server.getPrimaryService('fitness_machine');
+
+  const control = new TrainerControl(service);
+  control.addEventListener('ack', (e) => {
+    const d = e.detail;
+    log(`  ack: opcode 0x${d.reqOp.toString(16).padStart(2, '0')} -> ${d.ok ? 'OK' : 'FAIL'} (${d.message})`);
+  });
+  await control.init();
+
+  log('requesting control...');
+  await control.requestControl();
+  log('control granted. Sweeping resistance — feel the pedals.');
+
+  const steps = [2, 8, 14, 20, 5];
+  for (const level of steps) {
+    log(`  set resistance ${level.toFixed(1)} / 20.0`);
+    try {
+      await control.setResistance(level);
+    } catch (err) {
+      log('  !! ' + err.message);
+      log('  !! 0x04 may want a different format; will switch to SINT16 if so.');
+      break;
+    }
+    await new Promise((r) => setTimeout(r, 3000));
+  }
+  log('resistance test done. Set back to a light level.');
+  try { await control.setResistance(2); } catch { /* ignore */ }
+  device.gatt.disconnect();
+}
+
 // ------------------------------------------------------------------- wiring
 
 function wire(id, fn) {
@@ -158,6 +222,7 @@ function wire(id, fn) {
 
 wire('probe-trainer-btn', probeTrainer);
 wire('probe-click-btn', probeClick);
+wire('test-resistance-btn', testResistance);
 
 document.getElementById('copy-btn').addEventListener('click', () => {
   navigator.clipboard.writeText(logEl.textContent).then(() => log('\n(log copied)'));
