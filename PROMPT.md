@@ -99,6 +99,14 @@ data — this is still a bike computer, not a storybook.
     wake; nothing over BLE keeps it awake. The app handles this by
     auto-reconnecting when the wake-press brings it back, and by re-sending
     the start command if a fresh connection stays silent.
+  - **Daily hardware lock (the big one).** Zwift locks the v2 so it only
+    streams to third-party apps after being unlocked, and the unlock expires
+    daily. Rather than implement Zwift's challenge-response crypto (what
+    OpenBikeControl's unlock flow does — large and fragile), we use the same
+    workaround as QZ: **pair the controllers with the official Zwift app for
+    2+ minutes once a day to unlock them, then wake them (button press)
+    before connecting here.** This is an operational step, surfaced as a hint
+    on the home screen, not something the app performs.
 - The Click reports only "shift up" / "shift down". It carries no notion of
   a gear ratio, so **the app owns the virtual drivetrain**: hold a gear
   index in app state and translate each shift into a resistance command to
