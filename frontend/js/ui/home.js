@@ -63,12 +63,8 @@ export function initHome({ trainerConnection, createClickConnection, anyClickCon
     click.addEventListener('stream-restart', (event) => {
       renderClickStatus(`reviving stream (try ${event.detail.attempt})…`);
     });
-    click.addEventListener('reconnect-failed', () => {
-      if (counted) {
-        counted = false;
-        connectedClicks = Math.max(0, connectedClicks - 1);
-      }
-      renderClickStatus('a unit dropped — wake it and reconnect');
+    click.addEventListener('awaiting-wake', () => {
+      renderClickStatus('a unit is asleep — press its button to wake it');
     });
     click.addEventListener('disconnected', (event) => {
       if (event.detail?.intentional && counted) {

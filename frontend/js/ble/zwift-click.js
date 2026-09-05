@@ -88,6 +88,7 @@ export class ZwiftClickConnection extends EventTarget {
     this._intentionalDisconnect = false;
     this._reconnectTimer = null;
     this._streamMonitor = null;
+    this._keepaliveTimer = null;
     this._lastDataAt = 0; // timestamp of the last frame received; 0 = none yet
     this._connectedAt = 0;
     this._silentRestarts = 0;
@@ -157,6 +158,21 @@ export class ZwiftClickConnection extends EventTarget {
     this.dispatchEvent(new CustomEvent('connected', { detail: { deviceName: this.device.name } }));
 
     this._startStreamMonitor();
+    this._startKeepalive();
+  }
+
+  // Proactive session refresh. An un-unlocked left unit kills its stream
+  // roughly a minute after the last start command — and once dead, nothing
+  // over BLE revives it (verified on hardware). So don't let it die:
+  // re-send the start command well inside that window.
+  _startKeepalive() {
+    clearInterval(this._keepaliveTimer);
+    this._keepaliveTimer = setInterval(() => {
+      if (this._intentionalDisconnect || !this.device?.gatt?.connected) return;
+      this.syncRxCharacteristic
+        ?.writeValueWithoutResponse(Uint8Array.from([0xff, 0x04, 0x00]))
+        .catch(() => { /* a truly dead session is the stream monitor's job */ });
+    }, 25000);
   }
 
   async _sendStartSequence() {
@@ -209,25 +225,29 @@ export class ZwiftClickConnection extends EventTarget {
     this._intentionalDisconnect = true;
     clearTimeout(this._reconnectTimer);
     clearInterval(this._streamMonitor);
+    clearInterval(this._keepaliveTimer);
     if (this.device?.gatt?.connected) this.device.gatt.disconnect();
   }
 
-  // On an unexpected drop, retry the connection a handful of times with a
-  // short backoff. The units sleep/drop occasionally; this keeps shifting
-  // alive without the rider re-picking the device.
+  // On an unexpected drop, keep retrying until the rider disconnects on
+  // purpose. A sleeping unit wakes only on a physical button press — at an
+  // arbitrary later moment — so a persistent pending reconnect is what
+  // catches it the instant that press happens. After a few quick failures
+  // we tell the UI the unit is asleep, then keep retrying quietly.
   async _attemptReconnect(attempt = 1) {
-    const MAX_ATTEMPTS = 6;
-    if (this._intentionalDisconnect || attempt > MAX_ATTEMPTS) {
-      if (attempt > MAX_ATTEMPTS) {
-        this.dispatchEvent(new CustomEvent('reconnect-failed', { detail: { deviceName: this.device?.name } }));
-      }
-      return;
+    if (this._intentionalDisconnect) return;
+    if (attempt <= 4) {
+      this.dispatchEvent(new CustomEvent('reconnecting', { detail: { attempt, deviceName: this.device?.name } }));
+    } else if (attempt === 5) {
+      this.dispatchEvent(new CustomEvent('awaiting-wake', { detail: { deviceName: this.device?.name } }));
     }
-    this.dispatchEvent(new CustomEvent('reconnecting', { detail: { attempt, deviceName: this.device?.name } }));
     try {
       await this._openAndSetup();
     } catch {
-      this._reconnectTimer = setTimeout(() => this._attemptReconnect(attempt + 1), 1500);
+      this._reconnectTimer = setTimeout(
+        () => this._attemptReconnect(attempt + 1),
+        Math.min(3000, 1000 + attempt * 500)
+      );
     }
   }
 
