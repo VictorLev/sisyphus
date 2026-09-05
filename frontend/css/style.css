@@ -201,6 +201,20 @@ button.secondary {
   color: var(--color-text);
 }
 
+.tools-link {
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+}
+
+.tools-link a {
+  color: var(--color-stone-light);
+  text-decoration: underline;
+}
+
+.tools-link a:hover {
+  color: var(--color-bronze);
+}
+
 #gear-metric {
   border-color: var(--color-bronze-bright);
 }

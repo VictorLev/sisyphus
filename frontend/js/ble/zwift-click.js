@@ -77,6 +77,8 @@ export class ZwiftClickConnection extends EventTarget {
     this._prevMask = 0; // Ride-protocol pressed-bit mask, previous frame
     this._intentionalDisconnect = false;
     this._reconnectTimer = null;
+    this._streamWatchdog = null;
+    this._lastDataAt = 0; // timestamp of the last frame received; 0 = none yet
     this._onAsyncValue = this._onAsyncValue.bind(this);
     this._onDisconnected = this._onDisconnected.bind(this);
   }
@@ -136,26 +138,49 @@ export class ZwiftClickConnection extends EventTarget {
     await asyncChar.startNotifications();
     await syncTx.startNotifications(); // handshake reply arrives as an indication
 
-    // Handshake: the device stays silent until it receives this.
-    await this.syncRxCharacteristic.writeValueWithoutResponse(RIDE_ON);
+    this._lastDataAt = 0;
+    await this._sendStartSequence();
 
+    this.dispatchEvent(new CustomEvent('connected', { detail: { deviceName: this.device.name } }));
+
+    // These units are flaky about starting their button stream: sometimes
+    // the first RideOn + start command lands only telemetry (or nothing).
+    // If no data arrives shortly after connect, re-send the sequence a few
+    // times — this is what turns an unreliable unit into a working one.
+    this._ensureStreaming();
+  }
+
+  async _sendStartSequence() {
+    // Handshake: the device stays silent until it receives RideOn.
+    await this.syncRxCharacteristic.writeValueWithoutResponse(RIDE_ON);
     // Click v2 firmware needs a follow-up start command before it streams
-    // button frames — RideOn alone leaves it sending only telemetry. This is
-    // the command OpenBikeControl sends to an unlocked Click v2.
+    // button frames — RideOn alone leaves it sending only telemetry.
     await new Promise((r) => setTimeout(r, 250));
     try {
       await this.syncRxCharacteristic.writeValueWithoutResponse(Uint8Array.from([0xff, 0x04, 0x00]));
     } catch (err) {
-      // Non-fatal: older Click firmware streams without it.
       console.warn('[zwift-click] start command rejected:', err.message);
     }
+  }
 
-    this.dispatchEvent(new CustomEvent('connected', { detail: { deviceName: this.device.name } }));
+  _ensureStreaming(attempt = 1) {
+    const MAX = 5;
+    clearTimeout(this._streamWatchdog);
+    this._streamWatchdog = setTimeout(async () => {
+      const gotData = this._lastDataAt > 0;
+      if (gotData || attempt > MAX || this._intentionalDisconnect) return;
+      console.warn(`[zwift-click] no data yet, re-sending start (try ${attempt})`);
+      try {
+        if (this.device?.gatt?.connected) await this._sendStartSequence();
+      } catch { /* will retry on the next tick */ }
+      this._ensureStreaming(attempt + 1);
+    }, 2000);
   }
 
   disconnect() {
     this._intentionalDisconnect = true;
     clearTimeout(this._reconnectTimer);
+    clearTimeout(this._streamWatchdog);
     if (this.device?.gatt?.connected) this.device.gatt.disconnect();
   }
 
@@ -181,6 +206,8 @@ export class ZwiftClickConnection extends EventTarget {
   _onAsyncValue(event) {
     const bytes = new Uint8Array(event.target.value.buffer);
     if (bytes.length === 0) return;
+
+    this._lastDataAt = Date.now(); // any frame counts as "streaming"
 
     const type = bytes[0];
     const payload = bytes.subarray(1);
