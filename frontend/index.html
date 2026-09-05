@@ -52,11 +52,43 @@
       </div>
 
       <div class="panel nav-panel">
+        <button id="open-chronicle-btn" type="button" class="secondary">The Chronicle</button>
         <button id="open-profile-btn" type="button" class="secondary">Profile</button>
         <button id="open-settings-btn" type="button" class="secondary">Settings</button>
       </div>
 
       <p class="tools-link"><a href="probe.html">Hardware diagnostics (probe)</a></p>
+    </section>
+
+    <section data-view="chronicle" class="view">
+      <h1 class="title">THE CHRONICLE</h1>
+      <p class="tagline" id="chronicle-summary">&nbsp;</p>
+
+      <div class="panel" style="margin-bottom:1.5rem">
+        <h2>Weekly Minutes</h2>
+        <canvas id="weekly-chart" class="chart chart-short"></canvas>
+      </div>
+
+      <div class="panel">
+        <h2>Pushes</h2>
+        <ul id="chronicle-list" class="workout-list"></ul>
+        <button id="chronicle-back-btn" type="button" class="secondary">Back</button>
+      </div>
+    </section>
+
+    <section data-view="ride-detail" class="view">
+      <h1 class="title" id="ride-detail-title">RIDE</h1>
+      <p class="tagline">Power over time.</p>
+
+      <div class="panel" style="margin-bottom:1.5rem">
+        <h2>Power</h2>
+        <canvas id="ride-chart" class="chart"></canvas>
+        <p class="hint">Solid line is your power. The dashed step, when shown,
+          is the workout's target for each segment.</p>
+      </div>
+
+      <dl class="summary-stats" id="ride-detail-stats"></dl>
+      <button id="detail-back-btn" type="button" class="secondary">Back to the Chronicle</button>
     </section>
 
     <section data-view="profile" class="view">

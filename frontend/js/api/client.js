@@ -54,3 +54,16 @@ export function saveSettings(body) {
     body: JSON.stringify(body),
   });
 }
+
+export function listSessions() {
+  return request('/api/sessions');
+}
+
+export function getSession(id) {
+  return request(`/api/sessions/${id}`);
+}
+
+export async function deleteSession(id) {
+  const res = await fetch(`/api/sessions/${id}`, { method: 'DELETE' });
+  if (!res.ok) throw new Error(`could not delete session ${id}`);
+}

@@ -176,10 +176,14 @@ ERG blocks gear writes, which would otherwise fight the trainer's target.
   they live with the training log and survive a browser reset.
 
 **Phase 2**
-- FTP estimator (short guided test or manual entry) — used only to help
-  you pick sensible workout targets, not to auto-scale anything
-- History view (**the Chronicle**): table of past sessions + simple charts
-  (power over time per ride, weekly totals)
+- FTP: manual entry is BUILT (Profile page; annotates targets as %FTP).
+  A short guided estimator test is still outstanding.
+- History view (**the Chronicle**) — BUILT: every Push newest-first with
+  date/duration/distance/avg power, a weekly-minutes bar chart, and a
+  per-ride power trace. When the ride followed a workout, the workout's
+  target steps are overlaid on the trace so effort can be read against
+  what was being chased. Pushes can be deleted (samples cascade), since a
+  mis-recorded ride has to be removable from the log.
 - Best-effort records (**Feats**) surfaced back to you (longest ride,
   highest avg power, etc.)
 - PWA installability (manifest, icons, service worker for offline shell)

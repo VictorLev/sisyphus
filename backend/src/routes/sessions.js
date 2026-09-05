@@ -33,6 +33,20 @@ const updateAggregates = db.prepare(
 );
 const selectSessionById = db.prepare('SELECT * FROM sessions WHERE id = ?');
 
+// The Chronicle needs the workout's name alongside each session, and a
+// duration; both are cheap to derive here rather than in the client.
+const selectAllSessions = db.prepare(
+  `SELECT s.*, w.name AS workout_name,
+          (SELECT COUNT(*) FROM session_samples ss WHERE ss.session_id = s.id) AS sample_count
+   FROM sessions s
+   LEFT JOIN workouts w ON w.id = s.workout_id
+   ORDER BY s.started_at DESC`
+);
+const selectSamples = db.prepare(
+  `SELECT timestamp_offset_sec, power, cadence, speed, heart_rate
+   FROM session_samples WHERE session_id = ? ORDER BY timestamp_offset_sec`
+);
+
 function validateSamples(samples) {
   if (!Array.isArray(samples) || samples.length === 0) {
     return 'samples must be a non-empty array';
@@ -87,6 +101,33 @@ router.post('/', (req, res) => {
   const sessionId = createSession(req.body);
   const row = selectSessionById.get(sessionId);
   res.status(201).json(row);
+});
+
+// The Chronicle: every Push, newest first.
+router.get('/', (req, res) => {
+  res.json(selectAllSessions.all());
+});
+
+// One session with its full time series, for the ride chart.
+router.get('/:id', (req, res) => {
+  const session = selectSessionById.get(req.params.id);
+  if (!session) return res.status(404).json({ error: 'session not found' });
+  res.json({ ...session, samples: selectSamples.all(req.params.id) });
+});
+
+// Deleting a Push removes its samples too — the log is the source of truth,
+// so a mis-recorded ride has to be removable.
+const deleteSamples = db.prepare('DELETE FROM session_samples WHERE session_id = ?');
+const deleteSession = db.prepare('DELETE FROM sessions WHERE id = ?');
+const removeSession = db.transaction((id) => {
+  deleteSamples.run(id);
+  return deleteSession.run(id).changes;
+});
+
+router.delete('/:id', (req, res) => {
+  const removed = removeSession(req.params.id);
+  if (!removed) return res.status(404).json({ error: 'session not found' });
+  res.status(204).end();
 });
 
 export default router;

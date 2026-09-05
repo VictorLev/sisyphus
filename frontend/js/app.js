@@ -13,6 +13,7 @@ import { createBoulder } from './ui/boulder.js';
 import { createSession, getSettings, getProfile } from './api/client.js';
 import { initProfile, initSettings } from './ui/config-forms.js';
 import { initSisyphusLoop } from './ui/sisyphus-loop.js';
+import { initChronicle } from './ui/chronicle.js';
 
 const trainerConnection = new TrainerConnection();
 const gears = new GearModel();
@@ -52,6 +53,7 @@ initHome({
 
 initBuilder({});
 initSisyphusLoop();
+initChronicle();
 initProfile();
 initSettings({ onSaved: (saved) => applySettings(saved) });
 updateModeUi();
@@ -93,6 +95,7 @@ document.addEventListener('profilechange', (event) => {
   liveScreen.setFtp(riderFtp);
 });
 
+document.getElementById('open-chronicle-btn').addEventListener('click', () => showView('chronicle'));
 document.getElementById('open-profile-btn').addEventListener('click', () => showView('profile'));
 document.getElementById('open-settings-btn').addEventListener('click', () => showView('settings'));
 
