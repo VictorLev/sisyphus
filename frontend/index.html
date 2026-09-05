@@ -18,10 +18,12 @@
       </div>
 
       <div class="panel">
-        <h2>Shifting</h2>
-        <p class="status">Press <strong>+</strong> (or =) to shift up,
-          <strong>&minus;</strong> to shift down during a ride. Any Bluetooth
-          keyboard on the bars works.</p>
+        <h2>Ride Mode</h2>
+        <div class="mode-select">
+          <button id="mode-gears-btn" type="button" class="mode-btn is-active">Virtual Gears</button>
+          <button id="mode-erg-btn" type="button" class="mode-btn">ERG</button>
+        </div>
+        <p id="mode-description" class="hint"></p>
       </div>
 
       <div class="panel">
@@ -99,6 +101,7 @@
       </div>
 
       <div class="panel live-controls">
+        <button id="toggle-mode-btn" type="button">Switch to ERG</button>
         <button id="end-ride-btn" type="button" class="secondary">End Ride</button>
       </div>
     </section>

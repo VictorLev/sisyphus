@@ -21,6 +21,13 @@ const recorder = new SessionRecorder();
 const boulder = createBoulder(document.getElementById('boulder-canvas'));
 
 let runner = null;
+// 'gears'  — rider shifts, trainer holds a fixed resistance per gear
+// 'erg'    — trainer holds the segment's target watts, gearing is irrelevant
+// Both modes drive the same Control Point, so only one may write at a time.
+// preferredMode is what the rider chose; rideMode is what the current ride
+// actually runs (a free ride forces gears without discarding the choice).
+let preferredMode = 'gears';
+let rideMode = 'gears';
 let activeWorkout = null;
 let latestReading = null;
 let rideStartedAt = null;
@@ -40,8 +47,13 @@ initHome({
 });
 
 initBuilder({});
+updateModeUi();
 
-document.getElementById('summary-home-btn').addEventListener('click', () => showView('home'));
+document.getElementById('summary-home-btn').addEventListener('click', () => {
+  rideMode = preferredMode; // the ride is over; show what's chosen for next time
+  updateModeUi();
+  showView('home');
+});
 
 // Once the trainer is connected, attach the control point (same GATT
 // connection) and take control so shifting can write resistance.
@@ -77,6 +89,11 @@ async function ensureTrainerControl() {
 // Applies a shift and confirms it on screen — even at an end stop, where
 // the gear number can't change — so a press is always visibly acknowledged.
 function handleShift(direction) {
+  if (rideMode === 'erg') {
+    // Writing resistance now would fight the trainer's ERG target.
+    flashRideNote('ERG holds the target — gears do nothing', 1500);
+    return;
+  }
   const up = direction === 'up';
   const moved = up ? gears.shiftUp() : gears.shiftDown();
   updateGearDisplay(gears.gearNumber);
@@ -100,6 +117,53 @@ document.addEventListener('keydown', (event) => {
 
   event.preventDefault();
   handleShift(direction);
+});
+
+// Applies whichever control the current mode owns. In ERG that's the active
+// segment's target watts; in gears it's the current gear's resistance.
+async function applyRideMode() {
+  if (!(await ensureTrainerControl())) return;
+  if (rideMode === 'erg') {
+    const target = runner?.state.currentSegment?.target_watts;
+    if (target == null) return; // nothing to hold (free ride or finished)
+    try {
+      await trainerControl.setPower(target);
+      flashRideNote(`ERG holding ${target} W`, 2000);
+    } catch (err) {
+      flashRideNote(`ERG failed: ${err.message}`);
+    }
+  } else {
+    applyResistance(gears.resistance);
+  }
+}
+
+function setRideMode(mode, { announce = true } = {}) {
+  preferredMode = mode;
+  rideMode = mode;
+  updateModeUi();
+  if (announce) flashRideNote(mode === 'erg' ? 'ERG mode' : 'Virtual gears', 1500);
+  applyRideMode();
+}
+
+function updateModeUi() {
+  const erg = rideMode === 'erg';
+  document.getElementById('mode-gears-btn').classList.toggle('is-active', !erg);
+  document.getElementById('mode-erg-btn').classList.toggle('is-active', erg);
+  document.getElementById('mode-description').textContent = erg
+    ? 'ERG: the trainer forces each segment\'s target watts on you. Gearing does nothing — just pedal. Workouts only; free rides use gears.'
+    : 'Virtual gears: resistance is fixed per gear and you chase the target yourself. + / − to shift during a ride.';
+  document.getElementById('toggle-mode-btn').textContent = erg ? 'Switch to Gears' : 'Switch to ERG';
+  updateGearDisplay(gears.gearNumber);
+}
+
+document.getElementById('mode-gears-btn').addEventListener('click', () => setRideMode('gears', { announce: false }));
+document.getElementById('mode-erg-btn').addEventListener('click', () => setRideMode('erg', { announce: false }));
+document.getElementById('toggle-mode-btn').addEventListener('click', () => {
+  if (!activeWorkout && rideMode === 'gears') {
+    flashRideNote('ERG needs a workout target — free rides use gears', 2500);
+    return;
+  }
+  setRideMode(rideMode === 'erg' ? 'gears' : 'erg');
 });
 
 // A gear change updates the display and writes the new resistance.
@@ -165,7 +229,19 @@ function startRide(workout) {
   rideStartedAt = new Date().toISOString();
 
   runner = workout ? new WorkoutRunner(workout.structure) : null;
-  if (runner) runner.start(performance.now());
+  if (runner) {
+    runner.start(performance.now());
+    // In ERG each segment's target has to be pushed to the trainer as it
+    // begins; in gears mode this is a no-op.
+    runner.addEventListener('segment-change', () => {
+      if (rideMode === 'erg') applyRideMode();
+    });
+  }
+
+  // ERG needs a workout's targets, so free rides always run in gears — but
+  // that must not discard an ERG choice made for the next workout.
+  rideMode = workout ? preferredMode : 'gears';
+  updateModeUi();
 
   liveScreen.updateWorkoutInfo(runner ? runner.state : null);
   boulder.setProgress(0);
@@ -173,6 +249,7 @@ function startRide(workout) {
 
   showView('live');
   startLoop();
+  applyRideMode();
 }
 
 function startLoop() {
@@ -215,6 +292,16 @@ function stopLoop() {
 async function endRide() {
   stopLoop();
 
+  // Release the trainer: in ERG it would otherwise keep forcing the last
+  // target on the rider after the ride has ended.
+  if (trainerControl) {
+    try {
+      await trainerControl.reset();
+    } catch (err) {
+      console.warn('[app] trainer reset failed:', err.message);
+    }
+  }
+
   if (recorder.getSamples().length === 0) {
     recorder.addSample(
       {
@@ -247,8 +334,16 @@ async function endRide() {
 function updateGearDisplay(gear) {
   const metric = document.getElementById('gear-metric');
   const value = document.getElementById('gear-value');
-  metric.hidden = false; // shifting is always available via the keyboard
-  value.textContent = gear;
+  const label = metric.querySelector('.metric-label');
+  metric.hidden = false;
+  if (rideMode === 'erg') {
+    // The gear number is meaningless while the trainer holds a wattage.
+    value.textContent = 'ERG';
+    label.textContent = 'mode';
+  } else {
+    value.textContent = gear;
+    label.textContent = 'gear';
+  }
 }
 
 function showSummary(session) {

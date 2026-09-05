@@ -130,13 +130,27 @@ data — this is still a bike computer, not a storybook.
 - Session (a Push) saved permanently to SQLite at the end of a ride ✓
 - ~~Manual lap marking~~ — cut by decision; `lap_marker` column remains
 
-**Virtual shifting (BUILT — pulled forward from phase 3)**
-- GearModel: 12 gears mapped linearly over resistance 0–8 (tuned down
-  from 2–18 after ride feel; the two numbers in `frontend/js/gears.js`
-  are the tuning knobs), starting gear 5
-- **Keyboard input**: `+`/`=` up, `-` down, live-view only, one shift per
-  press, on-screen `▲/▼` confirmation of every press
-- Each shift writes `0x04` with control auto-re-request on failure
+**Ride modes (BUILT — pulled forward from phase 3)**
+
+Two modes, chosen on the home screen and switchable mid-ride. They are
+mutually exclusive because both drive the same Control Point — ERG blocks
+gear writes, which would otherwise fight the trainer's target.
+
+- **Virtual Gears** — resistance is fixed per gear and the rider chases
+  the target. GearModel: 12 gears mapped linearly over resistance 0–8
+  (tuned down from 2–18 after ride feel; the two numbers in
+  `frontend/js/gears.js` are the tuning knobs), starting gear 5. Keyboard
+  `+`/`=` up, `-` down — live-view only, one shift per press, `▲/▼`
+  confirmation on screen. Each shift writes `0x04`, re-requesting control
+  if the trainer dropped it.
+- **ERG** — the trainer forces each segment's target watts (`0x05`),
+  written at ride start and again on every segment change. Gearing is
+  irrelevant, so shifting is inert and says so. The gear tile reads "ERG".
+- ERG needs a workout's targets, so **free rides always run in gears**;
+  choosing ERG for a free ride is remembered for the next workout rather
+  than discarded.
+- Ending a ride sends Reset (`0x01`) so ERG stops forcing a target on the
+  rider once they stop.
 
 **Phase 2**
 - FTP estimator (short guided test or manual entry) — used only to help
@@ -150,15 +164,15 @@ data — this is still a bike computer, not a storybook.
   parser is the highest-risk piece of code, test it thoroughly) + GitHub
   Actions CI running tests on push
 
-**Phase 3 — remaining trainer control**
+**Phase 3 — complete**
 
-Most of the original phase 3 (hardware probe, Control Point groundwork,
-virtual shifting) was pulled forward and is built. What remains:
+All of the original phase 3 (hardware probe, Control Point groundwork,
+virtual shifting, ERG mode) was pulled forward and is built. Remaining
+trainer-control ideas are optional polish rather than planned work:
 
-- ERG mode: hold each segment's target watts automatically (`0x05`) —
-  the TrainerControl module already implements the write; the feature
-  needs a UI toggle and interplay rules with virtual shifting (ERG makes
-  gears irrelevant while active)
+- Simulation mode (`0x11`) as an alternative gear feel, if resistance-mode
+  gears ever prove unsatisfying
+- ERG target trimming (bump the held wattage ±N W mid-interval)
 
 **Phase 4**
 - Strava export: OAuth connect flow, upload completed sessions as

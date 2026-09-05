@@ -201,6 +201,24 @@ button.secondary {
   color: var(--color-text);
 }
 
+.mode-select {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.mode-btn {
+  flex: 1;
+  background: transparent;
+  color: var(--color-bronze);
+  border: 2px solid var(--color-bronze);
+}
+
+.mode-btn.is-active {
+  background: var(--color-bronze);
+  color: var(--color-bg);
+}
+
 .hint {
   margin: 0.6rem 0 0;
   font-size: 0.75rem;
