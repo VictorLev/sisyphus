@@ -1,4 +1,4 @@
-import { createWorkout } from '../api/client.js';
+import { createWorkout, updateWorkout } from '../api/client.js';
 import { showView } from '../ui/views.js';
 
 export function initBuilder({ onSaved }) {
@@ -11,8 +11,21 @@ export function initBuilder({ onSaved }) {
   const addBtn = document.getElementById('add-segment-btn');
   const saveBtn = document.getElementById('save-workout-btn');
   const cancelBtn = document.getElementById('cancel-builder-btn');
+  const titleEl = document.getElementById('builder-title');
 
   let segments = [];
+  let editingId = null; // set when editing an existing workout
+
+  // Loading a workout turns the builder into an editor; Save then PUTs
+  // rather than creating a duplicate.
+  function loadWorkout(workout) {
+    editingId = workout?.id ?? null;
+    segments = workout ? workout.structure.map((seg) => ({ ...seg })) : [];
+    nameInput.value = workout?.name ?? '';
+    titleEl.textContent = workout ? 'EDIT WORKOUT' : 'BUILD A WORKOUT';
+    saveBtn.textContent = workout ? 'Save Changes' : 'Save Workout';
+    render();
+  }
 
   function render() {
     segmentList.innerHTML = '';
@@ -44,6 +57,9 @@ export function initBuilder({ onSaved }) {
 
   function reset() {
     segments = [];
+    editingId = null;
+    titleEl.textContent = 'BUILD A WORKOUT';
+    saveBtn.textContent = 'Save Workout';
     nameInput.value = '';
     labelInput.value = '';
     durationInput.value = '300';
@@ -88,7 +104,8 @@ export function initBuilder({ onSaved }) {
     }
 
     try {
-      await createWorkout({ name, structure: segments });
+      if (editingId) await updateWorkout(editingId, { name, structure: segments });
+      else await createWorkout({ name, structure: segments });
       reset();
       onSaved?.();
       showView('home');
@@ -103,4 +120,5 @@ export function initBuilder({ onSaved }) {
   });
 
   render();
+  return { loadWorkout, reset };
 }

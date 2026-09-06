@@ -109,7 +109,10 @@ data — this is still a bike computer, not a storybook.
   segments, each `{ duration_sec, target_watts, label, grade_percent? }`).
   `grade_percent` is optional and signed (-20..20): positive climbs,
   negative descends, absent reads as flat, so older workouts still load.
-- `sessions`: id, workout_id (nullable — free rides have none), started_at,
+- `sessions`: id, workout_id (nullable — free rides have none, and cleared
+  when a workout is deleted), workout_name (the workout's name as it was
+  when ridden — denormalised on purpose so deleting a template never
+  rewrites history), started_at,
   ended_at, distance_m, avg_power, max_power, avg_cadence, avg_speed.
   Averages are computed server-side over **moving** samples (cadence > 0)
   so setup/coasting time doesn't drag them down; max_power is over all

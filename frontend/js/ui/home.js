@@ -1,7 +1,7 @@
-import { listWorkouts } from '../api/client.js';
+import { listWorkouts, deleteWorkout } from '../api/client.js';
 import { showView } from './views.js';
 
-export function initHome({ trainerConnection, onStartRide }) {
+export function initHome({ trainerConnection, onStartRide, onEditWorkout }) {
   const connectBtn = document.getElementById('connect-btn');
   const statusEl = document.getElementById('connection-status');
   const freeRideBtn = document.getElementById('free-ride-btn');
@@ -56,11 +56,38 @@ export function initHome({ trainerConnection, onStartRide }) {
         info.appendChild(name);
         info.appendChild(meta);
         li.appendChild(info);
+        const actions = document.createElement('div');
+        actions.className = 'row-actions';
+
         const startBtn = document.createElement('button');
         startBtn.type = 'button';
         startBtn.textContent = 'Start';
         startBtn.addEventListener('click', () => onStartRide(workout));
-        li.appendChild(startBtn);
+
+        const editBtn = document.createElement('button');
+        editBtn.type = 'button';
+        editBtn.className = 'secondary';
+        editBtn.textContent = 'Edit';
+        editBtn.addEventListener('click', () => onEditWorkout(workout));
+
+        const delBtn = document.createElement('button');
+        delBtn.type = 'button';
+        delBtn.className = 'secondary';
+        delBtn.textContent = 'Delete';
+        delBtn.addEventListener('click', async () => {
+          if (!confirm(`Delete "${workout.name}"? Rides that used it keep their history.`)) return;
+          try {
+            await deleteWorkout(workout.id);
+            refreshWorkoutList();
+          } catch (err) {
+            alert(`Could not delete: ${err.message}`);
+          }
+        });
+
+        actions.appendChild(startBtn);
+        actions.appendChild(editBtn);
+        actions.appendChild(delBtn);
+        li.appendChild(actions);
         workoutListEl.appendChild(li);
       }
     } catch (err) {

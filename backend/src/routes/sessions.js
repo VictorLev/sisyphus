@@ -4,9 +4,10 @@ import db from '../db/index.js';
 const router = Router();
 
 const insertSession = db.prepare(
-  `INSERT INTO sessions (workout_id, started_at, ended_at, distance_m)
-   VALUES (@workout_id, @started_at, @ended_at, @distance_m)`
+  `INSERT INTO sessions (workout_id, workout_name, started_at, ended_at, distance_m)
+   VALUES (@workout_id, @workout_name, @started_at, @ended_at, @distance_m)`
 );
+const selectWorkoutName = db.prepare('SELECT name FROM workouts WHERE id = ?');
 const insertSample = db.prepare(
   `INSERT INTO session_samples
      (session_id, timestamp_offset_sec, power, cadence, speed, heart_rate, lap_marker)
@@ -39,7 +40,7 @@ const selectSessionById = db.prepare('SELECT * FROM sessions WHERE id = ?');
 // The Chronicle needs the workout's name alongside each session, and a
 // duration; both are cheap to derive here rather than in the client.
 const selectAllSessions = db.prepare(
-  `SELECT s.*, w.name AS workout_name,
+  `SELECT s.*, COALESCE(s.workout_name, w.name) AS workout_name,
           (SELECT COUNT(*) FROM session_samples ss WHERE ss.session_id = s.id) AS sample_count
    FROM sessions s
    LEFT JOIN workouts w ON w.id = s.workout_id
@@ -65,6 +66,9 @@ function validateSamples(samples) {
 const createSession = db.transaction((body) => {
   const info = insertSession.run({
     workout_id: body.workout_id ?? null,
+    // Snapshot the name so the ride keeps its identity if the workout is
+    // later deleted or renamed.
+    workout_name: body.workout_id ? (selectWorkoutName.get(body.workout_id)?.name ?? null) : null,
     started_at: body.started_at,
     ended_at: body.ended_at,
     distance_m: body.distance_m ?? null,

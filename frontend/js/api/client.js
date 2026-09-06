@@ -71,3 +71,15 @@ export async function deleteSession(id) {
 export function getRecords() {
   return request('/api/records');
 }
+
+export function updateWorkout(id, body) {
+  return request(`/api/workouts/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+
+export function deleteWorkout(id) {
+  return request(`/api/workouts/${id}`, { method: 'DELETE' });
+}

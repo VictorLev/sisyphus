@@ -51,9 +51,26 @@ const liveScreen = initLiveScreen({
 initHome({
   trainerConnection,
   onStartRide: (workout) => startRide(workout),
+  onEditWorkout: (workout) => editWorkout(workout),
 });
 
-initBuilder({});
+const builder = initBuilder({});
+
+// Arriving at Build from the nav should start blank; arriving via a
+// workout's Edit button should keep the loaded workout. The Edit path sets
+// this flag immediately before switching views.
+let enteringBuilderForEdit = false;
+document.addEventListener('viewchange', (event) => {
+  if (event.detail.view !== 'builder') return;
+  if (enteringBuilderForEdit) enteringBuilderForEdit = false;
+  else builder.reset();
+});
+
+function editWorkout(workout) {
+  enteringBuilderForEdit = true;
+  builder.loadWorkout(workout);
+  showView('builder');
+}
 initSisyphusLoop();
 const chronicle = initChronicle();
 initFeats({ onOpenRide: (id) => chronicle.openDetail(id) });

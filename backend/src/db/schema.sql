@@ -11,6 +11,10 @@ CREATE TABLE IF NOT EXISTS workouts (
 CREATE TABLE IF NOT EXISTS sessions (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   workout_id INTEGER REFERENCES workouts(id), -- nullable: free rides have none
+  -- The workout's name as it was when ridden. Denormalised on purpose: the
+  -- log is permanent, so deleting a workout template must not erase what a
+  -- past ride actually was.
+  workout_name TEXT,
   started_at TEXT NOT NULL,
   ended_at TEXT,
   distance_m REAL,

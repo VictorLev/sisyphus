@@ -7,7 +7,7 @@ const router = Router();
 const POWER_WINDOWS = [5, 60, 300, 1200];
 
 const selectSessions = db.prepare(
-  `SELECT s.*, w.name AS workout_name
+  `SELECT s.*, COALESCE(s.workout_name, w.name) AS workout_name
    FROM sessions s LEFT JOIN workouts w ON w.id = s.workout_id`
 );
 const selectSamples = db.prepare(
