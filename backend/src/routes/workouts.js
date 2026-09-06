@@ -7,12 +7,13 @@ const insertWorkout = db.prepare(
   'INSERT INTO workouts (name, structure) VALUES (@name, @structure)'
 );
 const selectAllWorkouts = db.prepare(
-  'SELECT * FROM workouts ORDER BY created_at DESC'
+  'SELECT * FROM workouts ORDER BY starred DESC, created_at DESC'
 );
+const setStarred = db.prepare('UPDATE workouts SET starred = @starred WHERE id = @id');
 const selectWorkoutById = db.prepare('SELECT * FROM workouts WHERE id = ?');
 
 function toResponse(row) {
-  return { ...row, structure: JSON.parse(row.structure) };
+  return { ...row, starred: !!row.starred, structure: JSON.parse(row.structure) };
 }
 
 function validateStructure(structure) {
@@ -95,6 +96,18 @@ router.put('/:id', (req, res) => {
   if (structureError) return res.status(400).json({ error: structureError });
 
   updateWorkout.run({ id: req.params.id, name, structure: JSON.stringify(structure) });
+  res.json(toResponse(selectWorkoutById.get(req.params.id)));
+});
+
+// Starring is its own endpoint: it is a one-field toggle from a list row,
+// not a full workout edit.
+router.patch('/:id/starred', (req, res) => {
+  const existing = selectWorkoutById.get(req.params.id);
+  if (!existing) return res.status(404).json({ error: 'workout not found' });
+  if (typeof req.body?.starred !== 'boolean') {
+    return res.status(400).json({ error: 'starred must be a boolean' });
+  }
+  setStarred.run({ id: req.params.id, starred: req.body.starred ? 1 : 0 });
   res.json(toResponse(selectWorkoutById.get(req.params.id)));
 });
 

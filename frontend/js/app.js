@@ -13,7 +13,8 @@ import { createBoulder } from './ui/boulder.js';
 import { createSession, getSettings, getProfile } from './api/client.js';
 import { initProfile, initSettings } from './ui/config-forms.js';
 import { initSisyphusLoop } from './ui/sisyphus-loop.js';
-import { initChronicle } from './ui/chronicle.js';
+import { initChronicle, setChronicleFtp } from './ui/chronicle.js';
+import { initWorkouts } from './ui/workouts.js';
 import { initFeats } from './ui/feats.js';
 
 const trainerConnection = new TrainerConnection();
@@ -48,10 +49,16 @@ const liveScreen = initLiveScreen({
   onEndRide: () => endRide(),
 });
 
-initHome({
+const home = initHome({
   trainerConnection,
   onStartRide: (workout) => startRide(workout),
+});
+
+initWorkouts({
+  onStartRide: (workout) => startRide(workout),
   onEditWorkout: (workout) => editWorkout(workout),
+  // Starring or deleting changes what the home launchpad should show.
+  onLibraryChanged: () => home.refreshWorkoutList(),
 });
 
 const builder = initBuilder({});
@@ -109,6 +116,7 @@ async function loadConfig() {
     const profile = await getProfile();
     riderFtp = profile.ftp > 0 ? profile.ftp : null;
     liveScreen.setFtp(riderFtp);
+    setChronicleFtp(riderFtp);
     renderRiderStrip(profile);
   } catch { /* %FTP display is optional */ }
 }
@@ -117,6 +125,7 @@ loadConfig();
 document.addEventListener('profilechange', (event) => {
   riderFtp = event.detail.ftp > 0 ? event.detail.ftp : null;
   liveScreen.setFtp(riderFtp);
+  setChronicleFtp(riderFtp);
   renderRiderStrip(event.detail);
 });
 

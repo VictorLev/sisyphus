@@ -1,12 +1,13 @@
-import { listWorkouts, deleteWorkout } from '../api/client.js';
+import { listWorkouts } from '../api/client.js';
+import { renderWorkoutRow } from './workouts.js';
 import { showView } from './views.js';
 
-export function initHome({ trainerConnection, onStartRide, onEditWorkout }) {
+export function initHome({ trainerConnection, onStartRide }) {
   const connectBtn = document.getElementById('connect-btn');
   const statusEl = document.getElementById('connection-status');
   const freeRideBtn = document.getElementById('free-ride-btn');
   const workoutListEl = document.getElementById('workout-list');
-  const newWorkoutBtn = document.getElementById('new-workout-btn');
+  const openWorkoutsBtn = document.getElementById('open-workouts-btn');
 
   connectBtn.addEventListener('click', async () => {
     connectBtn.disabled = true;
@@ -32,63 +33,22 @@ export function initHome({ trainerConnection, onStartRide, onEditWorkout }) {
 
   freeRideBtn.addEventListener('click', () => onStartRide(null));
 
-  newWorkoutBtn.addEventListener('click', () => showView('builder'));
+  openWorkoutsBtn.addEventListener('click', () => showView('workouts'));
 
+  // The home screen is a launchpad: only starred workouts, no management.
+  // The full library lives on its own page.
   async function refreshWorkoutList() {
     workoutListEl.innerHTML = '<li>Loading…</li>';
     try {
-      const workouts = await listWorkouts();
+      const workouts = (await listWorkouts()).filter((w) => w.starred);
       workoutListEl.innerHTML = '';
       if (workouts.length === 0) {
-        workoutListEl.innerHTML = '<li class="empty">No workouts yet.</li>';
+        workoutListEl.innerHTML =
+          '<li class="empty">No starred workouts. Star one in Workouts to pin it here.</li>';
         return;
       }
       for (const workout of workouts) {
-        const li = document.createElement('li');
-        const totalSec = workout.structure.reduce((sum, s) => sum + s.duration_sec, 0);
-        const info = document.createElement('div');
-        const name = document.createElement('span');
-        name.className = 'workout-name';
-        name.textContent = workout.name;
-        const meta = document.createElement('span');
-        meta.className = 'workout-meta';
-        meta.textContent = `${workout.structure.length} segments · ${Math.round(totalSec / 60)} min`;
-        info.appendChild(name);
-        info.appendChild(meta);
-        li.appendChild(info);
-        const actions = document.createElement('div');
-        actions.className = 'row-actions';
-
-        const startBtn = document.createElement('button');
-        startBtn.type = 'button';
-        startBtn.textContent = 'Start';
-        startBtn.addEventListener('click', () => onStartRide(workout));
-
-        const editBtn = document.createElement('button');
-        editBtn.type = 'button';
-        editBtn.className = 'secondary';
-        editBtn.textContent = 'Edit';
-        editBtn.addEventListener('click', () => onEditWorkout(workout));
-
-        const delBtn = document.createElement('button');
-        delBtn.type = 'button';
-        delBtn.className = 'secondary';
-        delBtn.textContent = 'Delete';
-        delBtn.addEventListener('click', async () => {
-          if (!confirm(`Delete "${workout.name}"? Rides that used it keep their history.`)) return;
-          try {
-            await deleteWorkout(workout.id);
-            refreshWorkoutList();
-          } catch (err) {
-            alert(`Could not delete: ${err.message}`);
-          }
-        });
-
-        actions.appendChild(startBtn);
-        actions.appendChild(editBtn);
-        actions.appendChild(delBtn);
-        li.appendChild(actions);
-        workoutListEl.appendChild(li);
+        workoutListEl.appendChild(renderWorkoutRow(workout, { onStart: onStartRide, compact: true }));
       }
     } catch (err) {
       workoutListEl.innerHTML = `<li class="empty">Could not load workouts: ${err.message}</li>`;
@@ -100,4 +60,6 @@ export function initHome({ trainerConnection, onStartRide, onEditWorkout }) {
   });
 
   refreshWorkoutList();
+
+  return { refreshWorkoutList };
 }

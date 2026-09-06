@@ -5,7 +5,8 @@ CREATE TABLE IF NOT EXISTS workouts (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
-  structure TEXT NOT NULL -- JSON: ordered list of { duration_sec, target_watts, label }
+  starred INTEGER NOT NULL DEFAULT 0, -- starred workouts surface on the home screen
+  structure TEXT NOT NULL -- JSON: ordered list of { duration_sec, target_watts, label, grade_percent? }
 );
 
 CREATE TABLE IF NOT EXISTS sessions (

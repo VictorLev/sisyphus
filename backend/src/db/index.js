@@ -24,4 +24,9 @@ if (!sessionColumns.includes('workout_name')) {
            WHERE workout_id IS NOT NULL`);
 }
 
+const workoutColumns = db.prepare('PRAGMA table_info(workouts)').all().map((c) => c.name);
+if (!workoutColumns.includes('starred')) {
+  db.exec('ALTER TABLE workouts ADD COLUMN starred INTEGER NOT NULL DEFAULT 0');
+}
+
 export default db;

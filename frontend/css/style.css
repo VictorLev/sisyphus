@@ -726,8 +726,49 @@ button.secondary:hover:not(:disabled) {
 .calendar-weekdays,
 .calendar-grid {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  /* Seven days plus a week-result column. */
+  grid-template-columns: repeat(7, 1fr) minmax(86px, 0.9fr);
   gap: 4px;
+}
+
+.week-result {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.15rem;
+  padding: 0.35rem 0.5rem;
+  border-left: 2px solid var(--color-stone);
+  font-size: 0.68rem;
+  color: var(--color-text-dim);
+}
+
+.week-result.is-empty {
+  opacity: 0.35;
+}
+
+.week-result strong {
+  font-family: var(--font-pixel);
+  font-size: 0.72rem;
+  font-weight: 400;
+  color: var(--color-bronze-bright);
+}
+
+.week-result span {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.4rem;
+}
+
+.week-result em {
+  font-style: normal;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-bronze-dim);
+}
+
+.star-btn.is-starred {
+  color: var(--color-bronze-bright);
+  border-color: var(--color-bronze);
 }
 
 .calendar-weekdays {

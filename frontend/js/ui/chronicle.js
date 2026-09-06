@@ -24,6 +24,26 @@ function dayKey(date) {
   return `${y}-${m}-${d}`;
 }
 
+function formatClock(minutes) {
+  const m = Math.round(minutes);
+  return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+}
+
+// An approximation of training load, not TrainingPeaks' TSS®: real TSS uses
+// normalised power (a 30s rolling average raised to the fourth power), and
+// we only keep average power per ride. Good enough to compare weeks.
+let riderFtp = null;
+export function setChronicleFtp(ftp) {
+  riderFtp = ftp > 0 ? ftp : null;
+}
+
+function trainingLoad(session) {
+  if (!riderFtp || !session.avg_power) return 0;
+  const hours = durationMinutes(session) / 60;
+  const intensity = session.avg_power / riderFtp;
+  return hours * intensity * intensity * 100;
+}
+
 function formatDate(iso) {
   const d = new Date(iso);
   return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) +
@@ -90,10 +110,11 @@ export function initChronicle() {
       const d = new Date(s.started_at);
       if (Number.isNaN(d.getTime())) continue;
       const key = dayKey(d);
-      const entry = map.get(key) ?? { rides: 0, minutes: 0, distance: 0 };
+      const entry = map.get(key) ?? { rides: 0, minutes: 0, distance: 0, load: 0 };
       entry.rides += 1;
       entry.minutes += durationMinutes(s);
       entry.distance += s.distance_m ?? 0;
+      entry.load += trainingLoad(s);
       map.set(key, entry);
     }
     return map;
@@ -107,7 +128,7 @@ export function initChronicle() {
     calendarMonthEl.textContent = viewMonth.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
 
     calendarWeekdaysEl.innerHTML = '';
-    for (const name of weekdayNames) {
+    for (const name of [...weekdayNames, 'Week']) {
       const el = document.createElement('span');
       el.textContent = name;
       calendarWeekdaysEl.appendChild(el);
@@ -166,6 +187,32 @@ export function initChronicle() {
         }
       }
       calendarGridEl.appendChild(cell);
+
+      // After each Sunday, summarise the week just laid out.
+      if (i % 7 === 6) {
+        const weekStart = new Date(start);
+        weekStart.setDate(start.getDate() + i - 6);
+        let km = 0;
+        let minutes = 0;
+        let load = 0;
+        for (let d = 0; d < 7; d++) {
+          const day = new Date(weekStart);
+          day.setDate(weekStart.getDate() + d);
+          const e = byDay.get(dayKey(day));
+          if (!e) continue;
+          km += e.distance / 1000;
+          minutes += e.minutes;
+          load += e.load;
+        }
+        const result = document.createElement('div');
+        result.className = 'week-result';
+        if (minutes === 0) result.classList.add('is-empty');
+        result.innerHTML =
+          `<strong>${km.toFixed(1)} km</strong>` +
+          `<span><em>Load</em>${Math.round(load)}</span>` +
+          `<span><em>Time</em>${formatClock(minutes)}</span>`;
+        calendarGridEl.appendChild(result);
+      }
     }
 
     calendarTotalsEl.textContent = monthRides === 0

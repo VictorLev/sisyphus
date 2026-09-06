@@ -105,7 +105,8 @@ data — this is still a bike computer, not a storybook.
 
 ## Data model (rough)
 
-- `workouts`: id, name, created_at, structure (JSON: ordered list of
+- `workouts`: id, name, created_at, starred (starred workouts are the ones
+  pinned to the home screen), structure (JSON: ordered list of
   segments, each `{ duration_sec, target_watts, label, grade_percent? }`).
   `grade_percent` is optional and signed (-20..20): positive climbs,
   negative descends, absent reads as flat, so older workouts still load.

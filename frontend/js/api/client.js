@@ -83,3 +83,11 @@ export function updateWorkout(id, body) {
 export function deleteWorkout(id) {
   return request(`/api/workouts/${id}`, { method: 'DELETE' });
 }
+
+export function setWorkoutStarred(id, starred) {
+  return request(`/api/workouts/${id}/starred`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ starred }),
+  });
+}
