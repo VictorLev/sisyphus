@@ -35,6 +35,27 @@ body {
   line-height: 1.5;
 }
 
+/* A cracked-earth texture, barely there: it sits on its own fixed layer
+   behind everything at very low opacity so the page still reads as near
+   black, with a vignette pulling the edges darker still. Kept as a separate
+   layer rather than a body background so the opacity can be tuned without
+   touching the gradient above. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: url('../media/texture.jpg');
+  background-size: cover;
+  background-position: center;
+  opacity: 0.07;
+  /* Mute the ochre so it reads as ancient stone rather than a brown tint. */
+  filter: grayscale(0.35) contrast(0.9);
+  -webkit-mask-image: radial-gradient(ellipse at 50% 35%, #000 20%, transparent 78%);
+  mask-image: radial-gradient(ellipse at 50% 35%, #000 20%, transparent 78%);
+}
+
 #app {
   max-width: 1800px;
   margin: 0 auto;

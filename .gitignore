@@ -4,3 +4,8 @@ backend/data/*.db-journal
 backend/data/*.db-wal
 backend/data/*.db-shm
 .env
+
+# Source media: full-resolution originals stay local; only the optimised
+# web copies under frontend/ are committed. Leading slash anchors this to
+# the repo root so it does not also swallow frontend/media/.
+/media/
