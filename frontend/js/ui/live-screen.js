@@ -37,9 +37,14 @@ export function initLiveScreen({ onEndRide }) {
   document.getElementById('end-ride-btn').addEventListener('click', () => onEndRide());
 
   let timelineSegments = [];
-  let stepEls = [];
   let riderFtp = null;
   let currentZoneId = null;
+  // The step list is a window onto the workout, not the whole thing: a
+  // 34-segment session would otherwise need a scrollbar the rider can't
+  // use mid-effort. Show what they're on plus what's coming.
+  const STEP_WINDOW = 5;
+  let allSegments = [];
+  let renderedFrom = null;
 
   // The zone ladder is static; only which cell is lit changes.
   for (const zone of ZONES) {
@@ -95,13 +100,15 @@ export function initLiveScreen({ onEndRide }) {
     elapsedEl.textContent = formatTime(seconds);
   }
 
-  // Builds both the step list and the timeline for a workout, once per ride.
+  // Builds the full timeline once per ride; the step list is drawn as a
+  // moving window (see renderSteps).
   function buildTimeline(segments, workoutName) {
     stepsTitleEl.textContent = workoutName || 'Free Ride';
     timelineEl.innerHTML = '';
     stepsListEl.innerHTML = '';
     timelineSegments = [];
-    stepEls = [];
+    allSegments = segments ?? [];
+    renderedFrom = null;
 
     if (!segments || segments.length === 0) {
       timelineEl.hidden = true;
@@ -124,26 +131,52 @@ export function initLiveScreen({ onEndRide }) {
       cell.appendChild(fill);
       timelineEl.appendChild(cell);
       timelineSegments.push({ cell, fill });
+    });
+    timelineEl.hidden = false;
+    renderSteps(0);
+  }
 
+  function stepDuration(segment) {
+    return segment.duration_sec >= 60
+      ? `${Math.round(segment.duration_sec / 60)} min`
+      : `${segment.duration_sec} sec`;
+  }
+
+  // Redraws the window of upcoming steps. Only called when the current
+  // segment changes, so the list is not rebuilt every animation frame.
+  function renderSteps(fromIndex) {
+    renderedFrom = fromIndex;
+    stepsListEl.innerHTML = '';
+    const slice = allSegments.slice(fromIndex, fromIndex + STEP_WINDOW);
+
+    slice.forEach((segment, offset) => {
+      const index = fromIndex + offset;
+      const zone = zoneForWatts(segment.target_watts, riderFtp);
       const li = document.createElement('li');
       li.style.setProperty('--zone-color', zone.color);
+      if (offset === 0) li.classList.add('is-current');
+
       const watts = document.createElement('span');
       watts.className = 'step-watts';
       watts.textContent = `${segment.target_watts} W`;
       const time = document.createElement('span');
       time.className = 'step-time';
       const grade = segment.grade_percent ?? 0;
-      time.textContent = (grade ? `${grade > 0 ? '▲' : '▼'}${Math.abs(grade)}%  ` : '') +
-        (segment.duration_sec >= 60
-          ? `${Math.round(segment.duration_sec / 60)} min`
-          : `${segment.duration_sec} sec`);
+      time.textContent = (grade ? `${grade > 0 ? '▲' : '▼'}${Math.abs(grade)}%  ` : '') + stepDuration(segment);
       li.appendChild(watts);
       li.appendChild(time);
       li.title = segment.label || `Segment ${index + 1}`;
       stepsListEl.appendChild(li);
-      stepEls.push(li);
     });
-    timelineEl.hidden = false;
+
+    // Say how much is out of view rather than silently truncating.
+    const remaining = allSegments.length - (fromIndex + slice.length);
+    if (remaining > 0) {
+      const more = document.createElement('li');
+      more.className = 'steps-more';
+      more.textContent = `+${remaining} more`;
+      stepsListEl.appendChild(more);
+    }
   }
 
   function updateTimeline(runnerState) {
@@ -156,16 +189,9 @@ export function initLiveScreen({ onEndRide }) {
       entry.fill.style.width = `${fraction * 100}%`;
     });
 
-    stepEls.forEach((li, index) => {
-      const done = runnerState.isComplete || index < runnerState.segmentIndex;
-      const current = !runnerState.isComplete && index === runnerState.segmentIndex;
-      const wasCurrent = li.classList.contains('is-current');
-      li.classList.toggle('is-done', done);
-      li.classList.toggle('is-current', current);
-      // Scroll only on the transition into current, so the list isn't
-      // fighting the rider every animation frame.
-      if (current && !wasCurrent) li.scrollIntoView({ block: 'nearest' });
-    });
+    // Slide the window forward as segments complete.
+    const from = Math.min(runnerState.segmentIndex, Math.max(0, allSegments.length - 1));
+    if (allSegments.length && from !== renderedFrom) renderSteps(from);
 
     stepsProgressEl.textContent = runnerState.isComplete
       ? 'done'

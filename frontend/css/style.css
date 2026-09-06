@@ -62,6 +62,13 @@ body::before {
   padding: 2rem 2.5rem 3rem;
 }
 
+/* While riding, the shell gives up its padding so the dashboard gets the
+   whole viewport. */
+#app:has(> [data-view="live"]:not([hidden])) {
+  max-width: none;
+  padding: 1rem 1.25rem;
+}
+
 .view[hidden] {
   display: none;
 }
@@ -1088,23 +1095,27 @@ button.secondary:hover:not(:disabled) {
 
 /* ============================================================ ride dashboard */
 
-/* The ride view fills the screen: it is read from the bike, so it gets the
-   whole viewport rather than sitting inside the normal page rhythm. */
+/* The ride view fits exactly one screen — it is read from the bike, and a
+   scrollbar there is useless. Everything inside must therefore be allowed
+   to shrink, hence the minmax(0, ...) tracks and overflow guards below. */
 .ride-view {
-  min-height: calc(100vh - 5rem);
+  height: calc(100vh - 3.5rem);
+  overflow: hidden;
 }
 
 .ride-grid {
   display: grid;
-  grid-template-columns: minmax(230px, 300px) 1fr minmax(190px, 240px);
-  grid-template-rows: auto 1fr auto auto;
+  grid-template-columns: minmax(210px, 280px) minmax(0, 1fr) minmax(180px, 230px);
+  /* minmax(0, 1fr) on the hero row is what stops tall content forcing the
+     grid past the viewport. */
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
   grid-template-areas:
     "steps metrics zone"
     "steps hero    zone"
     "timeline timeline timeline"
     "footer footer footer";
-  gap: 1rem;
-  min-height: calc(100vh - 5rem);
+  gap: 0.75rem;
+  height: 100%;
 }
 
 @media (max-width: 1100px) {
@@ -1126,7 +1137,8 @@ button.secondary:hover:not(:disabled) {
   grid-area: steps;
   display: flex;
   flex-direction: column;
-  padding: 1rem;
+  padding: 0.85rem;
+  min-height: 0;
   overflow: hidden;
 }
 
@@ -1148,7 +1160,8 @@ button.secondary:hover:not(:disabled) {
   list-style: none;
   margin: 0;
   padding: 0;
-  overflow-y: auto;
+  min-height: 0;
+  overflow: hidden; /* the window is sized to fit; never scroll here */
   flex: 1;
 }
 
@@ -1156,7 +1169,7 @@ button.secondary:hover:not(:disabled) {
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  padding: 0.5rem 0.6rem;
+  padding: 0.4rem 0.55rem;
   margin-bottom: 3px;
   border-left: 4px solid var(--zone-color, var(--color-stone));
   background: rgba(0, 0, 0, 0.25);
@@ -1191,7 +1204,7 @@ button.secondary:hover:not(:disabled) {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   align-items: center;
-  padding: 1.25rem 1rem;
+  padding: 0.9rem 1rem;
   text-align: center;
 }
 
@@ -1202,7 +1215,7 @@ button.secondary:hover:not(:disabled) {
 .ride-metric-value {
   display: block;
   font-family: var(--font-pixel);
-  font-size: clamp(2rem, 4.6vw, 3.8rem);
+  font-size: clamp(1.6rem, 4vw, 3.2rem);
   line-height: 1.1;
   color: var(--color-bronze-bright);
   text-shadow: 0 0 30px rgba(224, 192, 136, 0.25);
@@ -1210,7 +1223,7 @@ button.secondary:hover:not(:disabled) {
 
 .ride-metric-label {
   display: block;
-  margin-top: 0.7rem;
+  margin-top: 0.5rem;
   font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.16em;
@@ -1223,13 +1236,14 @@ button.secondary:hover:not(:disabled) {
   grid-area: zone;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  padding: 1.25rem 1rem;
+  gap: 0.7rem;
+  padding: 0.85rem;
+  min-height: 0;
   text-align: center;
 }
 
 .zone-badge {
-  padding: 1rem 0.5rem;
+  padding: 0.7rem 0.5rem;
   border: 2px solid var(--zone-color, var(--color-stone));
   border-radius: 2px;
   background: color-mix(in srgb, var(--zone-color, #3a3632) 22%, transparent);
@@ -1238,7 +1252,7 @@ button.secondary:hover:not(:disabled) {
 .zone-badge strong {
   display: block;
   font-family: var(--font-pixel);
-  font-size: 1.8rem;
+  font-size: clamp(1.1rem, 2.2vw, 1.6rem);
   font-weight: 400;
   color: var(--zone-color, var(--color-bronze-bright));
 }
@@ -1305,15 +1319,23 @@ button.secondary:hover:not(:disabled) {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1.25rem;
-  padding: 1.5rem;
+  gap: 0.9rem;
+  padding: 0.9rem;
+  min-height: 0;
+  overflow: hidden;
 }
 
+/* Scales to whichever of width or height runs out first, so it can never
+   push the grid taller than the viewport. */
 #ride-hero-canvas {
   image-rendering: pixelated;
-  width: 100%;
-  max-width: 560px;
+  aspect-ratio: 96 / 34;
+  width: auto;
   height: auto;
+  max-width: min(560px, 100%);
+  max-height: 100%;
+  min-height: 0;
+  flex: 0 1 auto;
 }
 
 .ride-target {
@@ -1321,8 +1343,9 @@ button.secondary:hover:not(:disabled) {
   flex-wrap: wrap;
   align-items: baseline;
   justify-content: center;
-  gap: 1.75rem;
+  gap: 1.25rem;
   text-align: center;
+  flex: none;
 }
 
 .ride-target strong {
@@ -1360,12 +1383,12 @@ button.secondary:hover:not(:disabled) {
 
 .ride-timeline {
   grid-area: timeline;
-  padding: 0.75rem;
+  padding: 0.6rem;
 }
 
 .ride-timeline .segment-timeline {
   margin: 0;
-  height: 40px;
+  height: 32px;
 }
 
 .ride-footer {
@@ -1374,12 +1397,22 @@ button.secondary:hover:not(:disabled) {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  padding: 0.9rem 1rem;
+  padding: 0.6rem 1rem;
 }
 
 .ride-footer #end-ride-btn {
-  padding: 0.9rem 2rem;
-  font-size: 1rem;
+  padding: 0.7rem 1.8rem;
+  font-size: 0.95rem;
+}
+
+/* Count of steps beyond the visible window. */
+.steps-more {
+  justify-content: center;
+  border-left-color: transparent !important;
+  background: transparent !important;
+  font-size: 0.72rem;
+  color: var(--color-text-dim);
+  letter-spacing: 0.08em;
 }
 
 .gear-display {
