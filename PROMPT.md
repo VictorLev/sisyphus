@@ -232,7 +232,15 @@ ERG blocks gear writes, which would otherwise fight the trainer's target.
   if the ride actually covered it, so a 20-minute record can't be set by a
   5-minute ride — unearned records read "No ride long enough yet" instead
   of a misleading number. Each Feat links to the ride that set it.
-- PWA installability (manifest, icons, service worker for offline shell)
+- PWA installability — BUILT: web manifest, pixel-art icons generated from
+  the app's own boulder motif (including a maskable variant with the wider
+  safe zone the OS crop needs), and a service worker registering an offline
+  shell. The worker is deliberately **network-first**, not the usual
+  cache-first: this app is served from localhost and actively developed, so
+  cache-first would hand back stale JS after every edit. `/api/` requests
+  are never cached — a training log showing a stale ride list is worse than
+  showing an error — and `sw.js` is served no-cache so an old worker can
+  never pin the app to an old shell.
 - Basic test suite (unit tests on the FTMS parser and workout logic — the
   parser is the highest-risk piece of code, test it thoroughly) + GitHub
   Actions CI running tests on push

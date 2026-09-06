@@ -16,6 +16,16 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(express.json());
+
+// The service worker must never be served from cache, or a stale copy can
+// pin the app to an old shell. Modern browsers revalidate it anyway; this
+// makes it explicit. Must come before express.static.
+app.get('/sw.js', (req, res) => {
+  res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.type('application/javascript');
+  res.sendFile(path.join(frontendDir, 'sw.js'));
+});
+
 app.use(express.static(frontendDir));
 
 app.get('/api/health', (req, res) => {

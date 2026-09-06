@@ -477,3 +477,13 @@ function showSummary(session) {
   }
   showView('summary');
 }
+
+// Register the offline shell. Failure is non-fatal: the app works fine
+// without a service worker, it simply won't run offline.
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch((err) => {
+      console.warn('[app] service worker not registered:', err.message);
+    });
+  });
+}
