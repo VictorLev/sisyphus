@@ -317,5 +317,5 @@ export function initChronicle() {
     if (event.detail.view === 'chronicle') refresh();
   });
 
-  return { refresh };
+  return { refresh, openDetail };
 }

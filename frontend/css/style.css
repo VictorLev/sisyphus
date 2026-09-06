@@ -573,6 +573,22 @@ button.secondary:hover:not(:disabled) {
   color: var(--color-bronze-bright);
 }
 
+.feat-card.is-empty {
+  opacity: 0.45;
+}
+
+.feat-card.is-clickable {
+  cursor: pointer;
+}
+
+.feat-card.is-clickable:hover {
+  border-color: var(--color-bronze-bright);
+}
+
+.feat-card .hint {
+  margin-top: 0.4rem;
+}
+
 .chronicle-grid {
   display: grid;
   grid-template-columns: minmax(340px, 1fr) minmax(340px, 1fr);

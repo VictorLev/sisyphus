@@ -67,3 +67,7 @@ export async function deleteSession(id) {
   const res = await fetch(`/api/sessions/${id}`, { method: 'DELETE' });
   if (!res.ok) throw new Error(`could not delete session ${id}`);
 }
+
+export function getRecords() {
+  return request('/api/records');
+}

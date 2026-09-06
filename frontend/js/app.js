@@ -14,6 +14,7 @@ import { createSession, getSettings, getProfile } from './api/client.js';
 import { initProfile, initSettings } from './ui/config-forms.js';
 import { initSisyphusLoop } from './ui/sisyphus-loop.js';
 import { initChronicle } from './ui/chronicle.js';
+import { initFeats } from './ui/feats.js';
 
 const trainerConnection = new TrainerConnection();
 const gears = new GearModel();
@@ -54,7 +55,8 @@ initHome({
 
 initBuilder({});
 initSisyphusLoop();
-initChronicle();
+const chronicle = initChronicle();
+initFeats({ onOpenRide: (id) => chronicle.openDetail(id) });
 initProfile();
 initSettings({ onSaved: (saved) => applySettings(saved) });
 updateModeUi();
@@ -100,6 +102,7 @@ document.addEventListener('profilechange', (event) => {
 });
 
 document.getElementById('open-chronicle-btn').addEventListener('click', () => showView('chronicle'));
+document.getElementById('open-feats-btn').addEventListener('click', () => showView('feats'));
 document.getElementById('open-profile-btn').addEventListener('click', () => showView('profile'));
 document.getElementById('open-settings-btn').addEventListener('click', () => showView('settings'));
 
@@ -271,6 +274,13 @@ trainerConnection.addEventListener('reading', (event) => {
     rollingAverage.push(reading.instantaneousPowerW, receivedAt);
   }
   distanceTracker.update(reading, receivedAt);
+  // Accumulate every notification; the recording tick commits their mean.
+  recorder.addReading({
+    power: reading.instantaneousPowerW,
+    cadence: reading.instantaneousCadenceRpm,
+    speed: reading.instantaneousSpeedKmh,
+    heartRate: reading.heartRateBpm,
+  });
 
   liveScreen.updateRawNumbers({
     powerSmoothed: rollingAverage.average(),
@@ -314,21 +324,9 @@ function startRide(workout) {
 }
 
 function startLoop() {
-  recordIntervalId = setInterval(() => {
-    // Record raw instantaneous power, not the smoothed value — smoothing is
-    // a display concern. Storing the 10s average here would make max_power
-    // the peak of an average (badly under-reporting sprints) and would throw
-    // away the raw series that best-effort records are computed from.
-    recorder.addSample(
-      {
-        power: latestReading?.instantaneousPowerW ?? null,
-        cadence: latestReading?.instantaneousCadenceRpm ?? null,
-        speed: latestReading?.instantaneousSpeedKmh ?? null,
-        heartRate: latestReading?.heartRateBpm ?? null,
-      },
-      performance.now()
-    );
-  }, sampleIntervalMs);
+  // Commit the mean of every reading received since the last tick. Raw
+  // values only — smoothing is a display concern, never stored.
+  recordIntervalId = setInterval(() => recorder.commitSample(performance.now()), sampleIntervalMs);
 
   function frame(now) {
     if (runner) {
@@ -364,16 +362,9 @@ async function endRide() {
     }
   }
 
+  // A ride ended before the first tick still needs one row to be saveable.
   if (recorder.getSamples().length === 0) {
-    recorder.addSample(
-      {
-        power: latestReading?.instantaneousPowerW ?? null,
-        cadence: latestReading?.instantaneousCadenceRpm ?? null,
-        speed: latestReading?.instantaneousSpeedKmh ?? null,
-        heartRate: latestReading?.heartRateBpm ?? null,
-      },
-      performance.now()
-    );
+    recorder.commitSample(performance.now());
   }
 
   const payload = {
@@ -381,6 +372,9 @@ async function endRide() {
     started_at: rideStartedAt,
     ended_at: new Date().toISOString(),
     distance_m: distanceTracker.currentTotalM,
+    // The true peak across every raw reading, not the peak of the committed
+    // means — a 30s sprint would otherwise be flattened by windowing.
+    max_power: recorder.getMaxPower(),
     samples: recorder.getSamples(),
   };
 

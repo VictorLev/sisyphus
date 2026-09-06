@@ -115,8 +115,11 @@ data — this is still a bike computer, not a storybook.
   so setup/coasting time doesn't drag them down; max_power is over all
   samples. distance_m is the client's running total (device total-distance
   field when reported, else trapezoidal speed integration).
-- `session_samples`: session_id, timestamp_offset_sec, power (**raw
-  instantaneous**, 1 Hz — smoothing is display-only, never stored),
+- `session_samples`: session_id, timestamp_offset_sec, power (the **mean
+  of every BLE reading** in each recording window — smoothing is
+  display-only, never stored; the session's true peak is tracked separately
+  across raw readings and sent as max_power, since a window mean would
+  flatten a sprint),
   cadence, speed, heart_rate (null until a strap exists), lap_marker
   (vestigial: lap marking was cut as a feature; the column stays at 0 to
   avoid a migration) — the time series behind the charts
@@ -195,8 +198,13 @@ ERG blocks gear writes, which would otherwise fight the trainer's target.
   target steps are overlaid on the trace so effort can be read against
   what was being chased. Pushes can be deleted (samples cascade), since a
   mis-recorded ride has to be removable from the log.
-- Best-effort records (**Feats**) surfaced back to you (longest ride,
-  highest avg power, etc.)
+- Best-effort records (**Feats**) — BUILT: longest/furthest Push, highest
+  avg power, peak power, and a power curve (best 5s / 1min / 5min / 20min
+  sustained). Computed on demand from the log rather than cached, so
+  deleting a ride can't leave a stale record standing. A window only counts
+  if the ride actually covered it, so a 20-minute record can't be set by a
+  5-minute ride — unearned records read "No ride long enough yet" instead
+  of a misleading number. Each Feat links to the ride that set it.
 - PWA installability (manifest, icons, service worker for offline shell)
 - Basic test suite (unit tests on the FTMS parser and workout logic — the
   parser is the highest-risk piece of code, test it thoroughly) + GitHub

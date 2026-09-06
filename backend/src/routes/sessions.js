@@ -22,7 +22,10 @@ const updateAggregates = db.prepare(
      avg_power = COALESCE(
        (SELECT AVG(power) FROM session_samples WHERE session_id = @id AND cadence > 0),
        (SELECT AVG(power) FROM session_samples WHERE session_id = @id)),
-     max_power = (SELECT MAX(power) FROM session_samples WHERE session_id = @id),
+     -- Prefer the client's true peak across every raw BLE reading; samples
+     -- hold per-window means, whose max would under-report a short sprint.
+     max_power = COALESCE(@max_power,
+       (SELECT MAX(power) FROM session_samples WHERE session_id = @id)),
      avg_cadence = COALESCE(
        (SELECT AVG(cadence) FROM session_samples WHERE session_id = @id AND cadence > 0),
        (SELECT AVG(cadence) FROM session_samples WHERE session_id = @id)),
@@ -80,7 +83,7 @@ const createSession = db.transaction((body) => {
     });
   }
 
-  updateAggregates.run({ id: sessionId });
+  updateAggregates.run({ id: sessionId, max_power: body.max_power ?? null });
   return sessionId;
 });
 
