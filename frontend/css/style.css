@@ -96,6 +96,101 @@ h2 {
   margin: 0 0 1rem;
 }
 
+/* ------------------------------------------------------ chrome: strip+nav */
+
+#app-chrome[hidden] {
+  display: none;
+}
+
+/* Rider vitals, always in view — the numbers that set every workout target. */
+.rider-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2.5rem;
+  padding: 0.9rem 1.25rem;
+  margin: 1.25rem 0;
+  background: linear-gradient(180deg, var(--color-surface-raised), var(--color-surface));
+  border: var(--border);
+  border-radius: 2px;
+}
+
+.rider-strip span {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.rider-strip em {
+  font-style: normal;
+  font-size: 0.65rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-bronze);
+}
+
+.rider-strip strong {
+  font-family: var(--font-pixel);
+  font-size: 0.95rem;
+  font-weight: 400;
+  color: var(--color-bronze-bright);
+}
+
+/* Persistent destinations, so no screen is a dead end needing a back button. */
+.main-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+  border-bottom: 2px solid var(--color-stone);
+  padding-bottom: 0.75rem;
+}
+
+.main-nav button {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  background: transparent;
+  color: var(--color-text-dim);
+  border: 2px solid transparent;
+  padding: 0.6rem 1.1rem;
+  font-size: 0.85rem;
+  letter-spacing: 0.04em;
+}
+
+.main-nav button svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.main-nav button:hover:not(.is-active) {
+  background: rgba(176, 141, 87, 0.08);
+  color: var(--color-text);
+}
+
+.main-nav button.is-active {
+  background: var(--color-bronze);
+  color: #17140f;
+  border-color: var(--color-bronze);
+}
+
+@media (max-width: 700px) {
+  .main-nav button span,
+  .rider-strip {
+    font-size: 0.8rem;
+  }
+  .main-nav {
+    gap: 0.25rem;
+  }
+  .main-nav button {
+    padding: 0.55rem 0.7rem;
+  }
+}
+
 /* ----------------------------------------------------------- home layout */
 
 /* Wide screens get two columns: setup on the left, workouts on the right. */

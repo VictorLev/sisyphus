@@ -1,5 +1,4 @@
 import { getProfile, saveProfile, getSettings, saveSettings } from '../api/client.js';
-import { showView } from './views.js';
 
 // Generic form binding for the profile and settings pages. Both are the same
 // shape — load a JSON document, edit named fields, save it back — so they
@@ -55,7 +54,6 @@ export function initProfile() {
   });
 
   document.getElementById('save-profile-btn').addEventListener('click', () => form.submit());
-  document.getElementById('profile-back-btn').addEventListener('click', () => showView('home'));
   document.addEventListener('viewchange', (event) => {
     if (event.detail.view === 'profile') form.populate();
   });
@@ -81,7 +79,6 @@ export function initSettings({ onSaved }) {
   });
 
   document.getElementById('save-settings-btn').addEventListener('click', () => form.submit());
-  document.getElementById('settings-back-btn').addEventListener('click', () => showView('home'));
   document.addEventListener('viewchange', (event) => {
     if (event.detail.view === 'settings') form.populate();
   });

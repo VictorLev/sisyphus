@@ -311,7 +311,6 @@ export function initChronicle() {
     renderCalendar();
     renderList();
   });
-  document.getElementById('chronicle-back-btn').addEventListener('click', () => showView('home'));
   document.getElementById('detail-back-btn').addEventListener('click', () => showView('chronicle'));
   document.addEventListener('viewchange', (event) => {
     if (event.detail.view === 'chronicle') refresh();

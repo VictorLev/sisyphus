@@ -1,5 +1,4 @@
 import { getRecords } from '../api/client.js';
-import { showView } from './views.js';
 
 export function initFeats({ onOpenRide }) {
   const totalsEl = document.getElementById('feats-totals');
@@ -55,7 +54,6 @@ export function initFeats({ onOpenRide }) {
     }
   }
 
-  document.getElementById('feats-back-btn').addEventListener('click', () => showView('home'));
   document.addEventListener('viewchange', (event) => {
     if (event.detail.view === 'feats') refresh();
   });

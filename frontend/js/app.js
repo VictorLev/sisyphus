@@ -92,6 +92,7 @@ async function loadConfig() {
     const profile = await getProfile();
     riderFtp = profile.ftp > 0 ? profile.ftp : null;
     liveScreen.setFtp(riderFtp);
+    renderRiderStrip(profile);
   } catch { /* %FTP display is optional */ }
 }
 loadConfig();
@@ -99,12 +100,18 @@ loadConfig();
 document.addEventListener('profilechange', (event) => {
   riderFtp = event.detail.ftp > 0 ? event.detail.ftp : null;
   liveScreen.setFtp(riderFtp);
+  renderRiderStrip(event.detail);
 });
 
-document.getElementById('open-chronicle-btn').addEventListener('click', () => showView('chronicle'));
-document.getElementById('open-feats-btn').addEventListener('click', () => showView('feats'));
-document.getElementById('open-profile-btn').addEventListener('click', () => showView('profile'));
-document.getElementById('open-settings-btn').addEventListener('click', () => showView('settings'));
+// Keeps the rider strip in the header in step with the saved profile.
+function renderRiderStrip(profile) {
+  const ftp = profile.ftp > 0 ? profile.ftp : null;
+  const weight = profile.weight_kg > 0 ? profile.weight_kg : null;
+  document.getElementById('strip-name').textContent = profile.name?.trim() || 'Anonymous';
+  document.getElementById('strip-ftp').textContent = ftp ? `${Math.round(ftp)} W` : '—';
+  document.getElementById('strip-weight').textContent = weight ? `${weight} kg` : '—';
+  document.getElementById('strip-wkg').textContent = ftp && weight ? (ftp / weight).toFixed(2) : '—';
+}
 
 document.getElementById('summary-home-btn').addEventListener('click', () => {
   rideMode = preferredMode; // the ride is over; show what's chosen for next time
