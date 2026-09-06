@@ -288,7 +288,27 @@
 
     <section data-view="builder" class="view">
       <h1 class="title" id="builder-title">BUILD A WORKOUT</h1>
-      <p class="tagline">An ordered list of segments. Duration and target watts.</p>
+      <p class="tagline">Stack segments. Watch the shape of the session.</p>
+
+      <div class="panel builder-preview-panel">
+        <div class="builder-stats">
+          <span><em>Duration</em><strong id="builder-duration">00:00</strong></span>
+          <span><em>Segments</em><strong id="builder-count">0</strong></span>
+          <span><em>Load</em><strong id="builder-load">—</strong></span>
+        </div>
+
+        <div class="preview-wrap">
+          <div class="preview-axis" id="preview-axis"></div>
+          <div class="preview-chart" id="preview-chart">
+            <p class="preview-empty">Add a segment to see the shape of the workout.</p>
+          </div>
+        </div>
+        <div class="preview-time" id="preview-time"></div>
+
+        <div class="zone-picker" id="zone-picker"></div>
+        <p class="hint">Click a zone to append a segment at that intensity, or
+          set exact values below. Click any bar to remove it.</p>
+      </div>
 
       <div class="builder-grid">
         <div class="home-col">

@@ -145,7 +145,13 @@ data — this is still a bike computer, not a storybook.
   pixel-art bike-computer readout (dark mode, stone-grey/bronze palette) ✓
 - Power displayed as **10-second smoothed** average (storage keeps raw) ✓
 - Workout builder: ordered `duration + target watts` segments, manual
-  targets (no FTP auto-scaling) ✓
+  targets (no FTP auto-scaling) ✓, with a live bar preview — width by
+  duration, height by watts, coloured by power zone — plus Z1–Z6 quick-add
+  buttons, zone gridlines, and running duration/load. Zone colours are a
+  heat progression through the app's own palette (stone, slate, bronze,
+  gold, ember, rust) rather than the neon bands other apps use: zone colour
+  is functional, but it should not fight the interface. FTP still scales
+  nothing automatically — it only labels and colours.
 - Run a workout: current segment, target watts, time remaining, workout
   progression; "PUSH COMPLETE" state at the end ✓
 - Boulder-incline motif fills per segment, holds the summit on completion ✓

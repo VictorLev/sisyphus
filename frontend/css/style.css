@@ -922,3 +922,166 @@ button.secondary:hover:not(:disabled) {
   background: var(--color-bronze);
   transition: width 0.4s ease;
 }
+
+/* -------------------------------------------------- workout builder chart */
+
+.builder-preview-panel {
+  margin-bottom: 1.5rem;
+}
+
+.builder-stats {
+  display: flex;
+  gap: 2.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.builder-stats span {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.builder-stats em {
+  font-style: normal;
+  font-size: 0.65rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-bronze);
+}
+
+.builder-stats strong {
+  font-family: var(--font-pixel);
+  font-size: 1rem;
+  font-weight: 400;
+  color: var(--color-bronze-bright);
+}
+
+/* The axis sits behind the bars, so zone lines read as a backdrop. */
+.preview-wrap {
+  position: relative;
+  height: 220px;
+  background: rgba(0, 0, 0, 0.3);
+  border: var(--border);
+  border-radius: 2px;
+  padding: 0.5rem 0.5rem 0 2.4rem;
+}
+
+.preview-axis {
+  position: absolute;
+  inset: 0.5rem 0.5rem 0 2.4rem;
+  pointer-events: none;
+}
+
+.axis-line {
+  position: absolute;
+  left: -2.4rem;
+  right: 0;
+  border-top: 1px dashed var(--color-stone);
+  font-size: 0.6rem;
+  color: var(--color-bronze-dim);
+  padding-left: 0.15rem;
+  line-height: 1;
+}
+
+.preview-chart {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 100%;
+}
+
+.preview-empty {
+  margin: auto;
+  font-size: 0.85rem;
+  color: var(--color-text-dim);
+}
+
+.preview-bar {
+  position: relative;
+  min-width: 3px;
+  padding: 0;
+  border: none;
+  border-radius: 1px 1px 0 0;
+  cursor: pointer;
+  transition: filter 0.12s ease;
+}
+
+.preview-bar:hover {
+  filter: brightness(1.25);
+}
+
+.bar-grade {
+  position: absolute;
+  top: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.55rem;
+  font-style: normal;
+  color: rgba(0, 0, 0, 0.65);
+}
+
+.preview-time {
+  display: flex;
+  justify-content: space-between;
+  padding-left: 2.4rem;
+  margin-top: 0.35rem;
+  font-size: 0.65rem;
+  color: var(--color-text-dim);
+}
+
+/* Zone palette: a heat progression through the app's own colours rather
+   than the neon bands other apps use. */
+.zone-picker {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 0.5rem;
+  margin-top: 1.25rem;
+}
+
+@media (max-width: 800px) {
+  .zone-picker {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.zone-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+  padding: 0.6rem 0.3rem;
+  background: transparent;
+  border: 2px solid var(--zone-color);
+  border-radius: 2px;
+  color: var(--color-text);
+}
+
+.zone-btn:hover:not(:disabled) {
+  background: var(--zone-color);
+  color: #17140f;
+}
+
+.zone-btn strong {
+  font-family: var(--font-pixel);
+  font-size: 0.7rem;
+  font-weight: 400;
+  color: var(--zone-color);
+}
+
+.zone-btn:hover strong {
+  color: #17140f;
+}
+
+.zone-btn em {
+  font-style: normal;
+  font-size: 0.62rem;
+  opacity: 0.85;
+}
+
+.zone-btn span {
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  opacity: 0.7;
+}

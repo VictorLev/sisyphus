@@ -117,6 +117,7 @@ async function loadConfig() {
     riderFtp = profile.ftp > 0 ? profile.ftp : null;
     liveScreen.setFtp(riderFtp);
     setChronicleFtp(riderFtp);
+    builder.setFtp(riderFtp);
     renderRiderName(profile);
   } catch { /* %FTP display is optional */ }
 }
@@ -127,6 +128,7 @@ document.addEventListener('profilechange', (event) => {
   riderFtp = event.detail.ftp > 0 ? event.detail.ftp : null;
   liveScreen.setFtp(riderFtp);
   setChronicleFtp(riderFtp);
+  builder.setFtp(riderFtp);
   renderRiderName(event.detail);
 });
 
