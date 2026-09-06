@@ -179,15 +179,16 @@ h2 {
 }
 
 /* Settings is a destination you visit rarely, so it sits apart from the
-   riding destinations: pushed to the far right as a bare gear. */
-.main-nav .nav-icon-only {
+   riding destinations: pushed to the far right of the nav. */
+.main-nav .nav-settings {
   margin-left: auto;
-  padding: 0.6rem;
 }
 
-.main-nav .nav-icon-only svg {
-  width: 20px;
-  height: 20px;
+/* The cog's teeth are a filled outline rather than a stroked path — at 18px
+   a stroked gear turns to mush. */
+.main-nav .nav-settings svg path {
+  fill: currentColor;
+  stroke: none;
 }
 
 @media (max-width: 700px) {
