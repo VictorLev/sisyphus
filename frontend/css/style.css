@@ -178,6 +178,18 @@ h2 {
   border-color: var(--color-bronze);
 }
 
+/* Settings is a destination you visit rarely, so it sits apart from the
+   riding destinations: pushed to the far right as a bare gear. */
+.main-nav .nav-icon-only {
+  margin-left: auto;
+  padding: 0.6rem;
+}
+
+.main-nav .nav-icon-only svg {
+  width: 20px;
+  height: 20px;
+}
+
 @media (max-width: 700px) {
   .main-nav button span,
   .rider-strip {
