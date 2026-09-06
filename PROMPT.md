@@ -141,8 +141,10 @@ data — this is still a bike computer, not a storybook.
 
 **Phase 1 — MVP (BUILT, verified against the trainer)**
 - Connect to trainer over Bluetooth, parse Indoor Bike Data correctly ✓
-- Live screen: power, cadence, speed, all visible at once, styled as a
-  pixel-art bike-computer readout (dark mode, stone-grey/bronze palette) ✓
+- Live screen ✓ — a full-viewport dashboard: workout steps down the left
+  with the current one lit, power/cadence/speed across the top centre,
+  current power zone + level top right, the intensity timeline along the
+  bottom, End Ride bottom-left and the gear bottom-right.
 - Power displayed as **10-second smoothed** average (storage keeps raw) ✓
 - Workout builder: ordered `duration + target watts` segments, manual
   targets (no FTP auto-scaling) ✓, with a live bar preview — width by
@@ -154,7 +156,11 @@ data — this is still a bike computer, not a storybook.
   nothing automatically — it only labels and colours.
 - Run a workout: current segment, target watts, time remaining, workout
   progression; "PUSH COMPLETE" state at the end ✓
-- Boulder-incline motif fills per segment, holds the summit on completion ✓
+- Boulder motif ✓ — during a ride Sisyphus occupies the centre of the
+  dashboard and **works harder the higher the power zone**: the slope
+  steepens, his stride quickens (190ms → 70ms per frame), and from Z4 up
+  he drops from upright into a braced-low posture. Three cues at once, so
+  the difference between Z2 and Z5 is legible from the bike.
 - Session (a Push) saved permanently to SQLite at the end of a ride ✓
 - ~~Manual lap marking~~ — cut by decision; `lap_marker` column remains
 

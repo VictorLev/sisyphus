@@ -1085,3 +1085,312 @@ button.secondary:hover:not(:disabled) {
   letter-spacing: 0.06em;
   opacity: 0.7;
 }
+
+/* ============================================================ ride dashboard */
+
+/* The ride view fills the screen: it is read from the bike, so it gets the
+   whole viewport rather than sitting inside the normal page rhythm. */
+.ride-view {
+  min-height: calc(100vh - 5rem);
+}
+
+.ride-grid {
+  display: grid;
+  grid-template-columns: minmax(230px, 300px) 1fr minmax(190px, 240px);
+  grid-template-rows: auto 1fr auto auto;
+  grid-template-areas:
+    "steps metrics zone"
+    "steps hero    zone"
+    "timeline timeline timeline"
+    "footer footer footer";
+  gap: 1rem;
+  min-height: calc(100vh - 5rem);
+}
+
+@media (max-width: 1100px) {
+  .ride-grid {
+    grid-template-columns: 1fr;
+    grid-template-areas: "metrics" "hero" "zone" "timeline" "steps" "footer";
+  }
+}
+
+.ride-grid > * {
+  background: linear-gradient(180deg, var(--color-surface-raised), var(--color-surface));
+  border: var(--border);
+  border-radius: 2px;
+}
+
+/* -- 1. steps ------------------------------------------------------------ */
+
+.ride-steps {
+  grid-area: steps;
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+  overflow: hidden;
+}
+
+.ride-steps-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding-bottom: 0.75rem;
+  margin-bottom: 0.5rem;
+  border-bottom: 2px solid var(--color-stone);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-bronze);
+}
+
+.steps-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.steps-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.6rem;
+  margin-bottom: 3px;
+  border-left: 4px solid var(--zone-color, var(--color-stone));
+  background: rgba(0, 0, 0, 0.25);
+  font-size: 0.85rem;
+}
+
+.steps-list li.is-done {
+  opacity: 0.4;
+}
+
+.steps-list li.is-current {
+  background: var(--zone-color, var(--color-bronze));
+  color: #17140f;
+  font-weight: 700;
+}
+
+.steps-list .step-watts {
+  flex: 1;
+  font-family: var(--font-pixel);
+  font-size: 0.72rem;
+}
+
+.steps-list .step-time {
+  font-size: 0.78rem;
+  opacity: 0.85;
+}
+
+/* -- 2. metrics ---------------------------------------------------------- */
+
+.ride-metrics {
+  grid-area: metrics;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  align-items: center;
+  padding: 1.25rem 1rem;
+  text-align: center;
+}
+
+.ride-metric + .ride-metric {
+  border-left: 2px solid var(--color-stone);
+}
+
+.ride-metric-value {
+  display: block;
+  font-family: var(--font-pixel);
+  font-size: clamp(2rem, 4.6vw, 3.8rem);
+  line-height: 1.1;
+  color: var(--color-bronze-bright);
+  text-shadow: 0 0 30px rgba(224, 192, 136, 0.25);
+}
+
+.ride-metric-label {
+  display: block;
+  margin-top: 0.7rem;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--color-bronze);
+}
+
+/* -- 3. zone + level ----------------------------------------------------- */
+
+.ride-zone {
+  grid-area: zone;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.25rem 1rem;
+  text-align: center;
+}
+
+.zone-badge {
+  padding: 1rem 0.5rem;
+  border: 2px solid var(--zone-color, var(--color-stone));
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--zone-color, #3a3632) 22%, transparent);
+}
+
+.zone-badge strong {
+  display: block;
+  font-family: var(--font-pixel);
+  font-size: 1.8rem;
+  font-weight: 400;
+  color: var(--zone-color, var(--color-bronze-bright));
+}
+
+.zone-badge span {
+  display: block;
+  margin-top: 0.5rem;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--color-text-dim);
+}
+
+/* Z1..Z6 ladder, current zone lit. */
+.zone-scale {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 2px;
+}
+
+.zone-scale span {
+  padding: 0.3rem 0;
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: var(--color-text-dim);
+  background: rgba(0, 0, 0, 0.3);
+  border-bottom: 3px solid var(--zone-color);
+  opacity: 0.4;
+}
+
+.zone-scale span.is-active {
+  opacity: 1;
+  color: #17140f;
+  background: var(--zone-color);
+}
+
+.ride-level {
+  margin-top: auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding-top: 0.75rem;
+  border-top: 2px solid var(--color-stone);
+}
+
+.ride-level span {
+  font-family: var(--font-pixel);
+  font-size: 0.8rem;
+  color: var(--color-bronze-bright);
+}
+
+.ride-level em {
+  font-style: normal;
+  font-family: var(--font-pixel);
+  font-size: 0.8rem;
+  color: var(--color-text-dim);
+}
+
+/* -- 8. hero ------------------------------------------------------------- */
+
+.ride-hero {
+  grid-area: hero;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+  padding: 1.5rem;
+}
+
+#ride-hero-canvas {
+  image-rendering: pixelated;
+  width: 100%;
+  max-width: 560px;
+  height: auto;
+}
+
+.ride-target {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: center;
+  gap: 1.75rem;
+  text-align: center;
+}
+
+.ride-target strong {
+  width: 100%;
+  font-family: var(--font-pixel);
+  font-size: clamp(0.9rem, 1.6vw, 1.3rem);
+  color: var(--color-bronze-bright);
+}
+
+.ride-target b {
+  font-family: var(--font-pixel);
+  font-size: clamp(1rem, 2vw, 1.6rem);
+  font-weight: 400;
+  color: var(--color-text);
+}
+
+.ride-target em {
+  font-style: normal;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--color-bronze);
+}
+
+.ride-note {
+  margin: 0;
+  padding: 0.5rem 1rem;
+  background: rgba(176, 141, 87, 0.12);
+  border-left: 3px solid var(--color-bronze);
+  color: var(--color-bronze-bright);
+  font-size: 0.9rem;
+}
+
+/* -- 5. timeline & 6/7. footer ------------------------------------------- */
+
+.ride-timeline {
+  grid-area: timeline;
+  padding: 0.75rem;
+}
+
+.ride-timeline .segment-timeline {
+  margin: 0;
+  height: 40px;
+}
+
+.ride-footer {
+  grid-area: footer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 1rem;
+}
+
+.ride-footer #end-ride-btn {
+  padding: 0.9rem 2rem;
+  font-size: 1rem;
+}
+
+.gear-display {
+  display: flex;
+  align-items: baseline;
+  gap: 0.7rem;
+}
+
+.gear-display strong {
+  font-family: var(--font-pixel);
+  font-size: clamp(1.4rem, 2.6vw, 2.2rem);
+  font-weight: 400;
+  color: var(--color-bronze-bright);
+}

@@ -357,53 +357,73 @@
       </div>
     </section>
 
-    <section data-view="live" class="view">
-      <div class="readout">
-        <div class="metric">
-          <span class="metric-value" id="power-value">--</span>
-          <span class="metric-label">watts (10s)</span>
-        </div>
-        <div class="metric">
-          <span class="metric-value" id="cadence-value">--</span>
-          <span class="metric-label">rpm</span>
-        </div>
-        <div class="metric">
-          <span class="metric-value" id="speed-value">--</span>
-          <span class="metric-label">km/h</span>
-        </div>
-        <div class="metric" id="gear-metric" hidden>
-          <span class="metric-value" id="gear-value">--</span>
-          <span class="metric-label">gear</span>
-        </div>
-      </div>
+    <section data-view="live" class="view ride-view">
+      <div class="ride-grid">
+        <!-- 1. Steps: the workout, current segment highlighted -->
+        <aside class="ride-steps" id="ride-steps">
+          <div class="ride-steps-head">
+            <span id="steps-title">Free Ride</span>
+            <span id="steps-progress">--</span>
+          </div>
+          <ol class="steps-list" id="steps-list"></ol>
+        </aside>
 
-      <p id="ride-note" class="ride-note" hidden></p>
-
-      <div id="segment-timeline" class="segment-timeline" hidden></div>
-
-      <div id="segment-info" class="segment-info" hidden>
-        <div>
-          <p class="segment-label" id="segment-label-value">--</p>
-          <div class="segment-figures">
-            <div class="segment-figure">
-              <span class="segment-figure-value" id="segment-target-value">--</span>
-              <span class="segment-figure-label" id="segment-target-label">target watts</span>
-            </div>
-            <div class="segment-figure">
-              <span class="segment-figure-value" id="segment-remaining-value">--</span>
-              <span class="segment-figure-label">remaining</span>
-            </div>
-            <div class="segment-figure" id="segment-grade-figure" hidden>
-              <span class="segment-figure-value" id="segment-grade-value">--</span>
-              <span class="segment-figure-label" id="segment-grade-label">grade</span>
-            </div>
+        <!-- 2. Live numbers -->
+        <div class="ride-metrics">
+          <div class="ride-metric">
+            <span class="ride-metric-value" id="power-value">--</span>
+            <span class="ride-metric-label">watts (10s)</span>
+          </div>
+          <div class="ride-metric">
+            <span class="ride-metric-value" id="cadence-value">--</span>
+            <span class="ride-metric-label">rpm</span>
+          </div>
+          <div class="ride-metric">
+            <span class="ride-metric-value" id="speed-value">--</span>
+            <span class="ride-metric-label">km/h</span>
           </div>
         </div>
-        <canvas id="boulder-canvas" width="160" height="60"></canvas>
-      </div>
 
-      <div class="panel live-controls">
-        <button id="end-ride-btn" type="button" class="secondary">End Ride</button>
+        <!-- 3. Zone and level -->
+        <aside class="ride-zone" id="ride-zone-panel">
+          <div class="zone-badge" id="zone-badge">
+            <strong id="zone-name">Z1</strong>
+            <span id="zone-label">Recovery</span>
+          </div>
+          <div class="zone-scale" id="zone-scale"></div>
+          <div class="ride-level">
+            <span id="ride-level">Lv 1</span>
+            <em id="ride-elapsed">0:00</em>
+          </div>
+        </aside>
+
+        <!-- 8. The rider, working harder the higher the zone -->
+        <div class="ride-hero">
+          <canvas id="ride-hero-canvas" aria-hidden="true"></canvas>
+          <div class="ride-target" id="ride-target" hidden>
+            <strong id="segment-label-value">--</strong>
+            <span><b id="segment-target-value">--</b> <em id="segment-target-label">target watts</em></span>
+            <span><b id="segment-remaining-value">--</b> <em>remaining</em></span>
+            <span class="ride-grade" id="segment-grade-figure" hidden>
+              <b id="segment-grade-value">--</b> <em id="segment-grade-label">grade</em>
+            </span>
+          </div>
+          <p id="ride-note" class="ride-note" hidden></p>
+        </div>
+
+        <!-- 5. Intensity timeline -->
+        <div class="ride-timeline">
+          <div id="segment-timeline" class="segment-timeline" hidden></div>
+        </div>
+
+        <!-- 6 & 7. Controls and gear -->
+        <div class="ride-footer">
+          <button id="end-ride-btn" type="button" class="secondary">End Ride</button>
+          <div class="gear-display" id="gear-metric">
+            <strong id="gear-value">--</strong>
+            <span class="metric-label">gear</span>
+          </div>
+        </div>
       </div>
     </section>
 

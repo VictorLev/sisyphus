@@ -9,7 +9,7 @@ import { initViews, showView } from './ui/views.js';
 import { initHome } from './ui/home.js';
 import { initBuilder } from './workout/builder.js';
 import { initLiveScreen } from './ui/live-screen.js';
-import { createBoulder } from './ui/boulder.js';
+import { createRideHero } from './ui/ride-hero.js';
 import { createSession, getSettings, getProfile, getLevel } from './api/client.js';
 import { initProfile, initSettings } from './ui/config-forms.js';
 import { initSisyphusLoop } from './ui/sisyphus-loop.js';
@@ -23,7 +23,7 @@ let trainerControl = null; // created once the trainer's GATT service is up
 const rollingAverage = new RollingAverage(10000);
 const distanceTracker = new DistanceTracker();
 const recorder = new SessionRecorder();
-const boulder = createBoulder(document.getElementById('boulder-canvas'));
+const rideHero = createRideHero(document.getElementById('ride-hero-canvas'));
 
 let runner = null;
 // 'gears'  — rider shifts, trainer holds a fixed resistance per gear
@@ -36,6 +36,7 @@ let rideMode = 'gears';
 let activeWorkout = null;
 let latestReading = null;
 let rideStartedAt = null;
+let rideStartedMs = null; // performance clock, for the elapsed readout
 let rafId = null;
 let recordIntervalId = null;
 let sampleIntervalMs = 1000; // overridden by saved settings
@@ -144,6 +145,7 @@ async function refreshLevel() {
   try {
     const data = await getLevel();
     document.getElementById('nav-level').textContent = `Lv ${data.level}`;
+    liveScreen.setLevel(data.level);
     document.getElementById('profile-level').textContent = `Lv ${data.level}`;
     document.getElementById('level-fill').style.width = `${Math.round(data.progress * 100)}%`;
     document.getElementById('level-detail').textContent =
@@ -330,11 +332,14 @@ trainerConnection.addEventListener('reading', (event) => {
     heartRate: reading.heartRateBpm,
   });
 
-  liveScreen.updateRawNumbers({
+  const zone = liveScreen.updateRawNumbers({
     powerSmoothed: rollingAverage.average(),
     cadence: reading.instantaneousCadenceRpm,
     speed: reading.instantaneousSpeedKmh,
   });
+  // Only fires when the zone actually changes: Sisyphus leans in harder and
+  // works faster the deeper the rider is into their zones.
+  if (zone) rideHero.setZone(zone.id, zone.color);
 });
 
 function startRide(workout) {
@@ -345,6 +350,7 @@ function startRide(workout) {
   recorder.start(performance.now());
   latestReading = null;
   rideStartedAt = new Date().toISOString();
+  rideStartedMs = performance.now();
 
   runner = workout ? new WorkoutRunner(workout.structure) : null;
   if (runner) {
@@ -361,9 +367,9 @@ function startRide(workout) {
   rideMode = workout ? preferredMode : 'gears';
   updateModeUi();
 
-  liveScreen.buildTimeline(workout ? workout.structure : null);
+  liveScreen.buildTimeline(workout ? workout.structure : null, workout?.name);
   liveScreen.updateWorkoutInfo(runner ? runner.state : null);
-  boulder.setProgress(0);
+  liveScreen.setElapsed(0);
   updateGearDisplay(gears.gearNumber);
 
   showView('live');
@@ -380,11 +386,8 @@ function startLoop() {
     if (runner) {
       const state = runner.tick(now);
       liveScreen.updateWorkoutInfo(state);
-      // On completion currentSegment is null and progressFraction resets to
-      // 0; keep the boulder at the summit instead of letting it drop.
-      boulder.setGrade(state.currentSegment?.grade_percent ?? 0);
-      boulder.setProgress(state.isComplete ? 1 : state.progressFraction);
     }
+    if (rideStartedMs != null) liveScreen.setElapsed((now - rideStartedMs) / 1000);
     rafId = requestAnimationFrame(frame);
   }
   rafId = requestAnimationFrame(frame);
