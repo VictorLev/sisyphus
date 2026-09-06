@@ -10,7 +10,7 @@ import { initHome } from './ui/home.js';
 import { initBuilder } from './workout/builder.js';
 import { initLiveScreen } from './ui/live-screen.js';
 import { createBoulder } from './ui/boulder.js';
-import { createSession, getSettings, getProfile } from './api/client.js';
+import { createSession, getSettings, getProfile, getLevel } from './api/client.js';
 import { initProfile, initSettings } from './ui/config-forms.js';
 import { initSisyphusLoop } from './ui/sisyphus-loop.js';
 import { initChronicle, setChronicleFtp } from './ui/chronicle.js';
@@ -117,26 +117,39 @@ async function loadConfig() {
     riderFtp = profile.ftp > 0 ? profile.ftp : null;
     liveScreen.setFtp(riderFtp);
     setChronicleFtp(riderFtp);
-    renderRiderStrip(profile);
+    renderRiderName(profile);
   } catch { /* %FTP display is optional */ }
 }
 loadConfig();
+refreshLevel();
 
 document.addEventListener('profilechange', (event) => {
   riderFtp = event.detail.ftp > 0 ? event.detail.ftp : null;
   liveScreen.setFtp(riderFtp);
   setChronicleFtp(riderFtp);
-  renderRiderStrip(event.detail);
+  renderRiderName(event.detail);
 });
 
-// Keeps the rider strip in the header in step with the saved profile.
-function renderRiderStrip(profile) {
-  const ftp = profile.ftp > 0 ? profile.ftp : null;
-  const weight = profile.weight_kg > 0 ? profile.weight_kg : null;
-  document.getElementById('strip-name').textContent = profile.name?.trim() || 'Anonymous';
-  document.getElementById('strip-ftp').textContent = ftp ? `${Math.round(ftp)} W` : '—';
-  document.getElementById('strip-weight').textContent = weight ? `${weight} kg` : '—';
-  document.getElementById('strip-wkg').textContent = ftp && weight ? (ftp / weight).toFixed(2) : '—';
+// The header carries just the rider's name and level; the detailed vitals
+// live on the Profile page where they are edited.
+function renderRiderName(profile) {
+  document.getElementById('nav-name').textContent = profile.name?.trim() || 'Anonymous';
+}
+
+// Level is derived from the ride log, so it is refreshed after every Push
+// as well as at startup.
+async function refreshLevel() {
+  try {
+    const data = await getLevel();
+    document.getElementById('nav-level').textContent = `Lv ${data.level}`;
+    document.getElementById('profile-level').textContent = `Lv ${data.level}`;
+    document.getElementById('level-fill').style.width = `${Math.round(data.progress * 100)}%`;
+    document.getElementById('level-detail').textContent =
+      `${data.into_level} / ${data.needed_for_next} XP to level ${data.level + 1} · ` +
+      `${data.totals.pushes} Pushes · ${data.totals.minutes} min · ${data.totals.distance_km} km`;
+  } catch (err) {
+    console.warn('[app] level unavailable:', err.message);
+  }
 }
 
 document.getElementById('summary-home-btn').addEventListener('click', () => {
@@ -413,6 +426,7 @@ async function endRide() {
 
   try {
     const session = await createSession(payload);
+    refreshLevel();
     showSummary(session);
   } catch (err) {
     alert(`Could not save the Push: ${err.message}`);

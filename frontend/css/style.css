@@ -102,36 +102,29 @@ h2 {
   display: none;
 }
 
-/* Rider vitals, always in view — the numbers that set every workout target. */
-.rider-strip {
+/* Name and level ride in the nav itself; the detailed vitals live on the
+   Profile page where they are edited. */
+.nav-rider {
+  margin-left: auto;
   display: flex;
-  flex-wrap: wrap;
-  gap: 2.5rem;
-  padding: 0.9rem 1.25rem;
-  margin: 1.25rem 0;
-  background: linear-gradient(180deg, var(--color-surface-raised), var(--color-surface));
-  border: var(--border);
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.35rem 0.9rem 0.35rem 0.4rem;
+  border: 2px solid var(--color-stone);
   border-radius: 2px;
 }
 
-.rider-strip span {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-}
-
-.rider-strip em {
-  font-style: normal;
-  font-size: 0.65rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--color-bronze);
-}
-
-.rider-strip strong {
+.nav-level {
   font-family: var(--font-pixel);
-  font-size: 0.95rem;
-  font-weight: 400;
+  font-size: 0.65rem;
+  color: #17140f;
+  background: var(--color-bronze);
+  padding: 0.35rem 0.5rem;
+  border-radius: 2px;
+}
+
+.nav-name {
+  font-size: 0.85rem;
   color: var(--color-bronze-bright);
 }
 
@@ -181,7 +174,7 @@ h2 {
 /* Settings is a destination you visit rarely, so it sits apart from the
    riding destinations: pushed to the far right of the nav. */
 .main-nav .nav-settings {
-  margin-left: auto;
+  margin-left: 0.5rem;
 }
 
 /* The cog's teeth are a filled outline rather than a stroked path — at 18px
@@ -869,4 +862,42 @@ button.secondary:hover:not(:disabled) {
 .tools-link a:hover {
   color: var(--color-bronze);
   border-bottom-color: var(--color-bronze);
+}
+
+/* ------------------------------------------------------------ level card */
+
+.level-block {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.level-badge {
+  font-family: var(--font-pixel);
+  font-size: 1.1rem;
+  color: var(--color-bronze-bright);
+  border: 2px solid var(--color-bronze);
+  border-radius: 2px;
+  padding: 0.9rem 1rem;
+  white-space: nowrap;
+}
+
+.level-meter {
+  flex: 1;
+}
+
+.level-bar {
+  height: 14px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 2px solid var(--color-stone);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.level-bar span {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: var(--color-bronze);
+  transition: width 0.4s ease;
 }

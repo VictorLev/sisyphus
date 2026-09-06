@@ -91,3 +91,7 @@ export function setWorkoutStarred(id, starred) {
     body: JSON.stringify({ starred }),
   });
 }
+
+export function getLevel() {
+  return request('/api/level');
+}

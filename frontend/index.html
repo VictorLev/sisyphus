@@ -17,13 +17,6 @@
         <canvas id="sisyphus-canvas" aria-hidden="true"></canvas>
       </div>
 
-      <div class="rider-strip" id="rider-strip">
-        <span><em>Rider</em><strong id="strip-name">—</strong></span>
-        <span><em>FTP</em><strong id="strip-ftp">—</strong></span>
-        <span><em>Weight</em><strong id="strip-weight">—</strong></span>
-        <span><em>W/kg</em><strong id="strip-wkg">—</strong></span>
-      </div>
-
       <nav class="main-nav" id="main-nav">
         <button type="button" data-nav="home">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>
@@ -49,6 +42,11 @@
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
           Profile
         </button>
+        <div class="nav-rider" id="nav-rider">
+          <span class="nav-level" id="nav-level" title="Level">Lv 1</span>
+          <span class="nav-name" id="nav-name">—</span>
+        </div>
+
         <button type="button" data-nav="settings" class="nav-settings">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.80 1.87L13.20 1.87L13.90 4.85L15.72 5.60L18.31 3.99L20.01 5.69L18.40 8.28L19.15 10.10L22.13 10.80L22.13 13.20L19.15 13.90L18.40 15.72L20.01 18.31L18.31 20.01L15.72 18.40L13.90 19.15L13.20 22.13L10.80 22.13L10.10 19.15L8.28 18.40L5.69 20.01L3.99 18.31L5.60 15.72L4.85 13.90L1.87 13.20L1.87 10.80L4.85 10.10L5.60 8.28L3.99 5.69L5.69 3.99L8.28 5.60L10.10 4.85Z"/><circle cx="12" cy="12" r="3.1"/></svg>
           Settings
@@ -170,6 +168,20 @@
 
       <div class="builder-grid">
         <div class="home-col">
+          <div class="panel">
+            <h2>Progress</h2>
+            <div class="level-block">
+              <span class="level-badge" id="profile-level">Lv 1</span>
+              <div class="level-meter">
+                <div class="level-bar"><span id="level-fill"></span></div>
+                <p class="hint" id="level-detail">&nbsp;</p>
+              </div>
+            </div>
+            <p class="hint">XP comes from time and distance ridden, plus each
+              completed Push — quantities that never change, so raising your FTP
+              can never cost you a level.</p>
+          </div>
+
           <div class="panel">
             <h2>Rider</h2>
             <label class="field">

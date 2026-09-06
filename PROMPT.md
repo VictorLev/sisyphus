@@ -182,6 +182,17 @@ ERG blocks gear writes, which would otherwise fight the trainer's target.
 - Ending a ride sends Reset (`0x01`) so ERG stops forcing a target on the
   rider once they stop.
 
+**Levelling (BUILT)**
+- XP accrues from **time and distance ridden plus each completed Push** —
+  deliberately not from training load, because load depends on FTP, so
+  raising your FTP would shrink past rides and your level could go *down*.
+  A progression system must never regress.
+- Cumulative thresholds are `100 x (L-1) x L / 2`: level 2 lands after
+  roughly an hour and a half of riding, level 10 after ~64 hours.
+- Name and level sit in the nav bar; the Profile page shows the level, a
+  progress bar and the totals behind it. Computed from the sessions table
+  alone (no sample scanning) so the header can ask for it on every load.
+
 **Profile and Settings pages (BUILT)**
 - **Profile**: name, FTP, weight, max HR. FTP annotates live workout
   targets as `% FTP`; weight and max HR are stored for later use.

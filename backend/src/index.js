@@ -7,6 +7,7 @@ import workoutsRouter from './routes/workouts.js';
 import sessionsRouter from './routes/sessions.js';
 import configRouter from './routes/config.js';
 import recordsRouter from './routes/records.js';
+import levelRouter from './routes/level.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const frontendDir = path.join(__dirname, '..', '..', 'frontend');
@@ -24,6 +25,7 @@ app.get('/api/health', (req, res) => {
 app.use('/api/workouts', workoutsRouter);
 app.use('/api/sessions', sessionsRouter);
 app.use('/api/records', recordsRouter);
+app.use('/api/level', levelRouter);
 app.use('/api', configRouter);
 
 app.listen(port, () => {
