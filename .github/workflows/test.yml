@@ -1,0 +1,23 @@
+name: tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # Only the backend has dependencies; the frontend is plain ES modules
+      # with no build step, and the tests use Node's built-in runner.
+      - name: Install backend dependencies
+        run: npm ci --prefix backend
+
+      - name: Run tests
+        run: npm test

@@ -11,12 +11,16 @@ export class GearModel extends EventTarget {
   // Gentle default range: resistance 0–8 across 12 gears (gear 7 ≈ 4.4),
   // tuned down from an initial 2–18 that made the middle gears too hard.
   // These are the two numbers to adjust for feel.
-  constructor({ gearCount = 12, minResistance = 0, maxResistance = 8, startGear = 4 } = {}) {
+  // startGear is 1-BASED, matching the gear numbers shown to the rider and
+  // the start_gear setting. It used to be a 0-based index here while
+  // configure() treated it as 1-based, so the same value meant different
+  // gears depending on which path set it.
+  constructor({ gearCount = 12, minResistance = 0, maxResistance = 8, startGear = 5 } = {}) {
     super();
     this.gearCount = gearCount;
     this.minResistance = minResistance;
     this.maxResistance = maxResistance;
-    this.index = Math.max(0, Math.min(gearCount - 1, startGear));
+    this.index = Math.max(0, Math.min(gearCount - 1, Math.round(startGear) - 1));
   }
 
   // Applied from saved settings at startup. Rebuilding the model would lose

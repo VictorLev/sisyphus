@@ -1,0 +1,12 @@
+{
+  "name": "sisyphus",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Push the boulder. Every day.",
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/",
+    "dev": "npm --prefix backend run dev",
+    "start": "npm --prefix backend start"
+  }
+}

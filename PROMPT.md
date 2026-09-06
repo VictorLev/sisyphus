@@ -93,7 +93,6 @@ data — this is still a bike computer, not a storybook.
   Bluetooth calls live here, since Web Bluetooth is a browser-only API.
 - **Backend:** small Node.js + Express server. Responsibilities:
   - Persist ride history, workouts, and best-effort records
-  - Hold the Strava OAuth client secret and handle the token exchange/refresh
   - Serve the frontend files
 - **Database:** SQLite (single file). Matches a one-user personal project,
   trivial to back up, and needs no separate DB server when this later moves
@@ -241,9 +240,14 @@ ERG blocks gear writes, which would otherwise fight the trainer's target.
   are never cached — a training log showing a stale ride list is worse than
   showing an error — and `sw.js` is served no-cache so an old worker can
   never pin the app to an old shell.
-- Basic test suite (unit tests on the FTMS parser and workout logic — the
-  parser is the highest-risk piece of code, test it thoroughly) + GitHub
-  Actions CI running tests on push
+- Test suite + CI — BUILT: 64 tests on Node's built-in runner (`npm test`),
+  no test framework dependency, matching the project's no-bundler stance.
+  Covers the FTMS parser thoroughly (the inverted bit-0 rule, field
+  resolutions, the 24-bit distance decode, signed fields, ordering, and
+  truncated buffers), the workout runner, gear model, zones, rolling
+  average, distance tracker and session recorder, plus backend API
+  integration tests against a throwaway database on an ephemeral port.
+  GitHub Actions runs them on every push and pull request.
 
 **Phase 3 — complete**
 
@@ -255,9 +259,9 @@ trainer-control ideas are optional polish rather than planned work:
   gears ever prove unsatisfying
 - ERG target trimming (bump the held wattage ±N W mid-interval)
 
-**Phase 4**
-- Strava export: OAuth connect flow, upload completed sessions as
-  activities
+**Phase 4 — dropped**
+- Strava export was cut. The log is self-contained and the export was never
+  the point of the project.
 
 ## Explicit non-goals
 
