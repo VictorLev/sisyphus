@@ -5,6 +5,7 @@ import { RollingAverage } from './metrics/rolling-average.js';
 import { DistanceTracker } from './metrics/distance.js';
 import { WorkoutRunner } from './workout/runner.js';
 import { SessionRecorder } from './session/recorder.js';
+import { stashRide, flushPending, pendingCount } from './session/pending.js';
 import { initViews, showView } from './ui/views.js';
 import { initHome } from './ui/home.js';
 import { initBuilder } from './workout/builder.js';
@@ -124,6 +125,7 @@ async function loadConfig() {
 }
 loadConfig();
 refreshLevel();
+retryPendingRides();
 
 document.addEventListener('profilechange', (event) => {
   riderFtp = event.detail.ftp > 0 ? event.detail.ftp : null;
@@ -434,8 +436,38 @@ async function endRide() {
     refreshLevel();
     showSummary(session);
   } catch (err) {
-    alert(`Could not save the Push: ${err.message}`);
+    // Never drop the ride. Park it and retry on the next load — the rider
+    // cannot pedal the hour again.
+    const kept = stashRide(payload);
+    if (kept) {
+      alert(
+        `Could not save the Push: ${err.message}\n\n` +
+        'The ride has been kept on this device and will be saved automatically ' +
+        'once the server is reachable. Do not clear your browser data before then.'
+      );
+    } else {
+      alert(
+        `Could not save the Push: ${err.message}\n\n` +
+        'It could not be kept on this device either. Leave this page open and ' +
+        'restart the server if you can — closing it will lose the ride.'
+      );
+    }
     showView('home');
+  }
+}
+
+// Any ride parked by a failed save is retried as soon as the app loads.
+async function retryPendingRides() {
+  if (pendingCount() === 0) return;
+  const { saved, remaining } = await flushPending(createSession);
+  if (saved > 0) {
+    refreshLevel();
+    home.refreshWorkoutList();
+    flashRideNote(`Saved ${saved} ride${saved > 1 ? 's' : ''} that failed earlier.`, 8000);
+    console.info(`[app] recovered ${saved} pending ride(s)`);
+  }
+  if (remaining > 0) {
+    console.warn(`[app] ${remaining} ride(s) still waiting for the server`);
   }
 }
 
