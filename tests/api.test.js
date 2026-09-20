@@ -128,6 +128,23 @@ describe('sessions API', () => {
     assert.equal(session.max_power, 275);
   });
 
+  test('accepts a long ride whose body exceeds the default JSON limit', async () => {
+    // Express defaults to 100kb, which a ride outgrows in ~15 minutes. This
+    // silently made long rides unsaveable, so the limit is pinned by a test.
+    const samples = Array.from({ length: 4000 }, (_, i) => ({
+      timestamp_offset_sec: i, power: 180, cadence: 88, speed: 30, heart_rate: null,
+    }));
+    const res = await postJson('/api/sessions', {
+      started_at: '2026-01-05T10:00:00Z',
+      ended_at: '2026-01-05T11:06:40Z',
+      distance_m: 33000,
+      samples,
+    });
+    assert.equal(res.status, 201, 'a 67-minute ride must save');
+    const session = await res.json();
+    assert.equal(session.avg_power, 180);
+  });
+
   test('requires timestamps and at least one sample', async () => {
     assert.equal((await postJson('/api/sessions', { started_at: '', ended_at: '', samples: [] })).status, 400);
   });
@@ -191,12 +208,33 @@ describe('config API', () => {
 });
 
 describe('records and level', () => {
-  test('a duration record needs a ride that actually covered it', async () => {
-    // Every ride so far is short, so the 20-minute record must be absent
-    // rather than derived from a shorter effort.
-    const { records } = await (await api('/api/records')).json();
-    const twentyMin = records.find((r) => r.key === 'best_1200s');
-    assert.equal(twentyMin.value, null);
+  test('a duration record is only ever set by a ride that covered it', async () => {
+    // The invariant, rather than an assumption about which rides exist: a
+    // 20-minute record must never come from a 5-minute effort.
+    const [{ records }, sessions] = await Promise.all([
+      (await api('/api/records')).json(),
+      (await api('/api/sessions')).json(),
+    ]);
+    const longestSec = Math.max(
+      0,
+      ...sessions.map((s) => (new Date(s.ended_at) - new Date(s.started_at)) / 1000)
+    );
+
+    for (const record of records.filter((r) => r.key.startsWith('best_'))) {
+      const windowSec = Number(record.key.match(/best_(\d+)s/)[1]);
+      if (record.value == null) continue;
+      assert.ok(
+        longestSec >= windowSec,
+        `${record.key} is set but no ride is ${windowSec}s long`
+      );
+    }
+
+    // And a window longer than any ride must stay empty.
+    const impossible = records.find((r) => {
+      const m = r.key.match(/best_(\d+)s/);
+      return m && Number(m[1]) > longestSec;
+    });
+    if (impossible) assert.equal(impossible.value, null);
   });
 
   test('surfaces the ride that set each record', async () => {
