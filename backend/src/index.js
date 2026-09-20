@@ -5,7 +5,9 @@ import { readFileSync } from 'node:fs';
 import { createApp } from './app.js';
 
 const app = createApp();
-const port = Number(process.env.PORT) || 3000;
+// 7479 spells SISY on a phone keypad, and unlike 3000 it is unlikely to
+// collide with whatever else is running.
+const port = Number(process.env.PORT) || 7479;
 // Default to all interfaces so a home-server install is reachable on the LAN.
 const host = process.env.HOST || '0.0.0.0';
 

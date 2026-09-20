@@ -22,7 +22,7 @@ Restart=on-failure
 RestartSec=5
 
 Environment=NODE_ENV=production
-Environment=PORT=3000
+Environment=PORT=7479
 # The database lives outside the repo so a git pull can never touch it.
 Environment=DB_PATH=/var/lib/sisyphus/sisyphus.db
 

@@ -79,7 +79,7 @@ npm install --prefix backend
 npm run dev
 ```
 
-Then open **http://localhost:3000** in Chrome.
+Then open **http://localhost:7479** in Chrome.
 
 Web Bluetooth requires a secure context, and `localhost` counts as one — so no
 HTTPS setup is needed to run it on the machine beside your bike. If you serve it
@@ -135,7 +135,7 @@ the bike is just a screen.
 
 **One catch decides the whole setup: Web Bluetooth requires a secure context.**
 `localhost` is exempt, which is why development works over plain HTTP. A LAN
-address is not. Browse to `http://192.168.1.x:3000` and the app loads, the
+address is not. Browse to `http://192.168.1.x:7479` and the app loads, the
 Chronicle works — and *Connect Trainer* silently does nothing, because the
 browser will not expose Bluetooth at all. So a home-server install needs HTTPS.
 
@@ -155,7 +155,7 @@ this fails loudly rather than at the bike.
 | **[Tailscale](https://tailscale.com/kb/1153/enabling-https)** — `tailscale cert <host>.<tailnet>.ts.net` | Easiest. Real trusted certs, no domain, no port forwarding, works away from home too. |
 | **[mkcert](https://github.com/FiloSottile/mkcert)** — a local CA trusted on your own machines | Fully offline, no accounts. You must install the CA on the bike machine. |
 | **Let's Encrypt** via Caddy or certbot with a DNS-01 challenge | You already own a domain. Works for a LAN-only host since DNS-01 needs no inbound ports. |
-| Chrome's `--unsafely-treat-insecure-origin-as-secure=http://192.168.1.x:3000` flag | A quick trial. Per-machine and easy to forget — not a real setup. |
+| Chrome's `--unsafely-treat-insecure-origin-as-secure=http://192.168.1.x:7479` flag | A quick trial. Per-machine and easy to forget — not a real setup. |
 
 A self-signed certificate you simply click through is the one option to avoid:
 Chrome treats it as a broken secure context, and Web Bluetooth stays disabled.
