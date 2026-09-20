@@ -84,8 +84,9 @@ Then open **http://localhost:3000** in Chrome.
 Web Bluetooth requires a secure context, and `localhost` counts as one — so no
 HTTPS setup is needed to run it on the machine beside your bike. If you serve it
 from elsewhere on your network, you will need HTTPS — see
-[deploy/README.md](deploy/README.md) for running it on a home server with
-automatic updates.
+[Running it on a home server](#running-it-on-a-home-server), or
+[deploy/README.md](deploy/README.md) for the Docker setup with automatic
+updates.
 
 There is nothing to configure. The SQLite file is created on first run at
 `backend/data/sisyphus.db`. To change the port or database location, copy
@@ -117,13 +118,70 @@ tests/      Node's built-in test runner
 
 All Bluetooth happens **client-side**, because Web Bluetooth is a browser-only
 API. The backend never talks to the trainer; it stores workouts, sessions and
-settings, and serves the static files. That means the server can later live on a
-home server without changing anything — the browser beside the bike still owns
-the Bluetooth connection.
+settings, and serves the static files. That separation is why the server can
+live on a home server while the browser beside the bike owns the Bluetooth
+connection.
 
 The frontend has **no dependencies and no build step**: it is ES modules loaded
 directly by the browser. The backend has three (`express`, `better-sqlite3`,
 `dotenv`).
+
+## Running it on a home server
+
+The browser does the Bluetooth, so it must run on the machine beside the bike.
+The server only serves files and stores data — which makes it a good fit for a
+home server: your training log lives somewhere backed up, while the laptop at
+the bike is just a screen.
+
+**One catch decides the whole setup: Web Bluetooth requires a secure context.**
+`localhost` is exempt, which is why development works over plain HTTP. A LAN
+address is not. Browse to `http://192.168.1.x:3000` and the app loads, the
+Chronicle works — and *Connect Trainer* silently does nothing, because the
+browser will not expose Bluetooth at all. So a home-server install needs HTTPS.
+
+The server can terminate TLS itself; no nginx or Caddy required:
+
+```sh
+TLS_CERT=/path/to/cert.pem TLS_KEY=/path/to/key.pem npm start
+```
+
+It warns on startup if you are serving plain HTTP on a non-local address, so
+this fails loudly rather than at the bike.
+
+### Getting a certificate
+
+| Approach | Good when |
+| --- | --- |
+| **[Tailscale](https://tailscale.com/kb/1153/enabling-https)** — `tailscale cert <host>.<tailnet>.ts.net` | Easiest. Real trusted certs, no domain, no port forwarding, works away from home too. |
+| **[mkcert](https://github.com/FiloSottile/mkcert)** — a local CA trusted on your own machines | Fully offline, no accounts. You must install the CA on the bike machine. |
+| **Let's Encrypt** via Caddy or certbot with a DNS-01 challenge | You already own a domain. Works for a LAN-only host since DNS-01 needs no inbound ports. |
+| Chrome's `--unsafely-treat-insecure-origin-as-secure=http://192.168.1.x:3000` flag | A quick trial. Per-machine and easy to forget — not a real setup. |
+
+A self-signed certificate you simply click through is the one option to avoid:
+Chrome treats it as a broken secure context, and Web Bluetooth stays disabled.
+
+### Running as a service
+
+`deploy/sisyphus.service` is a systemd unit:
+
+```sh
+sudo cp deploy/sisyphus.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now sisyphus
+journalctl -u sisyphus -f
+```
+
+Edit `User`, `WorkingDirectory` and `ExecStart` first — the Node path varies
+(`which node`), especially under nvm.
+
+The unit puts the database at `/var/lib/sisyphus/sisyphus.db`, outside the repo,
+so a `git pull` can never touch your training log. Back it up by copying that
+one file; it is the entire history.
+
+### Don't expose it to the internet
+
+There is no authentication — anyone who can reach it can read and delete your
+log. Keep it on your LAN or a private tailnet.
 
 ## Development
 

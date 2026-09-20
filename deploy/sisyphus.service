@@ -1,0 +1,43 @@
+# Runs Sisyphus on a home server.
+#
+#   sudo cp deploy/sisyphus.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now sisyphus
+#   journalctl -u sisyphus -f
+#
+# Edit User, WorkingDirectory and the Environment lines to match your box.
+
+[Unit]
+Description=Sisyphus indoor training log
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=victor
+WorkingDirectory=/home/victor/projects/sisyphus/backend
+# Node's path varies (nvm, distro package, /usr/local). Check with `which node`.
+ExecStart=/home/victor/.nvm/versions/node/v20.19.5/bin/node src/index.js
+Restart=on-failure
+RestartSec=5
+
+Environment=NODE_ENV=production
+Environment=PORT=3000
+# The database lives outside the repo so a git pull can never touch it.
+Environment=DB_PATH=/var/lib/sisyphus/sisyphus.db
+
+# Web Bluetooth needs a secure context, so anything but localhost needs TLS.
+# Uncomment and point these at your certificate (see the README).
+# Environment=TLS_CERT=/var/lib/sisyphus/cert.pem
+# Environment=TLS_KEY=/var/lib/sisyphus/key.pem
+
+# The service only needs its own data directory.
+StateDirectory=sisyphus
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/var/lib/sisyphus
+
+[Install]
+WantedBy=multi-user.target
