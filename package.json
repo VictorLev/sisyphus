@@ -7,6 +7,7 @@
   "scripts": {
     "test": "node --test tests/*.test.js",
     "dev": "npm --prefix backend run dev",
-    "start": "npm --prefix backend start"
+    "start": "npm --prefix backend start",
+    "fake-ride": "node scripts/fake-ride.mjs"
   }
 }

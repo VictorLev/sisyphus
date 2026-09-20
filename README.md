@@ -191,6 +191,24 @@ npm start       # start normally
 npm test        # run the test suite
 ```
 
+### Generating test rides
+
+Filling the Chronicle by actually riding is slow, so there is a generator:
+
+```sh
+npm run fake-ride                        # the first workout in your library
+npm run fake-ride -- "Aerobic 15's #1"   # by name (partial matches work)
+npm run fake-ride -- "Sweet Spot" 3      # ...ridden 3 days ago
+```
+
+It simulates a rider following the workout — power approaches each target
+with a lag, sprints are attacked then sag, cadence and speed derive from
+power — and saves through the real API, so aggregates and records are
+computed exactly as they would be for a genuine ride. The session is normal
+data; delete it from the Chronicle when you are done with it.
+
+### Tests
+
 Tests use Node's built-in runner — no test framework to install. Coverage is
 weighted toward the risky parts: the FTMS binary parser gets the most (its flags
 field has an inverted bit that is very easy to get wrong), then the workout
