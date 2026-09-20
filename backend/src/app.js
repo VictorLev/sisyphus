@@ -15,11 +15,10 @@ const frontendDir = path.join(__dirname, '..', '..', 'frontend');
 // ephemeral port. index.js is the only place that binds.
 export function createApp() {
   const app = express();
-  // Express defaults to a 100kb JSON body, which a ride outgrows in about
-  // fifteen minutes: one sample per second at ~100 bytes each means a
-  // 30-minute ride is ~180kb and a long one several megabytes. The default
-  // silently made long rides unsaveable with a 413. 25mb covers a ride of
-  // well over a day at 1 Hz.
+  // Express defaults to a 100kb JSON body. A sample serialises to ~86 bytes,
+  // so at one per second that budget runs out after ~1190 samples — just
+  // under 20 minutes. Every longer ride was silently rejected with a 413.
+  // 25mb covers ~85 hours at 1 Hz, far past any real session.
   app.use(express.json({ limit: '25mb' }));
 
   // The service worker must never be served from cache, or a stale copy can
