@@ -32,8 +32,8 @@ let runner = null;
 // Both modes drive the same Control Point, so only one may write at a time.
 // preferredMode is what the rider chose; rideMode is what the current ride
 // actually runs (a free ride forces gears without discarding the choice).
-let preferredMode = 'gears';
-let rideMode = 'gears';
+let preferredMode = 'erg';
+let rideMode = 'erg';
 let activeWorkout = null;
 let latestReading = null;
 let rideStartedAt = null;

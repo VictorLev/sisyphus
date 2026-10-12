@@ -183,7 +183,7 @@ describe('config API', () => {
   test('returns defaults before anything is saved', async () => {
     const settings = await (await api('/api/settings')).json();
     assert.equal(settings.gear_count, 12);
-    assert.equal(settings.default_mode, 'gears');
+    assert.equal(settings.default_mode, 'erg');
   });
 
   test('merges partial updates over stored values', async () => {
