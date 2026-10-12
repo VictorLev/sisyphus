@@ -83,7 +83,9 @@ Then open **http://localhost:3000** in Chrome.
 
 Web Bluetooth requires a secure context, and `localhost` counts as one — so no
 HTTPS setup is needed to run it on the machine beside your bike. If you serve it
-from elsewhere on your network, you will need HTTPS.
+from elsewhere on your network, you will need HTTPS — see
+[deploy/README.md](deploy/README.md) for running it on a home server with
+automatic updates.
 
 There is nothing to configure. The SQLite file is created on first run at
 `backend/data/sisyphus.db`. To change the port or database location, copy

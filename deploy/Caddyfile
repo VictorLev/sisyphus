@@ -1,0 +1,17 @@
+{
+	# Browsers send no SNI when you browse to an IP address, and inside Docker
+	# the connection arrives on the container's own IP, so Caddy could not
+	# match the certificate on its own. This tells it which one to use.
+	default_sni {$SITE_ADDRESS}
+}
+
+# SITE_ADDRESS comes from deploy/.env: the server's LAN IP (e.g. 192.168.2.50)
+# or a hostname that resolves to it on your network. No port here; the
+# published port is set by HTTPS_PORT in compose.yaml.
+{$SITE_ADDRESS} {
+	# Certificate from Caddy's own local CA. Trust its root once on the
+	# riding PC; Caddy renews the site certificate by itself after that.
+	tls internal
+	encode gzip
+	reverse_proxy app:3000
+}
