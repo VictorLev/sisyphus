@@ -1,0 +1,9 @@
+.git
+.github
+**/node_modules
+backend/data
+**/.env
+media
+tests
+deploy
+*.md
