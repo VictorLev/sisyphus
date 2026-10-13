@@ -38,6 +38,7 @@ const SHELL = [
   '/js/ui/ride-hero.js',
   '/js/ui/sisyphus-loop.js',
   '/js/ui/views.js',
+  '/js/ui/scenery.js',
   '/js/ui/workouts.js',
   '/manifest.webmanifest',
   '/icons/icon-192.png',

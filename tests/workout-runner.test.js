@@ -86,4 +86,27 @@ describe('WorkoutRunner', () => {
     r.tick(4999);
     assert.ok(r.state.progressFraction <= 1);
   });
+
+  test('time spent stopped does not count after resume', () => {
+    const r = new WorkoutRunner(segments());
+    r.start(0);
+    r.tick(2000);
+    r.stop();
+    r.tick(60000); // paused for a minute
+    r.resume(60000);
+    r.tick(61000);
+    assert.equal(r.state.totalElapsedSec, 3);
+    assert.equal(r.state.segmentIndex, 0);
+  });
+
+  test('resume does not revive a finished workout', () => {
+    const r = new WorkoutRunner(segments());
+    r.start(0);
+    r.tick(15000);
+    r.resume(20000);
+    r.tick(25000);
+    assert.equal(r.state.isComplete, true);
+    assert.equal(r.state.isRunning, false);
+    assert.equal(r.state.totalElapsedSec, 15);
+  });
 });

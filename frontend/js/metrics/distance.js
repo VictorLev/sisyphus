@@ -8,6 +8,7 @@ export class DistanceTracker {
   constructor() {
     this.mode = null; // 'device' | 'integrated'
     this.deviceBaselineM = null;
+    this.deviceCarriedM = 0;
     this.integratedTotalM = 0;
     this.lastSpeedKmh = null;
     this.lastTimestampMs = null;
@@ -24,7 +25,7 @@ export class DistanceTracker {
         if (this.deviceBaselineM === null) {
           this.deviceBaselineM = reading.totalDistanceM;
         }
-        this.currentTotalM = reading.totalDistanceM - this.deviceBaselineM;
+        this.currentTotalM = this.deviceCarriedM + reading.totalDistanceM - this.deviceBaselineM;
       }
       // field absent on this particular reading: no update this tick
     } else {
@@ -42,9 +43,20 @@ export class DistanceTracker {
     return this.currentTotalM;
   }
 
+  // After a pause, carry the distance so far and start measuring afresh:
+  // re-baseline the odometer (the wheel may have coasted on) and drop the
+  // last speed sample so the gap isn't integrated as riding.
+  resume() {
+    this.deviceCarriedM = this.currentTotalM;
+    this.deviceBaselineM = null;
+    this.lastSpeedKmh = null;
+    this.lastTimestampMs = null;
+  }
+
   reset() {
     this.mode = null;
     this.deviceBaselineM = null;
+    this.deviceCarriedM = 0;
     this.integratedTotalM = 0;
     this.lastSpeedKmh = null;
     this.lastTimestampMs = null;

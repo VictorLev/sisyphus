@@ -54,6 +54,40 @@ export class SessionRecorder {
     this._window = [];
   }
 
+  // A pause drops whatever the open window holds; resume() then shifts the
+  // start forward by the paused time, so offsets count riding time only and
+  // a break never looks like a stretch of the power curve.
+  pause(nowMs) {
+    this._window = [];
+    this._pausedAtMs = nowMs;
+  }
+
+  resume(nowMs) {
+    if (this._pausedAtMs == null) return;
+    if (this.startedAtMs != null) this.startedAtMs += nowMs - this._pausedAtMs;
+    this._pausedAtMs = null;
+    this._window = [];
+  }
+
+  // Averages so far, by the same rule the server uses for the saved ride:
+  // moving samples (cadence > 0) only, falling back to all samples, so the
+  // live figures agree with the summary at the end.
+  averagePower() {
+    return this._movingMean('power');
+  }
+
+  averageSpeed() {
+    return this._movingMean('speed');
+  }
+
+  _movingMean(field) {
+    const withValue = this.samples.filter((s) => s[field] != null);
+    const moving = withValue.filter((s) => s.cadence > 0);
+    const pool = moving.length > 0 ? moving : withValue;
+    if (pool.length === 0) return null;
+    return pool.reduce((sum, s) => sum + s[field], 0) / pool.length;
+  }
+
   getSamples() {
     return this.samples;
   }

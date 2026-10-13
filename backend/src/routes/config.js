@@ -25,6 +25,9 @@ const DEFAULTS = {
     // small (0..20), so a climb has to cost only a couple of units to leave
     // room for the gears to matter.
     resistance_per_grade: 0.4,
+    // YouTube virtual rides for the ride screen, one link per line,
+    // optionally named: "Swiss Alps | https://youtu.be/...".
+    scenery_videos: '',
   },
 };
 

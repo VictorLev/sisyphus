@@ -416,7 +416,8 @@ button.secondary:hover:not(:disabled) {
   color: var(--color-bronze);
 }
 
-.field input {
+.field input,
+.field textarea {
   font-family: inherit;
   font-size: 1rem;
   text-transform: none;
@@ -428,9 +429,16 @@ button.secondary:hover:not(:disabled) {
   padding: 0.7rem 0.8rem;
 }
 
-.field input:focus {
+.field input:focus,
+.field textarea:focus {
   outline: none;
   border-color: var(--color-bronze);
+}
+
+.field textarea {
+  resize: vertical;
+  font-size: 0.85rem;
+  line-height: 1.5;
 }
 
 .form-row {
@@ -636,12 +644,33 @@ button.secondary:hover:not(:disabled) {
   min-width: 3px;
 }
 
+/* Finished bars are filled but muted; the current one is outlined. */
 .timeline-seg.is-done {
-  background: var(--color-bronze-dim);
+  opacity: 0.55;
 }
 
 .timeline-seg.is-current {
   border-color: var(--color-bronze-bright);
+  outline: 2px solid var(--color-bronze-bright);
+  outline-offset: 1px;
+  z-index: 1;
+}
+
+/* Exactly where the rider is: a bright line through the whole graph. */
+.timeline-now {
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  width: 3px;
+  margin-left: -1px;
+  background: var(--color-bronze-bright);
+  box-shadow: 0 0 6px var(--color-bronze-bright);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.timeline-now[hidden] {
+  display: none;
 }
 
 .timeline-fill {
@@ -1108,12 +1137,11 @@ button.secondary:hover:not(:disabled) {
   grid-template-columns: minmax(210px, 280px) minmax(0, 1fr) minmax(180px, 230px);
   /* minmax(0, 1fr) on the hero row is what stops tall content forcing the
      grid past the viewport. */
-  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  grid-template-rows: auto minmax(0, 1fr) auto;
   grid-template-areas:
     "steps metrics zone"
     "steps hero    zone"
-    "timeline timeline timeline"
-    "footer footer footer";
+    "bottom bottom bottom";
   gap: 0.75rem;
   height: 100%;
 }
@@ -1121,7 +1149,11 @@ button.secondary:hover:not(:disabled) {
 @media (max-width: 1100px) {
   .ride-grid {
     grid-template-columns: 1fr;
-    grid-template-areas: "metrics" "hero" "zone" "timeline" "steps" "footer";
+    grid-template-areas: "metrics" "hero" "zone" "bottom" "steps";
+  }
+
+  .ride-bottom {
+    flex-direction: column;
   }
 }
 
@@ -1289,75 +1321,133 @@ button.secondary:hover:not(:disabled) {
   background: var(--zone-color);
 }
 
-.ride-level {
-  margin-top: auto;
+/* Ride-so-far figures, under the zone ladder. */
+.ride-totals {
   display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  padding-top: 0.75rem;
-  border-top: 2px solid var(--color-stone);
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0.5rem 0 0;
 }
 
-.ride-level span {
-  font-family: var(--font-pixel);
-  font-size: 0.8rem;
-  color: var(--color-bronze-bright);
+.ride-totals > div {
+  padding: 0.6rem 0.5rem;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--color-stone);
+  border-radius: 2px;
 }
 
-.ride-level em {
-  font-style: normal;
+.ride-totals dt {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--color-bronze);
+}
+
+.ride-totals dd {
+  margin: 0.4rem 0 0;
   font-family: var(--font-pixel);
-  font-size: 0.8rem;
-  color: var(--color-text-dim);
+  font-size: clamp(0.9rem, 1.3vw, 1.2rem);
+  color: var(--color-text);
 }
 
 /* -- 8. hero ------------------------------------------------------------- */
 
+/* The scenery video fills the panel; ride notes and the video picker
+   float over it. */
 .ride-hero {
   grid-area: hero;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.9rem;
-  padding: 0.9rem;
+  position: relative;
   min-height: 0;
   overflow: hidden;
 }
 
-/* Scales to whichever of width or height runs out first, so it can never
-   push the grid taller than the viewport. */
-#ride-hero-canvas {
-  image-rendering: pixelated;
-  aspect-ratio: 96 / 34;
-  width: auto;
-  height: auto;
-  max-width: min(560px, 100%);
-  max-height: 100%;
-  min-height: 0;
-  flex: 0 1 auto;
+.scenery-frame,
+.scenery-frame iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #000;
 }
 
+.scenery-frame:empty {
+  display: none;
+}
+
+.scenery-empty {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  padding: 2rem;
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--color-text-dim);
+}
+
+.scenery-empty[hidden],
+.scenery-picker[hidden] {
+  display: none;
+}
+
+.scenery-picker {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  z-index: 2;
+  max-width: 45%;
+  padding: 0.35rem 0.5rem;
+  font: inherit;
+  font-size: 0.8rem;
+  color: var(--color-text);
+  background: rgba(20, 18, 15, 0.85);
+  border: 1px solid var(--color-stone-light);
+  border-radius: 2px;
+}
+
+/* Sisyphus sits on top of the zone badge, the width of the zone column. */
+#ride-hero-canvas {
+  image-rendering: pixelated;
+  width: 100%;
+  height: auto;
+  flex: none;
+}
+
+/* display: flex would otherwise beat the hidden attribute, and a free ride
+   (no targets) would show an empty target block and timeline. */
+.ride-target[hidden],
+.segment-timeline[hidden] {
+  display: none;
+}
+
+/* The current target at the foot of the steps column, under the list,
+   large enough to read from the saddle. */
 .ride-target {
+  flex: none;
+  margin-top: auto;
+  padding-top: 0.75rem;
+  border-top: 2px solid var(--color-stone);
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  justify-content: center;
-  gap: 1.25rem;
-  text-align: center;
-  flex: none;
+  justify-content: flex-start;
+  gap: 0.4rem 1.25rem;
+  text-align: left;
 }
 
 .ride-target strong {
   width: 100%;
   font-family: var(--font-pixel);
-  font-size: clamp(0.9rem, 1.6vw, 1.3rem);
+  font-size: clamp(0.8rem, 1.1vw, 1rem);
   color: var(--color-bronze-bright);
 }
 
 .ride-target b {
   font-family: var(--font-pixel);
-  font-size: clamp(1rem, 2vw, 1.6rem);
+  /* "0:12" in the pixel font has to fit a ~250px column beside the watts. */
+  font-size: clamp(1.3rem, 1.9vw, 2rem);
   font-weight: 400;
   color: var(--color-text);
 }
@@ -1371,9 +1461,15 @@ button.secondary:hover:not(:disabled) {
 }
 
 .ride-note {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  z-index: 2;
+  max-width: 50%;
   margin: 0;
   padding: 0.5rem 1rem;
-  background: rgba(176, 141, 87, 0.12);
+  /* Near-solid, so it stays readable over the video. */
+  background: rgba(20, 18, 15, 0.9);
   border-left: 3px solid var(--color-bronze);
   color: var(--color-bronze-bright);
   font-size: 0.9rem;
@@ -1381,28 +1477,117 @@ button.secondary:hover:not(:disabled) {
 
 /* -- 5. timeline & 6/7. footer ------------------------------------------- */
 
+/* The graph and the controls share one row: the graph takes whatever width
+   the controls leave. The wrapper itself is invisible; its two children
+   are the panels. */
+.ride-grid > .ride-bottom {
+  grid-area: bottom;
+  display: flex;
+  gap: 0.75rem;
+  min-width: 0;
+  background: none;
+  border: none;
+}
+
+.ride-bottom > * {
+  background: linear-gradient(180deg, var(--color-surface-raised), var(--color-surface));
+  border: var(--border);
+  border-radius: 2px;
+}
+
 .ride-timeline {
-  grid-area: timeline;
+  flex: 1;
+  min-width: 0;
   padding: 0.6rem;
 }
 
+/* A graph of the workout: bars stand on a common baseline, their heights
+   set per segment from its target watts (see buildTimeline). */
 .ride-timeline .segment-timeline {
+  position: relative; /* the "now" line is placed against it */
   margin: 0;
-  height: 32px;
+  height: 72px;
+  align-items: flex-end;
 }
 
 .ride-footer {
-  grid-area: footer;
+  flex: none;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 1rem;
   padding: 0.6rem 1rem;
 }
 
-.ride-footer #end-ride-btn {
+.ride-actions {
+  display: flex;
+  gap: 0.6rem;
+  margin-left: 1rem;
+}
+
+.ride-footer .ride-actions button {
   padding: 0.7rem 1.8rem;
   font-size: 0.95rem;
+}
+
+/* Pause pop-up: a panel floating over the dimmed ride screen. */
+.pause-dialog {
+  width: min(32rem, calc(100vw - 2rem));
+  color: var(--color-text);
+  text-align: center;
+  padding: 2rem 1.5rem;
+}
+
+.pause-dialog::backdrop {
+  background: rgba(10, 9, 7, 0.75);
+}
+
+.pause-title {
+  font-family: var(--font-pixel);
+  font-size: 1.4rem;
+  font-weight: 400;
+  color: var(--color-bronze-bright);
+  margin: 0 0 1rem;
+}
+
+.pause-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.6rem;
+  margin: 0 0 1rem;
+}
+
+.pause-stats > div {
+  background: var(--color-bg);
+  border: var(--border);
+  border-radius: 2px;
+  padding: 0.8rem 0.4rem;
+}
+
+.pause-stats dt {
+  color: var(--color-bronze);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.pause-stats dd {
+  margin: 0.5rem 0 0;
+  font-family: var(--font-pixel);
+  font-size: 0.85rem; /* the pixel font runs wide; "12.34 km" must fit a third */
+  color: var(--color-bronze-bright);
+}
+
+.pause-actions {
+  display: flex;
+  justify-content: center;
+  gap: 0.8rem;
+  margin-top: 1.5rem;
+}
+
+.pause-actions button {
+  flex: 1;
+  padding: 0.8rem 1rem;
 }
 
 /* Count of steps beyond the visible window. */

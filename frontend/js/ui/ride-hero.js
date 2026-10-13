@@ -2,10 +2,15 @@
 // harder the higher the power zone. Effort is expressed three ways at once
 // — cadence of the animation, how far he leans into it, and how steep the
 // slope becomes — so the difference between Z2 and Z5 is legible from the
-// bike at a glance, not a subtle tell.
+// bike at a glance, not a subtle tell. The hill is a darker shade of the
+// zone colour the figure is drawn in, so he stays distinct where he stands.
 
 const GRID_W = 96;
-const GRID_H = 34;
+// Tall enough that a full-slope Z6 climb still fits the boulder at the top
+// of his run without clipping.
+const GRID_H = 44;
+// Rows kept clear above the steepest ground for the sprites (9 tall).
+const HEADROOM = 12;
 const PIXEL = 4;
 
 const BOULDER = [
@@ -46,15 +51,28 @@ const PUSHER_HARD = [
 ];
 
 // Per-zone character. Slope and lean rise together; the frame interval
-// falls, so he visibly labours faster under load.
+// falls, so he visibly labours faster under load. The slopes span nearly
+// flat to a full climb, so each zone step reads even at the small size he's
+// drawn at in the zone column.
 const EFFORT = {
-  1: { slope: 0.20, frameMs: 190, sprite: PUSHER_EASY },
-  2: { slope: 0.32, frameMs: 165, sprite: PUSHER_EASY },
-  3: { slope: 0.46, frameMs: 140, sprite: PUSHER_EASY },
-  4: { slope: 0.60, frameMs: 115, sprite: PUSHER_HARD },
-  5: { slope: 0.74, frameMs: 92, sprite: PUSHER_HARD },
-  6: { slope: 0.90, frameMs: 70, sprite: PUSHER_HARD },
+  1: { slope: 0.05, frameMs: 190, sprite: PUSHER_EASY },
+  2: { slope: 0.24, frameMs: 165, sprite: PUSHER_EASY },
+  3: { slope: 0.43, frameMs: 140, sprite: PUSHER_EASY },
+  4: { slope: 0.62, frameMs: 115, sprite: PUSHER_HARD },
+  5: { slope: 0.81, frameMs: 92, sprite: PUSHER_HARD },
+  6: { slope: 1.0, frameMs: 70, sprite: PUSHER_HARD },
 };
+
+// Hill shade: the zone colour at 65% brightness. Any darker and Z1's grey
+// would sink into the panel background.
+const HILL_SHADE = 0.65;
+
+function darken(hex, factor) {
+  const n = parseInt(hex.replace('#', ''), 16);
+  if (Number.isNaN(n)) return hex;
+  const channel = (shift) => Math.round(((n >> shift) & 0xff) * factor);
+  return `rgb(${channel(16)}, ${channel(8)}, ${channel(0)})`;
+}
 
 export function createRideHero(canvas) {
   canvas.width = GRID_W * PIXEL;
@@ -63,7 +81,6 @@ export function createRideHero(canvas) {
   ctx.imageSmoothingEnabled = false;
 
   const styles = getComputedStyle(document.documentElement);
-  const hillColor = styles.getPropertyValue('--color-bronze-dim').trim() || '#7a6340';
 
   let effort = EFFORT[2];
   let zoneColor = styles.getPropertyValue('--color-bronze-bright').trim() || '#e0c088';
@@ -71,7 +88,7 @@ export function createRideHero(canvas) {
   let timer = null;
 
   const groundRow = (x, slope) => {
-    const rise = (GRID_H - 6) * slope;
+    const rise = (GRID_H - HEADROOM) * slope;
     const y = Math.round(GRID_H - 3 - (x * rise) / (GRID_W - 1));
     return Math.max(1, Math.min(GRID_H - 1, y));
   };
@@ -105,6 +122,7 @@ export function createRideHero(canvas) {
   function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     const { slope, sprite } = effort;
+    const hillColor = darken(zoneColor, HILL_SHADE);
 
     for (let x = 0; x < GRID_W; x++) {
       for (let y = groundRow(x, slope); y < GRID_H; y++) px(x, y, hillColor);

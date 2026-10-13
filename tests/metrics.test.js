@@ -39,6 +39,23 @@ describe('DistanceTracker', () => {
     assert.equal(d.currentTotalM, 100);
   });
 
+  test('a pause adds no distance on either path', () => {
+    const dev = new DistanceTracker();
+    dev.update({ totalDistanceM: 1000, instantaneousSpeedKmh: 20 }, 0);
+    dev.update({ totalDistanceM: 1100, instantaneousSpeedKmh: 20 }, 1000);
+    dev.resume(); // the wheel coasted 50 m while paused
+    dev.update({ totalDistanceM: 1150, instantaneousSpeedKmh: 20 }, 60000);
+    dev.update({ totalDistanceM: 1160, instantaneousSpeedKmh: 20 }, 61000);
+    assert.equal(dev.currentTotalM, 110);
+
+    const int = new DistanceTracker();
+    int.update({ totalDistanceM: null, instantaneousSpeedKmh: 36 }, 0);
+    int.update({ totalDistanceM: null, instantaneousSpeedKmh: 36 }, 1000);
+    int.resume();
+    int.update({ totalDistanceM: null, instantaneousSpeedKmh: 36 }, 60000);
+    assert.equal(Math.round(int.update({ totalDistanceM: null, instantaneousSpeedKmh: 36 }, 61000)), 20);
+  });
+
   test('integrates speed when the device reports no distance', () => {
     const d = new DistanceTracker();
     d.update({ totalDistanceM: null, instantaneousSpeedKmh: 36 }, 0); // 10 m/s
@@ -94,6 +111,47 @@ describe('SessionRecorder', () => {
     r.commitSample(1000);
     r.commitSample(2000);
     assert.equal(r.getSamples()[1].power, null);
+  });
+
+  test('average power skips idle samples, like the saved ride', () => {
+    const r = new SessionRecorder();
+    r.start(0);
+    assert.equal(r.averagePower(), null);
+    r.addReading({ power: 200, cadence: 90 });
+    r.commitSample(1000);
+    r.addReading({ power: 0, cadence: 0 }); // coasting
+    r.commitSample(2000);
+    r.addReading({ power: 100, cadence: 80 });
+    r.commitSample(3000);
+    assert.equal(r.averagePower(), 150);
+  });
+
+  test('average speed follows the same moving-only rule', () => {
+    const r = new SessionRecorder();
+    r.start(0);
+    assert.equal(r.averageSpeed(), null);
+    r.addReading({ speed: 30, cadence: 90 });
+    r.commitSample(1000);
+    r.addReading({ speed: 5, cadence: 0 }); // coasting to a stop
+    r.commitSample(2000);
+    r.addReading({ speed: 20, cadence: 80 });
+    r.commitSample(3000);
+    assert.equal(r.averageSpeed(), 25);
+  });
+
+  test('paused time is left out of sample offsets', () => {
+    const r = new SessionRecorder();
+    r.start(0);
+    r.addReading({ power: 150 });
+    r.commitSample(1000);
+    r.addReading({ power: 999 }); // arrived just before the pause: dropped
+    r.pause(1500);
+    r.resume(61500);
+    r.addReading({ power: 200 });
+    r.commitSample(62500);
+    const samples = r.getSamples();
+    assert.equal(samples[1].timestamp_offset_sec, 2.5); // 1.5 s before the pause + 1 s after
+    assert.equal(samples[1].power, 200);
   });
 
   test('each window is independent', () => {

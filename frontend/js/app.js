@@ -11,6 +11,7 @@ import { initHome } from './ui/home.js';
 import { initBuilder } from './workout/builder.js';
 import { initLiveScreen } from './ui/live-screen.js';
 import { createRideHero } from './ui/ride-hero.js';
+import { initScenery } from './ui/scenery.js';
 import { createSession, getSettings, getProfile, getLevel } from './api/client.js';
 import { initProfile, initSettings } from './ui/config-forms.js';
 import { initSisyphusLoop } from './ui/sisyphus-loop.js';
@@ -25,6 +26,11 @@ const rollingAverage = new RollingAverage(10000);
 const distanceTracker = new DistanceTracker();
 const recorder = new SessionRecorder();
 const rideHero = createRideHero(document.getElementById('ride-hero-canvas'));
+const scenery = initScenery({
+  frameEl: document.getElementById('scenery-frame'),
+  pickerEl: document.getElementById('scenery-picker'),
+  emptyEl: document.getElementById('scenery-empty'),
+});
 
 let runner = null;
 // 'gears'  — rider shifts, trainer holds a fixed resistance per gear
@@ -38,6 +44,7 @@ let activeWorkout = null;
 let latestReading = null;
 let rideStartedAt = null;
 let rideStartedMs = null; // performance clock, for the elapsed readout
+let pausedAtMs = null; // set while the ride is paused
 let rafId = null;
 let recordIntervalId = null;
 let sampleIntervalMs = 1000; // overridden by saved settings
@@ -48,7 +55,10 @@ initViews();
 showView('home');
 
 const liveScreen = initLiveScreen({
+  onPause: (options) => pauseRide(options),
+  onResume: () => resumeRide(),
   onEndRide: () => endRide(),
+  onDiscardRide: () => discardRide(),
 });
 
 const home = initHome({
@@ -90,6 +100,7 @@ updateModeUi();
 // Settings are stored server-side, so the objects are built with defaults and
 // reconfigured once the saved values arrive.
 function applySettings(settings) {
+  scenery.setList(settings.scenery_videos);
   gears.configure({
     gearCount: settings.gear_count,
     minResistance: settings.min_resistance,
@@ -147,7 +158,6 @@ async function refreshLevel() {
   try {
     const data = await getLevel();
     document.getElementById('nav-level').textContent = `Lv ${data.level}`;
-    liveScreen.setLevel(data.level);
     document.getElementById('profile-level').textContent = `Lv ${data.level}`;
     document.getElementById('level-fill').style.width = `${Math.round(data.progress * 100)}%`;
     document.getElementById('level-detail').textContent =
@@ -218,6 +228,13 @@ document.addEventListener('keydown', (event) => {
   if (event.repeat) return; // one shift per physical press
   if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) return;
   if (liveViewEl.hidden) return; // only shift during a ride
+  if (pausedAtMs != null) return; // the pause pop-up owns the keys
+
+  if (event.key === ' ') {
+    event.preventDefault();
+    pauseRide();
+    return;
+  }
 
   let direction = null;
   if (event.key === '+' || event.key === '=') direction = 'up';
@@ -237,10 +254,18 @@ async function applyRideMode() {
     if (target == null) return; // nothing to hold (free ride or finished)
     try {
       await trainerControl.setPower(target);
-      flashRideNote(`ERG holding ${target} W`, 2000);
-    } catch (err) {
-      flashRideNote(`ERG failed: ${err.message}`);
+    } catch {
+      // Trainer may have dropped control (e.g. during a long pause);
+      // re-acquire once and retry, as applyResistance does.
+      try {
+        await trainerControl.requestControl();
+        await trainerControl.setPower(target);
+      } catch (err) {
+        flashRideNote(`ERG failed: ${err.message}`);
+        return;
+      }
     }
+    flashRideNote(`ERG holding ${target} W`, 2000);
   } else {
     applyResistance(terrainResistance());
   }
@@ -321,6 +346,7 @@ function flashRideNote(message, durationMs = 6000) {
 trainerConnection.addEventListener('reading', (event) => {
   const { reading, receivedAt } = event.detail;
   latestReading = reading;
+  if (pausedAtMs != null) return; // nothing counts while paused
 
   if (reading.instantaneousPowerW != null) {
     rollingAverage.push(reading.instantaneousPowerW, receivedAt);
@@ -353,6 +379,7 @@ function startRide(workout) {
   latestReading = null;
   rideStartedAt = new Date().toISOString();
   rideStartedMs = performance.now();
+  pausedAtMs = null;
 
   runner = workout ? new WorkoutRunner(workout.structure) : null;
   if (runner) {
@@ -372,9 +399,11 @@ function startRide(workout) {
   liveScreen.buildTimeline(workout ? workout.structure : null, workout?.name);
   liveScreen.updateWorkoutInfo(runner ? runner.state : null);
   liveScreen.setElapsed(0);
+  updateTotals();
   updateGearDisplay(gears.gearNumber);
 
   showView('live');
+  scenery.start();
   startLoop();
   applyRideMode();
 }
@@ -382,7 +411,11 @@ function startRide(workout) {
 function startLoop() {
   // Commit the mean of every reading received since the last tick. Raw
   // values only — smoothing is a display concern, never stored.
-  recordIntervalId = setInterval(() => recorder.commitSample(performance.now()), sampleIntervalMs);
+  // The ride-so-far figures refresh with each committed sample.
+  recordIntervalId = setInterval(() => {
+    recorder.commitSample(performance.now());
+    updateTotals();
+  }, sampleIntervalMs);
 
   function frame(now) {
     if (runner) {
@@ -395,6 +428,14 @@ function startLoop() {
   rafId = requestAnimationFrame(frame);
 }
 
+function updateTotals() {
+  liveScreen.setTotals({
+    avgPowerW: recorder.averagePower(),
+    avgSpeedKmh: recorder.averageSpeed(),
+    distanceM: distanceTracker.currentTotalM,
+  });
+}
+
 function stopLoop() {
   if (rafId != null) cancelAnimationFrame(rafId);
   if (recordIntervalId != null) clearInterval(recordIntervalId);
@@ -402,28 +443,91 @@ function stopLoop() {
   recordIntervalId = null;
 }
 
+// Pausing freezes everything that measures the ride (workout clock,
+// elapsed time, recording, distance) and drops the trainer to no load, so
+// the rider can stop and later restart the pedals without fighting an ERG
+// target. Paused time is never counted as riding.
+// confirmEnd opens the pop-up on the End Ride confirmation; the ride is
+// paused while the rider decides either way.
+function pauseRide({ confirmEnd = false } = {}) {
+  if (pausedAtMs != null || liveViewEl.hidden) return;
+  const now = performance.now();
+  pausedAtMs = now;
+  stopLoop();
+  runner?.stop();
+  recorder.pause(now);
+  scenery.pause();
+  const workout = runner?.state;
+  liveScreen.showPauseDialog({
+    distanceM: distanceTracker.currentTotalM,
+    avgPowerW: recorder.averagePower(),
+    timeLeftSec: workout ? workout.totalDurationSec - workout.totalElapsedSec : null,
+    elapsedSec: (now - rideStartedMs) / 1000,
+  }, { confirmEnd });
+  if (trainerControl) applyResistance(0);
+}
+
+function resumeRide() {
+  if (pausedAtMs == null) return;
+  const now = performance.now();
+  // Shifting the start forward by the pause keeps the elapsed clock and
+  // the ride's duration to riding time only.
+  rideStartedMs += now - pausedAtMs;
+  pausedAtMs = null;
+  recorder.resume(now);
+  distanceTracker.resume();
+  rollingAverage.reset(); // pre-pause watts would drag the 10s average
+  runner?.resume(now);
+  scenery.play();
+  startLoop();
+  applyRideMode(); // put back the ERG target or the gear's resistance
+}
+
+// Release the trainer: in ERG it would otherwise keep forcing the last
+// target on the rider after the ride has ended.
+async function releaseTrainer() {
+  if (!trainerControl) return;
+  try {
+    await trainerControl.reset();
+  } catch (err) {
+    console.warn('[app] trainer reset failed:', err.message);
+  }
+}
+
+// Ends the ride without saving anything: the rider chose to throw it away
+// (Cancel Ride, or Don't Save), so nothing is sent and nothing is parked.
+async function discardRide() {
+  stopLoop();
+  scenery.stop();
+  pausedAtMs = null;
+  recorder.reset();
+  await releaseTrainer();
+  rideMode = preferredMode; // show what's chosen for next time
+  updateModeUi();
+  showView('home');
+}
+
 async function endRide() {
   stopLoop();
+  scenery.stop();
+  // A ride ended from the pause pop-up ends where the riding stopped.
+  const endMs = pausedAtMs ?? performance.now();
+  pausedAtMs = null;
 
-  // Release the trainer: in ERG it would otherwise keep forcing the last
-  // target on the rider after the ride has ended.
-  if (trainerControl) {
-    try {
-      await trainerControl.reset();
-    } catch (err) {
-      console.warn('[app] trainer reset failed:', err.message);
-    }
-  }
+  await releaseTrainer();
 
   // A ride ended before the first tick still needs one row to be saveable.
   if (recorder.getSamples().length === 0) {
-    recorder.commitSample(performance.now());
+    recorder.commitSample(endMs);
   }
 
   const payload = {
     workout_id: activeWorkout?.id ?? null,
     started_at: rideStartedAt,
-    ended_at: new Date().toISOString(),
+    // Start plus riding time, not the wall clock: duration, XP and the
+    // longest-ride record all read ended_at - started_at, so a pause must
+    // not count. Without a pause the two are the same.
+    ended_at: new Date(Date.parse(rideStartedAt) + (endMs - rideStartedMs)).toISOString(),
     distance_m: distanceTracker.currentTotalM,
     // The true peak across every raw reading, not the peak of the committed
     // means — a 30s sprint would otherwise be flattened by windowing.

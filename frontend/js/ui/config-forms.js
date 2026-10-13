@@ -71,6 +71,7 @@ export function initSettings({ onSaved }) {
       'setting-power-smoothing-sec',
       'setting-sample-interval-sec',
       'setting-default-mode',
+      'setting-scenery-videos',
     ],
     load: getSettings,
     save: saveSettings,

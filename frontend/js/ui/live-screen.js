@@ -7,7 +7,7 @@ function formatTime(totalSec) {
   return `${mm}:${String(ss).padStart(2, '0')}`;
 }
 
-export function initLiveScreen({ onEndRide }) {
+export function initLiveScreen({ onPause, onResume, onEndRide, onDiscardRide }) {
   const powerEl = document.getElementById('power-value');
   const cadenceEl = document.getElementById('cadence-value');
   const speedEl = document.getElementById('speed-value');
@@ -32,17 +32,96 @@ export function initLiveScreen({ onEndRide }) {
   const zoneBadgeEl = document.getElementById('zone-badge');
   const zoneScaleEl = document.getElementById('zone-scale');
   const elapsedEl = document.getElementById('ride-elapsed');
-  const levelEl = document.getElementById('ride-level');
 
-  document.getElementById('end-ride-btn').addEventListener('click', () => onEndRide());
+  // Pause pop-up, in three steps: Paused (Continue / End / Cancel), then
+  // End (save or not) or Cancel (confirm the discard). Every way out of a
+  // ride is a deliberate second click.
+  const pauseDialog = document.getElementById('pause-dialog');
+  const steps = {
+    paused: document.getElementById('pause-step-paused'),
+    end: document.getElementById('pause-step-end'),
+    cancel: document.getElementById('pause-step-cancel'),
+  };
+  let currentStep = 'paused';
+  // Set when the dialog opened straight on End (the footer's End Ride): the
+  // rider never asked to pause, so Back resumes the ride instead of
+  // stopping at the Paused step.
+  let backResumes = false;
+
+  function showPauseStep(name) {
+    currentStep = name;
+    for (const [key, el] of Object.entries(steps)) el.hidden = key !== name;
+    for (const btn of pauseDialog.querySelectorAll('.pause-back')) {
+      btn.textContent = backResumes ? 'Keep Riding' : 'Back';
+    }
+    // Land on the safe choice, so a second press of Space or Enter never
+    // ends or discards the ride by accident.
+    const focusId = { paused: 'pause-continue-btn', end: 'pause-end-back-btn', cancel: 'pause-cancel-back-btn' }[name];
+    document.getElementById(focusId).focus();
+  }
+
+  // stats: { distanceM, avgPowerW, timeLeftSec, elapsedSec }. A workout
+  // shows the time left; a free ride has no end, so it shows time ridden.
+  function showPauseDialog({ distanceM, avgPowerW, timeLeftSec, elapsedSec }, { confirmEnd = false } = {}) {
+    if (pauseDialog.open) return;
+    document.getElementById('pause-distance').textContent =
+      distanceM != null ? `${(distanceM / 1000).toFixed(2)} km` : '--';
+    document.getElementById('pause-avg-power').textContent =
+      avgPowerW != null ? `${Math.round(avgPowerW)} W` : '--';
+    const hasEnd = timeLeftSec != null;
+    document.getElementById('pause-time-label').textContent = hasEnd ? 'Time Left' : 'Ridden';
+    document.getElementById('pause-time').textContent = formatTime(hasEnd ? timeLeftSec : elapsedSec);
+    pauseDialog.showModal();
+    backResumes = confirmEnd;
+    showPauseStep(confirmEnd ? 'end' : 'paused');
+  }
+
+  function back() {
+    if (backResumes) resume();
+    else showPauseStep('paused');
+  }
+
+  function resume() {
+    pauseDialog.close();
+    onResume();
+  }
+
+  function finish(callback) {
+    pauseDialog.close();
+    callback();
+  }
+
+  document.getElementById('pause-btn').addEventListener('click', () => onPause());
+  document.getElementById('end-ride-btn').addEventListener('click', () => onPause({ confirmEnd: true }));
+  document.getElementById('pause-continue-btn').addEventListener('click', resume);
+  for (const [buttonId, step] of [['pause-end-btn', 'end'], ['pause-cancel-btn', 'cancel']]) {
+    document.getElementById(buttonId).addEventListener('click', () => {
+      backResumes = false; // came from Paused, so Back returns there
+      showPauseStep(step);
+    });
+  }
+  document.getElementById('pause-end-back-btn').addEventListener('click', back);
+  document.getElementById('pause-cancel-back-btn').addEventListener('click', back);
+  document.getElementById('pause-save-btn').addEventListener('click', () => finish(onEndRide));
+  document.getElementById('pause-nosave-btn').addEventListener('click', () => finish(onDiscardRide));
+  document.getElementById('pause-discard-btn').addEventListener('click', () => finish(onDiscardRide));
+  // Escape steps back rather than slipping out of the dialog unhandled:
+  // from End or Cancel it acts as Back, and from Paused it continues.
+  pauseDialog.addEventListener('cancel', (event) => {
+    event.preventDefault();
+    if (currentStep === 'paused') resume();
+    else back();
+  });
 
   let timelineSegments = [];
+  let nowLineEl = null;
   let riderFtp = null;
   let currentZoneId = null;
   // The step list is a window onto the workout, not the whole thing: a
   // 34-segment session would otherwise need a scrollbar the rider can't
-  // use mid-effort. Show what they're on plus what's coming.
-  const STEP_WINDOW = 5;
+  // use mid-effort. Show what they're on plus what's coming; twelve fills
+  // the column on a 1080p screen without scrolling.
+  const STEP_WINDOW = 12;
   let allSegments = [];
   let renderedFrom = null;
 
@@ -92,8 +171,14 @@ export function initLiveScreen({ onEndRide }) {
     return updateZone(powerSmoothed);
   }
 
-  function setLevel(level) {
-    levelEl.textContent = `Lv ${level}`;
+  // Ride-so-far figures in the zone column; null shows as "--".
+  function setTotals({ avgPowerW, avgSpeedKmh, distanceM }) {
+    document.getElementById('total-avg-power').textContent =
+      avgPowerW != null ? `${Math.round(avgPowerW)} W` : '--';
+    document.getElementById('total-avg-speed').textContent =
+      avgSpeedKmh != null ? `${avgSpeedKmh.toFixed(1)} km/h` : '--';
+    document.getElementById('total-distance').textContent =
+      distanceM != null ? `${(distanceM / 1000).toFixed(2)} km` : '--';
   }
 
   function setElapsed(seconds) {
@@ -117,24 +202,55 @@ export function initLiveScreen({ onEndRide }) {
       return;
     }
 
+    // Drawn as a graph: bar height runs from the workout's lowest target
+    // (a 20% stub, so it stays visible) to its highest (full height).
+    const watts = segments.map((s) => s.target_watts);
+    const minW = Math.min(...watts);
+    const spanW = Math.max(...watts) - minW;
     segments.forEach((segment, index) => {
       const zone = zoneForWatts(segment.target_watts, riderFtp);
 
       const cell = document.createElement('div');
       cell.className = 'timeline-seg';
       cell.style.flex = `${segment.duration_sec} 0 0`;
-      cell.style.background = zone.color;
-      cell.style.opacity = '0.35';
+      const level = spanW > 0 ? (segment.target_watts - minW) / spanW : 1;
+      cell.style.height = `${20 + level * 80}%`;
+      // The bar itself is a faint tint and the fill is the solid zone
+      // colour, so progress through a bar stands out instead of hiding in
+      // a small opacity change.
+      cell.style.background = `color-mix(in srgb, ${zone.color} 35%, transparent)`;
       const fill = document.createElement('div');
       fill.className = 'timeline-fill';
       fill.style.background = zone.color;
       cell.appendChild(fill);
+      const label = document.createElement('span');
+      label.className = 'timeline-watts';
+      label.textContent = `${segment.target_watts}W`;
+      cell.appendChild(label);
       timelineEl.appendChild(cell);
       timelineSegments.push({ cell, fill });
     });
+    nowLineEl = document.createElement('div');
+    nowLineEl.className = 'timeline-now';
+    timelineEl.appendChild(nowLineEl);
     timelineEl.hidden = false;
+    fitTimelineLabels();
     renderSteps(0);
   }
+
+  // A 30-second sprint is a sliver on a 70-minute timeline, and the lowest
+  // bars are short stubs, so a label could be clipped to nonsense: show a
+  // bar's watts only where it fits both ways.
+  function fitTimelineLabels() {
+    requestAnimationFrame(() => {
+      for (const label of timelineEl.querySelectorAll('.timeline-watts')) {
+        label.hidden = false;
+        const bar = label.parentElement;
+        label.hidden = label.offsetWidth + 8 > bar.clientWidth || label.offsetHeight + 2 > bar.clientHeight;
+      }
+    });
+  }
+  window.addEventListener('resize', fitTimelineLabels);
 
   function stepDuration(segment) {
     return segment.duration_sec >= 60
@@ -184,10 +300,19 @@ export function initLiveScreen({ onEndRide }) {
       const done = runnerState.isComplete || index < runnerState.segmentIndex;
       const current = !runnerState.isComplete && index === runnerState.segmentIndex;
       entry.cell.classList.toggle('is-current', current);
-      entry.cell.style.opacity = done ? '1' : current ? '0.85' : '0.35';
+      entry.cell.classList.toggle('is-done', done);
       const fraction = done ? 1 : current ? runnerState.progressFraction : 0;
       entry.fill.style.width = `${fraction * 100}%`;
     });
+
+    // The "now" line sits at the exact point reached inside the current bar,
+    // measured from the bar itself so the gaps between bars can't skew it.
+    const currentEntry = timelineSegments[runnerState.segmentIndex];
+    nowLineEl.hidden = runnerState.isComplete || !currentEntry;
+    if (!nowLineEl.hidden) {
+      const { cell } = currentEntry;
+      nowLineEl.style.left = `${cell.offsetLeft + runnerState.progressFraction * cell.offsetWidth}px`;
+    }
 
     // Slide the window forward as segments complete.
     const from = Math.min(runnerState.segmentIndex, Math.max(0, allSegments.length - 1));
@@ -239,5 +364,5 @@ export function initLiveScreen({ onEndRide }) {
   updateWorkoutInfo(null);
   updateZone(null);
 
-  return { updateRawNumbers, updateWorkoutInfo, buildTimeline, setFtp, setLevel, setElapsed };
+  return { updateRawNumbers, updateWorkoutInfo, buildTimeline, setFtp, setElapsed, setTotals, showPauseDialog };
 }

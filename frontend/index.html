@@ -280,6 +280,15 @@
             <p class="hint">Smoothing affects the live watts display only —
               recorded samples are always raw. Sample interval sets how often a
               data point is written to the ride log.</p>
+            <h2 style="margin-top:1.5rem">Scenery</h2>
+            <label class="field">
+              YouTube virtual rides, one per line
+              <textarea id="setting-scenery-videos" rows="5" spellcheck="false"
+                placeholder="Swiss Alps | https://www.youtube.com/watch?v=..."></textarea>
+            </label>
+            <p class="hint">Plays in the middle of the ride screen, muted to
+              start (unmute in the player). Name a video by putting text before
+              its link; with several, pick one during the ride.</p>
             <p class="tools-link"><a href="probe.html">Hardware diagnostics (probe)</a></p>
             <p id="settings-status" class="status"></p>
             <div class="live-controls" style="margin-top:1.25rem">
@@ -370,6 +379,15 @@
             <span id="steps-progress">--</span>
           </div>
           <ol class="steps-list" id="steps-list"></ol>
+          <!-- The current step's target, at the foot of the list -->
+          <div class="ride-target" id="ride-target" hidden>
+            <strong id="segment-label-value">--</strong>
+            <span><b id="segment-target-value">--</b> <em id="segment-target-label">target watts</em></span>
+            <span><b id="segment-remaining-value">--</b> <em>remaining</em></span>
+            <span class="ride-grade" id="segment-grade-figure" hidden>
+              <b id="segment-grade-value">--</b> <em id="segment-grade-label">grade</em>
+            </span>
+          </div>
         </aside>
 
         <!-- 2. Live numbers -->
@@ -390,46 +408,89 @@
 
         <!-- 3. Zone and level -->
         <aside class="ride-zone" id="ride-zone-panel">
+          <!-- 8. The rider, working harder the higher the zone -->
+          <canvas id="ride-hero-canvas" aria-hidden="true"></canvas>
           <div class="zone-badge" id="zone-badge">
             <strong id="zone-name">Z1</strong>
             <span id="zone-label">Recovery</span>
           </div>
           <div class="zone-scale" id="zone-scale"></div>
-          <div class="ride-level">
-            <span id="ride-level">Lv 1</span>
-            <em id="ride-elapsed">0:00</em>
-          </div>
+          <dl class="ride-totals">
+            <div><dt>Elapsed</dt><dd id="ride-elapsed">0:00</dd></div>
+            <div><dt>Avg Power</dt><dd id="total-avg-power">--</dd></div>
+            <div><dt>Avg Speed</dt><dd id="total-avg-speed">--</dd></div>
+            <div><dt>Distance</dt><dd id="total-distance">--</dd></div>
+          </dl>
         </aside>
 
-        <!-- 8. The rider, working harder the higher the zone -->
+        <!-- 4. Scenery (a YouTube virtual ride), with ride notes on top -->
         <div class="ride-hero">
-          <canvas id="ride-hero-canvas" aria-hidden="true"></canvas>
-          <div class="ride-target" id="ride-target" hidden>
-            <strong id="segment-label-value">--</strong>
-            <span><b id="segment-target-value">--</b> <em id="segment-target-label">target watts</em></span>
-            <span><b id="segment-remaining-value">--</b> <em>remaining</em></span>
-            <span class="ride-grade" id="segment-grade-figure" hidden>
-              <b id="segment-grade-value">--</b> <em id="segment-grade-label">grade</em>
-            </span>
-          </div>
+          <div id="scenery-frame" class="scenery-frame"></div>
+          <p id="scenery-empty" class="scenery-empty" hidden>
+            Add YouTube virtual rides under Settings → Scenery to ride with a view.
+          </p>
+          <select id="scenery-picker" class="scenery-picker" aria-label="Scenery" hidden></select>
           <p id="ride-note" class="ride-note" hidden></p>
         </div>
 
-        <!-- 5. Intensity timeline -->
-        <div class="ride-timeline">
-          <div id="segment-timeline" class="segment-timeline" hidden></div>
-        </div>
+        <!-- Bottom row: the workout graph, then mode and controls -->
+        <div class="ride-bottom">
+          <!-- 5. Intensity timeline -->
+          <div class="ride-timeline">
+            <div id="segment-timeline" class="segment-timeline" hidden></div>
+          </div>
 
-        <!-- 6 & 7. Controls and gear -->
-        <div class="ride-footer">
-          <button id="end-ride-btn" type="button" class="secondary">End Ride</button>
-          <div class="gear-display" id="gear-metric">
-            <strong id="gear-value">--</strong>
-            <span class="metric-label">gear</span>
+          <!-- 6 & 7. Controls and gear -->
+          <div class="ride-footer">
+            <div class="gear-display" id="gear-metric">
+              <strong id="gear-value">--</strong>
+              <span class="metric-label">gear</span>
+            </div>
+            <div class="ride-actions">
+              <button id="pause-btn" type="button" class="secondary">Pause</button>
+              <button id="end-ride-btn" type="button" class="secondary">End Ride</button>
+            </div>
           </div>
         </div>
       </div>
     </section>
+
+    <!-- Pause: Continue, End Ride (asks whether to save) or Cancel Ride
+         (asks before throwing the ride away), so a stray click mid-effort
+         can never end or lose a ride. -->
+    <dialog id="pause-dialog" class="panel pause-dialog" aria-labelledby="pause-title">
+      <div id="pause-step-paused">
+        <h1 id="pause-title" class="pause-title">PAUSED</h1>
+        <dl class="pause-stats">
+          <div><dt>Distance</dt><dd id="pause-distance">--</dd></div>
+          <div><dt>Avg Power</dt><dd id="pause-avg-power">--</dd></div>
+          <div><dt id="pause-time-label">Time Left</dt><dd id="pause-time">--</dd></div>
+        </dl>
+        <p class="hint">The clock is stopped and the trainer is released.</p>
+        <div class="pause-actions">
+          <button id="pause-continue-btn" type="button" autofocus>Continue</button>
+          <button id="pause-end-btn" type="button" class="secondary">End Ride</button>
+          <button id="pause-cancel-btn" type="button" class="secondary">Cancel Ride</button>
+        </div>
+      </div>
+      <div id="pause-step-end" hidden>
+        <h1 class="pause-title">END RIDE?</h1>
+        <p class="hint">Save it to the Chronicle? Either way it can't be continued.</p>
+        <div class="pause-actions">
+          <button id="pause-save-btn" type="button">Save Ride</button>
+          <button id="pause-nosave-btn" type="button" class="secondary">Don't Save</button>
+          <button id="pause-end-back-btn" type="button" class="secondary pause-back">Back</button>
+        </div>
+      </div>
+      <div id="pause-step-cancel" hidden>
+        <h1 class="pause-title">CANCEL RIDE?</h1>
+        <p class="hint">The ride will be thrown away, not saved. This can't be undone.</p>
+        <div class="pause-actions">
+          <button id="pause-discard-btn" type="button">Discard Ride</button>
+          <button id="pause-cancel-back-btn" type="button" class="secondary pause-back">Back</button>
+        </div>
+      </div>
+    </dialog>
 
     <section data-view="summary" class="view">
       <h1 class="title">PUSH COMPLETE</h1>

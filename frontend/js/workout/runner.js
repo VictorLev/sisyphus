@@ -3,8 +3,8 @@
 // tick(nowMs), using a real elapsed delta rather than a fixed step, so the
 // boulder motif gets smooth sub-second motion and there's no drift.
 //
-// No pause/failure states, per the spec: workouts are additive and
-// informational only, not enforced.
+// No failure states, per the spec: workouts are additive and informational
+// only, not enforced. Pausing is just stop() then resume().
 export class WorkoutRunner extends EventTarget {
   constructor(segments) {
     super();
@@ -27,6 +27,14 @@ export class WorkoutRunner extends EventTarget {
   stop() {
     this.isRunning = false;
     this._lastTickMs = null;
+  }
+
+  // Picks up where stop() left off. Unlike start() it never revives a
+  // finished workout, so resuming after the last segment stays complete.
+  resume(nowMs) {
+    if (this.isComplete) return;
+    this.isRunning = true;
+    this._lastTickMs = nowMs;
   }
 
   tick(nowMs) {
