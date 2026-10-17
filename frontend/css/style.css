@@ -2022,3 +2022,18 @@ kbd {
   border-radius: 2px;
   color: var(--color-text);
 }
+
+/* The Start button leads the panel, right under the intro, with its one
+   precondition beside it. */
+.ftp-test-start {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  margin: 0 0 0.5rem;
+}
+
+.ftp-test-start .hint {
+  margin: 0;
+  flex: 1 1 14rem;
+}

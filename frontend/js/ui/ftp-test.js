@@ -103,7 +103,7 @@ export function initFtpHistory() {
     }
     listEl.innerHTML = '';
     if (entries.length === 0) {
-      listEl.append(item('empty', 'No FTP changes yet. Take the FTP Test above to measure yours.'));
+      listEl.append(item('empty', 'No FTP changes yet. Take the FTP Test to measure yours.'));
       return;
     }
     for (const entry of entries) {
