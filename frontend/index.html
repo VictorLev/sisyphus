@@ -171,6 +171,7 @@
       </div>
 
       <dl class="summary-stats" id="ride-detail-stats"></dl>
+      <div class="panel ftp-result" id="detail-ftp-result" hidden></div>
       <button id="detail-back-btn" type="button" class="secondary">Back to the Chronicle</button>
     </section>
 
@@ -221,6 +222,16 @@
             <div class="live-controls" style="margin-top:1.25rem">
               <button id="save-profile-btn" type="button">Save Profile</button>
             </div>
+          </div>
+        </div>
+
+        <div class="home-col">
+          <div class="panel">
+            <h2>FTP History</h2>
+            <ul id="ftp-history" class="workout-list"></ul>
+            <p class="hint">Measure it with the FTP Test (20 min) in the
+              workout library: after the ride you choose whether to adopt the
+              result. FTP changes saved under Rider are listed too.</p>
           </div>
         </div>
       </div>
@@ -548,6 +559,7 @@
       <h1 class="title">PUSH COMPLETE</h1>
       <p class="tagline">The boulder rests. Until tomorrow.</p>
       <dl class="summary-stats" id="summary-stats"></dl>
+      <div class="panel ftp-result" id="summary-ftp-result" hidden></div>
       <button id="summary-home-btn" type="button">Back to Home</button>
     </section>
   </main>

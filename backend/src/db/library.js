@@ -21,27 +21,38 @@ export function loadLibrary() {
     seen.add(entry.key);
     const error = validateStructure(entry.structure);
     if (error) throw new Error(`library.json: ${entry.key}: ${error}`);
+    if (entry.test !== undefined) {
+      const { kind, window_sec, factor } = entry.test;
+      if (kind !== 'ftp' || !Number.isInteger(window_sec) || window_sec <= 0 || !(factor > 0 && factor <= 1)) {
+        throw new Error(`library.json: ${entry.key}: test must be {kind:"ftp", window_sec>0, 0<factor<=1}`);
+      }
+      const total = entry.structure.reduce((sum, s) => sum + s.duration_sec, 0);
+      if (total < window_sec) throw new Error(`library.json: ${entry.key}: shorter than its test window`);
+    }
   }
   return entries;
 }
 
 export function syncLibrary(db, entries = loadLibrary()) {
   const existing = new Map(
-    db.prepare('SELECT id, library_key, name, structure FROM workouts WHERE library_key IS NOT NULL')
+    db.prepare('SELECT id, library_key, name, structure, test FROM workouts WHERE library_key IS NOT NULL')
       .all()
       .map((row) => [row.library_key, row])
   );
   const insert = db.prepare(
-    'INSERT INTO workouts (name, structure, user_id, library_key) VALUES (?, ?, NULL, ?)'
+    'INSERT INTO workouts (name, structure, user_id, library_key, test) VALUES (?, ?, NULL, ?, ?)'
   );
-  const update = db.prepare('UPDATE workouts SET name = ?, structure = ? WHERE id = ?');
+  const update = db.prepare('UPDATE workouts SET name = ?, structure = ?, test = ? WHERE id = ?');
 
   db.transaction(() => {
     for (const entry of entries) {
       const structure = JSON.stringify(entry.structure);
+      const test = entry.test ? JSON.stringify(entry.test) : null;
       const row = existing.get(entry.key);
-      if (!row) insert.run(entry.name, structure, entry.key);
-      else if (row.name !== entry.name || row.structure !== structure) update.run(entry.name, structure, row.id);
+      if (!row) insert.run(entry.name, structure, entry.key, test);
+      else if (row.name !== entry.name || row.structure !== structure || row.test !== test) {
+        update.run(entry.name, structure, test, row.id);
+      }
       existing.delete(entry.key);
     }
     // Whatever is left was removed from the JSON. Retire it the same way a

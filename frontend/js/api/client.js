@@ -153,3 +153,21 @@ export function changePassword(currentPassword, newPassword) {
     body: JSON.stringify({ current_password: currentPassword, new_password: newPassword }),
   });
 }
+
+// FTP tests: the estimate a test ride measured, setting the FTP (optionally
+// from that test ride), and the rider's FTP history.
+export function getFtpEstimate(sessionId) {
+  return request(`/api/ftp/estimate/${sessionId}`);
+}
+
+export function setFtp(ftp, sessionId = null) {
+  return request('/api/ftp', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ftp, session_id: sessionId }),
+  });
+}
+
+export function getFtpHistory() {
+  return request('/api/ftp/history');
+}

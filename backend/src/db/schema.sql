@@ -42,7 +42,10 @@ CREATE TABLE IF NOT EXISTS workouts (
   -- Set only on the built-in library (db/library.json), which is shared and
   -- read-only. This, not user_id IS NULL, is what marks a library workout,
   -- so a row that has simply not been given an owner yet is never shared.
-  library_key TEXT
+  library_key TEXT,
+  -- JSON, library only: set on FTP tests, e.g. {"kind":"ftp","window_sec":1200,
+  -- "factor":0.95}. A ride on such a workout yields an FTP estimate.
+  test TEXT
 );
 
 CREATE TABLE IF NOT EXISTS workout_stars (
@@ -113,6 +116,19 @@ CREATE TABLE IF NOT EXISTS user_config (
   value TEXT NOT NULL, -- JSON
   updated_at TEXT NOT NULL DEFAULT (datetime('now')),
   PRIMARY KEY (user_id, key)
+);
+
+-- Every FTP a rider has had, newest last: from a test (with the ride that
+-- measured it) or typed into Profile. Profile's `ftp` stays the current
+-- value; this is the history behind it.
+CREATE TABLE IF NOT EXISTS ftp_history (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  ftp REAL NOT NULL,
+  previous_ftp REAL,
+  source TEXT NOT NULL, -- 'test' | 'manual'
+  session_id INTEGER REFERENCES sessions(id), -- the test ride, for source 'test'
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
 -- One-off migration steps that have run, so they are never repeated.

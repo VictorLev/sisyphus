@@ -23,7 +23,8 @@ export function renderWorkoutRow(workout, { onStart, onEdit, onDelete, onCopy, o
   meta.className = 'workout-meta';
   const grades = workout.structure.filter((s) => s.grade_percent);
   meta.textContent = `${workout.structure.length} segments · ${totalMinutes(workout)} min` +
-    (grades.length ? ` · ${grades.length} with terrain` : '');
+    (grades.length ? ` · ${grades.length} with terrain` : '') +
+    (workout.test ? ' · measures your FTP' : '');
   info.appendChild(name);
   if (workout.library && compact) {
     const tag = document.createElement('span');

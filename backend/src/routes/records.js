@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import db from '../db/index.js';
+import { bestAverage } from '../power.js';
 
 const router = Router();
 
@@ -18,38 +19,6 @@ const selectSamples = db.prepare(
 function durationSec(session) {
   const ms = new Date(session.ended_at) - new Date(session.started_at);
   return Number.isFinite(ms) && ms > 0 ? ms / 1000 : 0;
-}
-
-// Best average power sustained over `windowSec`, via a sliding window over
-// timestamps rather than sample counts — the recording interval is a
-// setting, so N samples is not reliably N seconds.
-function bestAverage(samples, windowSec) {
-  const points = samples.filter((s) => s.power != null);
-  if (points.length < 2) return null;
-
-  let best = null;
-  let start = 0;
-  let sum = 0;
-  let count = 0;
-
-  for (let end = 0; end < points.length; end++) {
-    sum += points[end].power;
-    count += 1;
-    // Shrink from the left until the window fits.
-    while (start < end && points[end].timestamp_offset_sec - points[start].timestamp_offset_sec > windowSec) {
-      sum -= points[start].power;
-      count -= 1;
-      start += 1;
-    }
-    const span = points[end].timestamp_offset_sec - points[start].timestamp_offset_sec;
-    // Only count a window that actually covers the duration; a 20-minute
-    // record can't be set by a 5-minute ride.
-    if (span >= windowSec * 0.95 && count > 1) {
-      const avg = sum / count;
-      if (best === null || avg > best) best = avg;
-    }
-  }
-  return best;
 }
 
 function best(list, valueOf) {

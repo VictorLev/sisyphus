@@ -42,6 +42,8 @@ function toResponse(row) {
     // Library workouts are shared and read-only; the client offers "Copy to
     // my workouts" instead of Edit and Delete.
     library: row.library_key != null,
+    // Set on FTP tests: a ride on this workout yields an FTP estimate.
+    test: row.test ? JSON.parse(row.test) : null,
   };
 }
 
@@ -105,7 +107,9 @@ router.put('/:id', (req, res) => {
 });
 
 // "Copy to my workouts": the rider's own editable version. The builder works
-// in watts, so % FTP targets are converted at the rider's current FTP.
+// in watts, so % FTP targets are converted at the rider's current FTP. A copy
+// of an FTP test is an ordinary workout: its targets are now fixed watts, so
+// riding it measures nothing the original wouldn't.
 router.post('/:id/copy', (req, res) => {
   const row = findVisible(req);
   if (!row) return res.status(404).json({ error: 'workout not found' });

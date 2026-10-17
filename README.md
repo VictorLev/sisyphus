@@ -30,6 +30,9 @@ night, and you push it up again tomorrow.
 - **Workout library** — about a dozen built-in workouts (recovery to VO2max,
   a ramp test, some short ones) written in % of FTP, so they fit every rider.
   Ride them as they are, or copy one to edit.
+- **FTP test** — the library's 20-minute test runs in virtual gears so you
+  set the pace; afterwards the app works out your FTP (95% of your best 20
+  minutes) and asks before changing it. Profile keeps your FTP history.
 - **Workout builder** — stack segments of duration + target watts (+ optional
   gradient), with a live bar preview coloured by power zone and Z1–Z6 quick-add.
 - **The Chronicle** — a month calendar of everything you've ridden, weekly

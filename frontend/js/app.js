@@ -20,6 +20,7 @@ import { initWorkouts } from './ui/workouts.js';
 import { initFeats } from './ui/feats.js';
 import { requireLogin, initAccount } from './ui/login.js';
 import { resolveTargets } from './workout/targets.js';
+import { showFtpResult, initFtpHistory } from './ui/ftp-test.js';
 
 // Nothing below loads data until someone is logged in: requireLogin opens
 // the login screen and only resolves once there is a user (or with null
@@ -104,6 +105,7 @@ initFeats({ onOpenRide: (id) => chronicle.openDetail(id) });
 initProfile();
 initSettings({ onSaved: (saved) => applySettings(saved) });
 initAccount(currentUser);
+initFtpHistory();
 updateModeUi();
 
 // Settings are stored server-side, so the objects are built with defaults and
@@ -407,8 +409,11 @@ function startRide(workout) {
   }
 
   // ERG needs a workout's targets, so free rides always run in gears — but
-  // that must not discard an ERG choice made for the next workout.
-  rideMode = workout ? preferredMode : 'gears';
+  // that must not discard an ERG choice made for the next workout. FTP tests
+  // run in gears too: ERG would hold the test block at your CURRENT FTP, so
+  // it could only ever measure what you already have.
+  const isTest = Boolean(workout?.test);
+  rideMode = workout && !isTest ? preferredMode : 'gears';
   updateModeUi();
 
   liveScreen.buildTimeline(workout ? workout.structure : null, workout?.name);
@@ -418,6 +423,9 @@ function startRide(workout) {
   updateGearDisplay(gears.gearNumber);
 
   showView('live');
+  if (isTest) {
+    flashRideNote('FTP test: virtual gears, so you set the pace. Ride the 20-minute block as hard as you can hold it evenly.', 12000);
+  }
   scenery.start();
   startLoop();
   applyRideMode();
@@ -557,6 +565,7 @@ async function endRide() {
     const session = await createSession(payload);
     refreshLevel();
     showSummary(session);
+    if (activeWorkout?.test) showFtpResult(document.getElementById('summary-ftp-result'), session.id);
   } catch (err) {
     // Never drop the ride. Park it and retry on the next load — the rider
     // cannot pedal the hour again.
@@ -609,6 +618,7 @@ function updateGearDisplay(gear) {
 }
 
 function showSummary(session) {
+  document.getElementById('summary-ftp-result').hidden = true;
   const statsEl = document.getElementById('summary-stats');
   statsEl.innerHTML = '';
   const entries = [

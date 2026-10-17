@@ -1659,3 +1659,21 @@ button.secondary:hover:not(:disabled) {
   letter-spacing: 0.12em;
   color: var(--color-bronze);
 }
+
+/* -------------------------------------------------------------- FTP test */
+
+.ftp-result {
+  margin: 0 0 1.5rem;
+}
+
+.ftp-result .live-controls {
+  margin-top: 1rem;
+}
+
+/* The measured FTP, in the same pixel figure style as the ride numbers. */
+.ftp-figure {
+  font-family: var(--font-pixel);
+  font-size: 2rem;
+  color: var(--color-bronze-bright);
+  margin: 0.25rem 0 0.75rem;
+}

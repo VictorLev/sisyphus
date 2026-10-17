@@ -2,6 +2,7 @@ import { listSessions, getSession, getWorkout, deleteSession } from '../api/clie
 import { showView } from './views.js';
 import { drawPowerChart, drawWeeklyChart } from './chart.js';
 import { resolveTargets } from '../workout/targets.js';
+import { showFtpResult } from './ftp-test.js';
 
 function formatDuration(startIso, endIso) {
   const ms = new Date(endIso) - new Date(startIso);
@@ -318,9 +319,14 @@ export function initChronicle() {
     // If the ride followed a workout, overlay its target steps so the trace
     // can be read against what was being chased.
     let targetSeries = null;
+    const ftpResultEl = document.getElementById('detail-ftp-result');
+    ftpResultEl.hidden = true;
     if (session.workout_id) {
       try {
         const workout = await getWorkout(session.workout_id);
+        // A test ride offers its result here too, e.g. one saved offline
+        // whose summary screen was never seen.
+        if (workout.test) showFtpResult(ftpResultEl, session.id);
         // % FTP targets are drawn at the FTP the ride was ridden at; rides
         // from before that was recorded fall back to today's.
         const structure = resolveTargets(workout.structure, session.ftp ?? riderFtp);

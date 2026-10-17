@@ -243,7 +243,16 @@ ERG blocks gear writes, which would otherwise fight the trainer's target.
 
 **Phase 2**
 - FTP: manual entry is BUILT (Profile page; annotates targets as %FTP).
-  A short guided estimator test is still outstanding.
+  The **FTP test** is BUILT: "FTP Test (20 min)" in the library (warm-up,
+  openers, a 5-minute hard effort, recovery, 20 minutes all out). It always
+  runs in virtual gears, since ERG would pin the test at the current FTP.
+  The estimate is 95% of the best 20 minutes, computed from the samples on
+  the server (same sliding window as Feats); the rider chooses whether to
+  adopt it, on the summary or later from the ride in the Chronicle. Every
+  FTP change, from a test or typed into Profile, goes into `ftp_history`,
+  shown on Profile. Test specs live on library entries
+  (`"test": {"kind": "ftp", "window_sec", "factor"}`), so another protocol
+  is a JSON entry, not code.
 - History view (**the Chronicle**) — BUILT: a month calendar where ridden
   days fill with bronze scaled by volume (with per-month Push/minute/km
   totals, and clicking a day filters the list), every Push newest-first

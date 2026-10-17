@@ -43,6 +43,7 @@ export function migrate(db, env = {}) {
   ensureColumn(db, 'sessions', 'ftp', 'REAL');
   ensureColumn(db, 'workouts', 'user_id', 'INTEGER REFERENCES users(id)');
   ensureColumn(db, 'workouts', 'library_key', 'TEXT');
+  ensureColumn(db, 'workouts', 'test', 'TEXT');
   ensureColumn(db, 'records', 'user_id', 'INTEGER REFERENCES users(id)');
 
   db.exec(`
@@ -52,6 +53,7 @@ export function migrate(db, env = {}) {
     CREATE UNIQUE INDEX IF NOT EXISTS workouts_library_key ON workouts (library_key)
       WHERE library_key IS NOT NULL;
     CREATE INDEX IF NOT EXISTS auth_sessions_user ON auth_sessions (user_id);
+    CREATE INDEX IF NOT EXISTS ftp_history_user ON ftp_history (user_id, id);
   `);
 
   syncLibrary(db);

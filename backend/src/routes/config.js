@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import db from '../db/index.js';
+import { recordFtp } from '../ftp-history.js';
 
 const router = Router();
 
@@ -38,6 +39,10 @@ const upsertConfig = db.prepare(
   `INSERT INTO user_config (user_id, key, value, updated_at) VALUES (@userId, @key, @value, datetime('now'))
    ON CONFLICT(user_id, key) DO UPDATE SET value = @value, updated_at = datetime('now')`
 );
+
+export function writeConfig(userId, key, value) {
+  upsertConfig.run({ userId, key, value: JSON.stringify(value) });
+}
 
 export function readConfig(userId, key) {
   const row = selectConfig.get(userId, key);
@@ -85,7 +90,8 @@ for (const key of ['profile', 'settings']) {
     const { value, error } = sanitise(key, req.body ?? {});
     if (error) return res.status(400).json({ error });
 
-    const merged = { ...readConfig(req.user.id, key), ...value };
+    const before = readConfig(req.user.id, key);
+    const merged = { ...before, ...value };
     if (key === 'settings') {
       const invalid = validateSettings(merged);
       if (invalid) return res.status(400).json({ error: invalid });
@@ -93,7 +99,11 @@ for (const key of ['profile', 'settings']) {
       // shouldn't fail the save, it should just pull the start gear in.
       merged.start_gear = Math.min(Math.max(1, Math.round(merged.start_gear)), merged.gear_count);
     }
-    upsertConfig.run({ userId: req.user.id, key, value: JSON.stringify(merged) });
+    writeConfig(req.user.id, key, merged);
+    // A hand-typed FTP is part of the rider's FTP history too.
+    if (key === 'profile') {
+      recordFtp({ userId: req.user.id, ftp: merged.ftp, previous: before.ftp, source: 'manual' });
+    }
     res.json(merged);
   });
 }
