@@ -1,9 +1,9 @@
 #!/bin/sh
-# Pull-based deploy for one Sisyphus instance (prod or staging): brings the
-# running app in line with the image tag its .env selects (prod: stable,
-# staging: latest). Lives beside docker-compose.yml in the instance's folder
-# and runs from sisyphus-update@<folder>.service: nightly for prod, every 5
-# minutes for staging. Safe to run by hand any time.
+# Pull-based deploy for the homelab: brings the running app in line with
+# the image tag .env selects (stable, i.e. the last v* release, unless
+# IMAGE_TAG pins another). Lives beside docker-compose.yml in
+# /mnt/storage/docker/sisyphus/ and runs nightly from sisyphus-update.service.
+# Safe to run by hand any time.
 #
 # When the image changed:
 #   1. the database is backed up first (a new version may migrate it); if
@@ -16,16 +16,15 @@
 set -eu
 cd "$(dirname "$0")"
 SERVICE=sisyphus
-INSTANCE=$(basename "$(pwd)")
 BAD_IMAGE_FILE=.bad-image
 
-# One deploy or restore per instance at a time. Opened read-only: flock
+# One deploy or restore at a time. Opened read-only: flock
 # works on any open file, so whoever created the lock file, everyone can
 # take it.
-lock=/run/lock/sisyphus-deploy-$INSTANCE.lock
+lock=/run/lock/sisyphus-deploy.lock
 [ -e "$lock" ] || : > "$lock"
 exec 9<"$lock"
-flock -n 9 || { echo "Another update or restore of $INSTANCE is running; skipping."; exit 0; }
+flock -n 9 || { echo "Another update or restore is running; skipping."; exit 0; }
 
 # Docker would create a missing bind-mount folder owned by root, and the
 # container (uid 1000) could not write to it. Say so instead.
