@@ -2037,3 +2037,165 @@ kbd {
   margin: 0;
   flex: 1 1 14rem;
 }
+
+/* ---------------------------------------------------------------- badges */
+
+.badges-head {
+  margin: 2.5rem 0 1rem;
+}
+
+.badges-head h2 {
+  margin: 0 0 0.25rem;
+}
+
+.badge-group {
+  margin-bottom: 1.75rem;
+}
+
+.badge-group h3 {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--color-bronze);
+  margin: 0 0 0.6rem;
+}
+
+.badge-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: 0.6rem;
+}
+
+.badge-tile {
+  display: flex;
+  gap: 0.8rem;
+  align-items: flex-start;
+  padding: 0.75rem 0.85rem;
+  background: linear-gradient(180deg, var(--color-surface-raised), var(--color-surface));
+  border: var(--border);
+  border-radius: 2px;
+}
+
+.badge-tile.is-clickable {
+  cursor: pointer;
+}
+
+.badge-tile.is-clickable:hover,
+.badge-tile.is-clickable:focus-visible {
+  border-color: var(--color-bronze-dim);
+  outline: none;
+}
+
+/* The medallion: a square plate in the tier's colour with the group's
+   glyph in the pixel font. */
+.badge-medal {
+  --tier: var(--color-bronze);
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: 3px;
+  background: var(--tier);
+  box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.3), inset 0 2px 0 rgba(255, 255, 255, 0.25);
+  color: #17140f;
+  font-family: var(--font-pixel);
+  font-size: 0.7rem;
+  letter-spacing: -0.04em;
+}
+
+.tier-silver .badge-medal { --tier: #a9a39a; }
+.tier-gold .badge-medal { --tier: var(--color-bronze-bright); }
+.tier-fun .badge-medal { --tier: #6d7f8a; }
+.tier-secret .badge-medal { --tier: #b4533c; color: var(--color-text); }
+
+.badge-tile.is-locked .badge-medal {
+  filter: grayscale(1);
+  opacity: 0.4;
+}
+
+.badge-tile.is-locked .badge-name {
+  color: var(--color-text-dim);
+}
+
+.badge-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.badge-name {
+  font-size: 0.88rem;
+  color: var(--color-bronze-bright);
+}
+
+.badge-desc {
+  font-size: 0.76rem;
+  line-height: 1.4;
+  color: var(--color-text-dim);
+}
+
+.badge-when {
+  margin-top: 0.2rem;
+  font-size: 0.7rem;
+  color: var(--color-text-dim);
+}
+
+.badge-tile.is-earned .badge-when {
+  color: var(--color-bronze);
+}
+
+.badge-progress {
+  display: block;
+  margin-top: 0.35rem;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--color-bg);
+  overflow: hidden;
+}
+
+.badge-progress span {
+  display: block;
+  height: 100%;
+  border-radius: 2px;
+  background: var(--color-bronze);
+}
+
+.ride-badges {
+  margin: 0 0 1.5rem;
+}
+
+/* Earned badges, beside the level: a little gold medallion and the count.
+   It is a button (it opens the Badges tab), so it drops the button look. */
+.nav-badges {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: transparent;
+  border: none;
+  padding: 0.3rem 0.2rem;
+  font-family: var(--font-pixel);
+  font-size: 0.65rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--color-bronze-bright);
+}
+
+.nav-badges:hover:not(:disabled) {
+  background: transparent;
+  color: var(--color-text);
+}
+
+.nav-badges-medal {
+  width: 0.8rem;
+  height: 0.8rem;
+  border-radius: 2px;
+  background: var(--color-bronze-bright);
+  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}

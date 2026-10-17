@@ -181,3 +181,7 @@ export function setFtp(ftp, sessionId = null) {
 export function getFtpHistory() {
   return request('/api/ftp/history');
 }
+
+export function getBadges() {
+  return request('/api/badges');
+}

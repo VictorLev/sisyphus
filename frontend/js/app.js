@@ -20,6 +20,7 @@ import { initSisyphusLoop } from './ui/sisyphus-loop.js';
 import { initChronicle, setChronicleFtp } from './ui/chronicle.js';
 import { initWorkouts } from './ui/workouts.js';
 import { initFeats } from './ui/feats.js';
+import { initBadges, showRideBadges, refreshBadgeCount } from './ui/badges.js';
 import { requireLogin, initAccount } from './ui/login.js';
 import { initTrainerButton } from './ui/trainer-button.js';
 import { initLogPanel } from './ui/log-panel.js';
@@ -109,6 +110,7 @@ function editWorkout(workout) {
 initSisyphusLoop();
 const chronicle = initChronicle();
 initFeats({ onOpenRide: (id) => chronicle.openDetail(id) });
+initBadges({ onOpenRide: (id) => chronicle.openDetail(id), onOpenBadges: () => showView('badges') });
 initProfile();
 initSettings({ onSaved: (saved) => applySettings(saved) });
 initAccount(currentUser);
@@ -156,6 +158,7 @@ async function loadConfig() {
 }
 loadConfig();
 refreshLevel();
+refreshBadgeCount();
 retryPendingRides();
 
 document.addEventListener('profilechange', (event) => {
@@ -573,14 +576,18 @@ async function endRide() {
     // Kept with the ride so a % FTP workout's targets can be redrawn as the
     // watts that were actually chased, even after the FTP changes.
     ftp: riderFtp,
+    // Minutes east of UTC, so date and time badges use the rider's local time.
+    tz_offset_min: -new Date(rideStartedAt).getTimezoneOffset(),
     samples: recorder.getSamples(),
   };
 
   try {
     const session = await createSession(payload);
     refreshLevel();
+    refreshBadgeCount();
     showSummary(session);
     if (activeWorkout?.test) showFtpResult(document.getElementById('summary-ftp-result'), session.id);
+    showRideBadges(document.getElementById('summary-badges'), session.id, { onOpenRide: (id) => chronicle.openDetail(id) });
   } catch (err) {
     // Never drop the ride. Park it and retry on the next load — the rider
     // cannot pedal the hour again.
@@ -609,6 +616,7 @@ async function retryPendingRides() {
   const { saved, remaining } = await flushPending(createSession, currentUser?.id);
   if (saved > 0) {
     refreshLevel();
+    refreshBadgeCount();
     home.refreshWorkoutList();
     flashRideNote(`Saved ${saved} ride${saved > 1 ? 's' : ''} that failed earlier.`, 8000);
     console.info(`[app] recovered ${saved} pending ride(s)`);
@@ -635,6 +643,7 @@ function updateGearDisplay(gear) {
 
 function showSummary(session) {
   document.getElementById('summary-ftp-result').hidden = true;
+  document.getElementById('summary-badges').hidden = true;
   const statsEl = document.getElementById('summary-stats');
   statsEl.innerHTML = '';
   const entries = [

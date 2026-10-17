@@ -3,6 +3,7 @@ import { showView } from './views.js';
 import { drawPowerChart, drawWeeklyChart } from './chart.js';
 import { resolveTargets } from '../workout/targets.js';
 import { showFtpResult } from './ftp-test.js';
+import { showRideBadges } from './badges.js';
 
 function formatDuration(startIso, endIso) {
   const ms = new Date(endIso) - new Date(startIso);
@@ -321,6 +322,7 @@ export function initChronicle() {
     let targetSeries = null;
     const ftpResultEl = document.getElementById('detail-ftp-result');
     ftpResultEl.hidden = true;
+    showRideBadges(document.getElementById('detail-badges'), session.id, { title: 'Earned on this ride' });
     if (session.workout_id) {
       try {
         const workout = await getWorkout(session.workout_id);

@@ -106,6 +106,7 @@ const res = await api('/api/sessions', {
     distance_m: Number(distanceM.toFixed(1)),
     max_power: maxPower,
     ftp,
+    tz_offset_min: -start.getTimezoneOffset(),
     samples,
   }),
 });

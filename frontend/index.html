@@ -46,6 +46,10 @@
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M7 6H4v2a3 3 0 0 0 3 3M17 6h3v2a3 3 0 0 1-3 3M9 20h6M12 14v6"/></svg>
           Feats
         </button>
+        <button type="button" data-nav="badges">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="15" r="6"/><path d="M8 3l2.5 6.5M16 3l-2.5 6.5M10.2 15l1.3 1.3 2.5-2.6"/></svg>
+          Badges
+        </button>
         <button type="button" data-nav="builder">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V9M9 19V5M14 19v-7M19 19v-4"/></svg>
           Build
@@ -56,6 +60,10 @@
         </button>
         <div class="nav-rider" id="nav-rider">
           <span class="nav-level" id="nav-level" title="Level">Lv 1</span>
+          <button type="button" class="nav-badges" id="nav-badges" title="Badges earned" aria-label="Badges earned" hidden>
+            <span class="nav-badges-medal" aria-hidden="true"></span>
+            <span id="nav-badges-count">0</span>
+          </button>
           <span class="nav-name" id="nav-name">—</span>
         </div>
 
@@ -127,6 +135,12 @@
       <dl class="summary-stats" id="feats-grid"></dl>
     </section>
 
+    <section data-view="badges" class="view">
+      <h1 class="title">BADGES</h1>
+      <p class="tagline" id="badges-summary">&nbsp;</p>
+      <div id="badges-groups"></div>
+    </section>
+
     <section data-view="chronicle" class="view">
       <h1 class="title">THE CHRONICLE</h1>
       <p class="tagline" id="chronicle-summary">&nbsp;</p>
@@ -174,6 +188,7 @@
 
       <dl class="summary-stats" id="ride-detail-stats"></dl>
       <div class="panel ftp-result" id="detail-ftp-result" hidden></div>
+      <div class="panel ride-badges" id="detail-badges" hidden></div>
       <button id="detail-back-btn" type="button" class="secondary">Back to the Chronicle</button>
     </section>
 
@@ -629,6 +644,7 @@
       <p class="tagline">The boulder rests. Until tomorrow.</p>
       <dl class="summary-stats" id="summary-stats"></dl>
       <div class="panel ftp-result" id="summary-ftp-result" hidden></div>
+      <div class="panel ride-badges" id="summary-badges" hidden></div>
       <button id="summary-home-btn" type="button">Back to Home</button>
     </section>
   </main>

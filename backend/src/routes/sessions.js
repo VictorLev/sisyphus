@@ -4,8 +4,8 @@ import db from '../db/index.js';
 const router = Router();
 
 const insertSession = db.prepare(
-  `INSERT INTO sessions (user_id, workout_id, workout_name, started_at, ended_at, distance_m, ftp)
-   VALUES (@user_id, @workout_id, @workout_name, @started_at, @ended_at, @distance_m, @ftp)`
+  `INSERT INTO sessions (user_id, workout_id, workout_name, started_at, ended_at, distance_m, ftp, tz_offset_min)
+   VALUES (@user_id, @workout_id, @workout_name, @started_at, @ended_at, @distance_m, @ftp, @tz_offset_min)`
 );
 // Only a workout the rider can see: their own, or the shared library.
 const selectVisibleWorkout = db.prepare(
@@ -75,6 +75,8 @@ const createSession = db.transaction((userId, body) => {
   // itself must still save.
   const workout = body.workout_id ? selectVisibleWorkout.get(body.workout_id, userId) : null;
   const ftp = Number(body.ftp);
+  // Real offsets run from UTC-12 to UTC+14.
+  const tz = Number(body.tz_offset_min);
   const info = insertSession.run({
     user_id: userId,
     workout_id: workout?.id ?? null,
@@ -85,6 +87,7 @@ const createSession = db.transaction((userId, body) => {
     ended_at: body.ended_at,
     distance_m: body.distance_m ?? null,
     ftp: Number.isFinite(ftp) && ftp > 0 ? ftp : null,
+    tz_offset_min: Number.isInteger(tz) && tz >= -720 && tz <= 840 ? tz : null,
   });
   const sessionId = info.lastInsertRowid;
 
