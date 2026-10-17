@@ -1,4 +1,4 @@
-import { getFtpEstimate, setFtp, getFtpHistory } from '../api/client.js';
+import { getFtpEstimate, setFtp, getFtpHistory, listWorkouts } from '../api/client.js';
 
 // The result of an FTP test ride: the estimate, how it compares with the
 // rider's current FTP, and the choice to adopt it. Nothing changes until the
@@ -102,7 +102,7 @@ export function initFtpHistory() {
     }
     listEl.innerHTML = '';
     if (entries.length === 0) {
-      listEl.append(item('empty', 'No FTP changes yet. Ride the FTP Test (20 min) from the library to measure yours.'));
+      listEl.append(item('empty', 'No FTP changes yet. Take the FTP Test above to measure yours.'));
       return;
     }
     for (const entry of entries) {
@@ -136,4 +136,35 @@ export function initFtpHistory() {
   // A Profile save or an accepted test changes the history.
   document.addEventListener('profilechange', () => refresh());
   return { refresh };
+}
+
+// Profile → FTP Test: the test lives here rather than in the workout list.
+// It is still a library workout underneath, so a test ride is an ordinary
+// ride in the Chronicle and its result can be read back from there.
+export function initFtpTestPanel({ onStart }) {
+  const panel = document.getElementById('ftp-test-panel');
+  const description = document.getElementById('ftp-test-description');
+  const startBtn = document.getElementById('ftp-test-start-btn');
+  let testWorkout = null;
+
+  async function refresh() {
+    try {
+      testWorkout = (await listWorkouts()).find((w) => w.test) ?? null;
+    } catch {
+      testWorkout = null;
+    }
+    panel.hidden = !testWorkout;
+    if (!testWorkout) return;
+    const minutes = Math.round(testWorkout.structure.reduce((sum, s) => sum + s.duration_sec, 0) / 60);
+    description.textContent =
+      `${minutes} minutes: a warm-up with three short openers, 5 minutes hard to take the edge off, ` +
+      `recovery, then 20 minutes all out and a cool-down.`;
+  }
+
+  startBtn.addEventListener('click', () => {
+    if (testWorkout) onStart(testWorkout);
+  });
+  document.addEventListener('viewchange', (event) => {
+    if (event.detail.view === 'profile') refresh();
+  });
 }

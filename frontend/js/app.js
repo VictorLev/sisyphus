@@ -20,7 +20,7 @@ import { initWorkouts } from './ui/workouts.js';
 import { initFeats } from './ui/feats.js';
 import { requireLogin, initAccount } from './ui/login.js';
 import { resolveTargets } from './workout/targets.js';
-import { showFtpResult, initFtpHistory } from './ui/ftp-test.js';
+import { showFtpResult, initFtpHistory, initFtpTestPanel } from './ui/ftp-test.js';
 
 // Nothing below loads data until someone is logged in: requireLogin opens
 // the login screen and only resolves once there is a user (or with null
@@ -106,6 +106,7 @@ initProfile();
 initSettings({ onSaved: (saved) => applySettings(saved) });
 initAccount(currentUser);
 initFtpHistory();
+initFtpTestPanel({ onStart: (workout) => startRide(workout) });
 updateModeUi();
 
 // Settings are stored server-side, so the objects are built with defaults and

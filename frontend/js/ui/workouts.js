@@ -23,8 +23,7 @@ export function renderWorkoutRow(workout, { onStart, onEdit, onDelete, onCopy, o
   meta.className = 'workout-meta';
   const grades = workout.structure.filter((s) => s.grade_percent);
   meta.textContent = `${workout.structure.length} segments · ${totalMinutes(workout)} min` +
-    (grades.length ? ` · ${grades.length} with terrain` : '') +
-    (workout.test ? ' · measures your FTP' : '');
+    (grades.length ? ` · ${grades.length} with terrain` : '');
   info.appendChild(name);
   if (workout.library && compact) {
     const tag = document.createElement('span');
@@ -96,6 +95,8 @@ export function initWorkouts({ onStartRide, onEditWorkout, onLibraryChanged }) {
       return;
     }
 
+    // FTP tests are started from Profile, not listed with the workouts.
+    workouts = workouts.filter((w) => !w.test);
     const own = workouts.filter((w) => !w.library);
     const library = workouts.filter((w) => w.library);
     const starred = workouts.filter((w) => w.starred).length;
