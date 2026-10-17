@@ -38,6 +38,11 @@ export function validateStructure(structure) {
     )) {
       return `target_ftp_pct must be between 0 and ${MAX_FTP_PCT}`;
     }
+    // Optional name of the part of the workout a segment belongs to, e.g.
+    // "Warm-up" or "The test"; used to explain the FTP test.
+    if (segment.phase !== undefined && (typeof segment.phase !== 'string' || segment.phase.length > 40)) {
+      return 'phase must be a string of at most 40 characters';
+    }
     // Optional terrain. Signed: positive climbs, negative descends. Older
     // workouts have no grade at all, which reads as flat.
     if (segment.grade_percent !== undefined) {
