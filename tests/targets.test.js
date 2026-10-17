@@ -2,7 +2,7 @@ import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { resolveTargets, FALLBACK_FTP } from '../frontend/js/workout/targets.js';
-import { toWatts, validateStructure } from '../backend/src/workout-structure.js';
+import { toPercentOfFtp, validateStructure } from '../backend/src/workout-structure.js';
 import { WorkoutRunner } from '../frontend/js/workout/runner.js';
 
 const library = JSON.parse(readFileSync(new URL('../backend/src/db/library.json', import.meta.url), 'utf8'));
@@ -29,13 +29,14 @@ describe('% FTP targets', () => {
     assert.equal(seg.target_watts, FALLBACK_FTP / 2);
   });
 
-  test('the backend copy of the rule gives the same watts as the frontend', () => {
-    // "Copy to my workouts" converts on the server, a ride converts in the
-    // browser; a rider must get the same numbers either way.
+  test('watts saved through the API become % of FTP that ride at the same watts', () => {
+    // The server stores % FTP; the browser turns it back into watts at ride
+    // start. At the FTP used for the conversion, nothing may change.
     for (const ftp of [150, 213, 280, 333]) {
-      for (const workout of library) {
-        assert.deepEqual(toWatts(workout.structure, ftp), resolveTargets(workout.structure, ftp), workout.key);
-      }
+      const watts = [{ duration_sec: 60, target_watts: 187, label: 'a' }, { duration_sec: 60, target_watts: 95, label: 'b' }];
+      const pct = toPercentOfFtp(watts, ftp);
+      assert.ok(pct.every((s) => s.target_watts === undefined && typeof s.target_ftp_pct === 'number'));
+      assert.deepEqual(resolveTargets(pct, ftp).map((s) => s.target_watts), [187, 95], `at FTP ${ftp}`);
     }
   });
 });

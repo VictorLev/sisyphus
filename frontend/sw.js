@@ -9,7 +9,7 @@
 // API requests are never cached: a training log showing a stale ride list
 // would be worse than showing an error.
 
-const CACHE = 'sisyphus-shell-v6';
+const CACHE = 'sisyphus-shell-v7';
 
 const SHELL = [
   '/',
@@ -29,6 +29,7 @@ const SHELL = [
   '/js/session/recorder.js',
   '/js/session/pending.js',
   '/js/workout/builder.js',
+  '/js/workout/files.js',
   '/js/workout/runner.js',
   '/js/workout/targets.js',
   '/js/ui/badges.js',

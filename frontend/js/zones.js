@@ -39,12 +39,16 @@ export function zoneRangeLabel(zone) {
 // Approximate training load for a planned workout, same basis as the
 // Chronicle's weekly figure: not TrainingPeaks TSS, which needs normalised
 // power we cannot know in advance.
+// Segments in % of FTP need no FTP at all; watt segments do.
 export function estimatedLoad(segments, ftp) {
-  if (!ftp || ftp <= 0) return null;
+  const intensityOf = (seg) => (seg.target_ftp_pct != null
+    ? seg.target_ftp_pct / 100
+    : ftp > 0 ? seg.target_watts / ftp : null);
+  if (segments.some((seg) => intensityOf(seg) == null)) return null;
   return Math.round(
     segments.reduce((sum, seg) => {
       const hours = seg.duration_sec / 3600;
-      const intensity = seg.target_watts / ftp;
+      const intensity = intensityOf(seg);
       return sum + hours * intensity * intensity * 100;
     }, 0)
   );

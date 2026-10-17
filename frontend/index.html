@@ -112,11 +112,28 @@
       <div class="panel">
         <div class="calendar-header">
           <h2>Your Workouts</h2>
-          <button id="new-workout-btn" type="button">Build a Workout</button>
+          <div class="row-actions workout-file-actions">
+            <label class="file-format">
+              <span class="sr-only">File format</span>
+              <select id="workout-file-format" title="Format for Export and Export all">
+                <option value="csv">CSV</option>
+                <option value="zwo">Zwift (.zwo)</option>
+              </select>
+            </label>
+            <button id="import-workouts-btn" type="button" class="secondary">Import</button>
+            <button id="export-all-btn" type="button" class="secondary">Export all</button>
+            <button id="new-workout-btn" type="button">Build a Workout</button>
+          </div>
+          <input id="import-workouts-input" type="file" accept=".csv,.zwo,.txt,text/csv,application/xml,text/xml" multiple hidden />
         </div>
+        <p id="workout-files-status" class="status" role="status"></p>
         <ul id="workouts-list" class="workout-list"></ul>
         <p class="hint">Starred workouts (★) appear on the home screen for
-          quick access.</p>
+          quick access. Import and export workouts as CSV (one row per segment:
+          label, duration in seconds, % of FTP, grade; opens in any
+          spreadsheet) or as Zwift .zwo files, which TrainerRoad, intervals.icu
+          and others also read. Targets are always % of FTP, so a file fits
+          every rider.</p>
       </div>
 
       <div class="panel library-panel">
@@ -472,8 +489,9 @@
                 <input id="segment-duration" type="number" min="1" value="300" />
               </label>
               <label class="field">
-                Target Watts
-                <input id="segment-watts" type="number" min="0" value="150" />
+                Target % of FTP
+                <input id="segment-pct" type="number" min="0" max="300" step="0.5" value="75" />
+                <span class="field-hint" id="segment-pct-watts">&nbsp;</span>
               </label>
             </div>
             <label class="field">

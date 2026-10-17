@@ -146,15 +146,11 @@ describe('library', () => {
     await alice.patch(`/api/workouts/${libraryWorkout.id}/starred`, { starred: false });
   });
 
-  test("copying makes the rider's own editable workout, in watts at their FTP", async () => {
+  test("copying makes the rider's own editable workout, still in % of FTP", async () => {
     const copy = await (await alice.post(`/api/workouts/${libraryWorkout.id}/copy`)).json();
     assert.equal(copy.library, false);
     assert.equal(copy.name, libraryWorkout.name);
-    copy.structure.forEach((seg, i) => {
-      const pct = libraryWorkout.structure[i].target_ftp_pct;
-      assert.equal(seg.target_watts, Math.round((pct / 100) * 300), 'Alice rides at FTP 300');
-      assert.equal(seg.target_ftp_pct, undefined);
-    });
+    assert.deepEqual(copy.structure, libraryWorkout.structure, 'same % targets: it keeps scaling with her FTP');
     assert.equal((await alice.put(`/api/workouts/${copy.id}`, { name: 'Edited', structure: copy.structure })).status, 200);
     assert.equal((await bob.get(`/api/workouts/${copy.id}`)).status, 404, "the copy is Alice's alone");
   });

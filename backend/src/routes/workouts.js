@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import db from '../db/index.js';
-import { validateStructure, toWatts } from '../workout-structure.js';
+import { validateStructure, toPercentOfFtp } from '../workout-structure.js';
 import { readConfig } from './config.js';
 
 const router = Router();
@@ -75,7 +75,8 @@ router.post('/', (req, res) => {
   const error = validateBody(req.body);
   if (error) return res.status(400).json({ error });
 
-  const { name, structure } = req.body;
+  const { name } = req.body;
+  const structure = toPercentOfFtp(req.body.structure, readConfig(req.user.id, 'profile').ftp);
   const info = insertWorkout.run({ name, structure: JSON.stringify(structure), userId: req.user.id });
   res.status(201).json(toResponse(selectVisibleById.get({ id: info.lastInsertRowid, userId: req.user.id })));
 });
@@ -101,21 +102,21 @@ router.put('/:id', (req, res) => {
   const error = validateBody(req.body);
   if (error) return res.status(400).json({ error });
 
-  const { name, structure } = req.body;
+  const { name } = req.body;
+  const structure = toPercentOfFtp(req.body.structure, readConfig(req.user.id, 'profile').ftp);
   updateWorkout.run({ id: req.params.id, userId: req.user.id, name, structure: JSON.stringify(structure) });
   res.json(toResponse(findVisible(req)));
 });
 
-// "Copy to my workouts": the rider's own editable version. The builder works
-// in watts, so % FTP targets are converted at the rider's current FTP. A copy
-// of an FTP test is an ordinary workout: its targets are now fixed watts, so
-// riding it measures nothing the original wouldn't.
+// "Copy to my workouts": the rider's own editable version, in % of FTP like
+// the original, so it keeps scaling with the rider. A copy of an FTP test is
+// an ordinary workout: it is the test's `test` marker that makes a ride
+// yield an FTP estimate, and the copy doesn't carry it.
 router.post('/:id/copy', (req, res) => {
   const row = findVisible(req);
   if (!row) return res.status(404).json({ error: 'workout not found' });
 
-  const { ftp } = readConfig(req.user.id, 'profile');
-  const structure = toWatts(JSON.parse(row.structure), ftp > 0 ? ftp : 200);
+  const structure = toPercentOfFtp(JSON.parse(row.structure), readConfig(req.user.id, 'profile').ftp);
   const info = insertWorkout.run({ name: row.name, structure: JSON.stringify(structure), userId: req.user.id });
   res.status(201).json(toResponse(selectVisibleById.get({ id: info.lastInsertRowid, userId: req.user.id })));
 });

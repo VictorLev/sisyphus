@@ -33,8 +33,13 @@ night, and you push it up again tomorrow.
 - **FTP test** — a 20-minute test started from Profile. It runs in virtual
   gears so you set the pace; afterwards the app works out your FTP (95% of your best 20
   minutes) and asks before changing it. Profile keeps your FTP history.
-- **Workout builder** — stack segments of duration + target watts (+ optional
-  gradient), with a live bar preview coloured by power zone and Z1–Z6 quick-add.
+- **Workout builder** — stack segments of duration + target **% of FTP** (+
+  optional gradient), with a live bar preview coloured by power zone, Z1–Z6
+  quick-add, and your watts shown beside each target. Workouts scale with
+  your FTP.
+- **Import / export** — workouts as CSV (one row per segment; edit them in a
+  spreadsheet) or Zwift `.zwo` files, which TrainerRoad, intervals.icu and
+  others also read. A CSV with a watts column is converted at your FTP.
 - **The Chronicle** — a month calendar of everything you've ridden, weekly
   totals, and a power-over-time trace per ride with the workout's targets
   overlaid.
@@ -115,9 +120,9 @@ is accepted.
 ## First ride
 
 1. **Profile** → set your **FTP** and weight. FTP drives the power zones, the
-   `% FTP` labels on targets, the training-load figures, and the targets of
-   library workouts (converted to watts when the ride starts). Workouts you
-   build yourself stay exactly the watts you typed.
+   `% FTP` labels on targets, the training-load figures, and every
+   workout's targets: workouts are written in % of FTP and turned into watts
+   when the ride starts, so they get harder as your FTP rises.
 2. **Settings** → adjust the gear range if needed. The defaults are 12 gears
    across trainer resistance 0–8; raise the max if the top gears feel too easy.
 3. **Workouts** → star a library workout, or **Build** your own.

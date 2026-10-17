@@ -51,7 +51,8 @@ function seedLegacy(db) {
 // Everything a rider would consider "their history", in a comparable form.
 function snapshot(db) {
   return {
-    workouts: db.prepare('SELECT id, name, structure, created_at FROM workouts WHERE library_key IS NULL ORDER BY id').all(),
+    // Structures are converted to % FTP on purpose; checked separately below.
+    workouts: db.prepare('SELECT id, name, created_at FROM workouts WHERE library_key IS NULL ORDER BY id').all(),
     sessions: db.prepare(
       `SELECT id, workout_id, workout_name, started_at, ended_at, distance_m, avg_power, max_power, avg_cadence, avg_speed
        FROM sessions ORDER BY id`
@@ -77,7 +78,8 @@ describe('upgrading a single-user database', () => {
     // The snapshot is taken through the old columns only, so it reads the
     // same before and after the new ones are added.
     before_ = {
-      workouts: legacy.prepare('SELECT id, name, structure, created_at FROM workouts ORDER BY id').all(),
+      workouts: legacy.prepare('SELECT id, name, created_at FROM workouts ORDER BY id').all(),
+      structures: legacy.prepare('SELECT id, structure FROM workouts ORDER BY id').all(),
       sessions: legacy.prepare(
         `SELECT id, workout_id, workout_name, started_at, ended_at, distance_m, avg_power, max_power, avg_cadence, avg_speed
          FROM sessions ORDER BY id`
@@ -106,8 +108,23 @@ describe('upgrading a single-user database', () => {
   });
 
   test('loses and alters nothing', () => {
-    assert.deepEqual(snapshot(db), before_);
+    const { structures, ...rest } = before_;
+    assert.deepEqual(snapshot(db), rest);
     assert.equal(before_.samples.length, 360, 'the fixture really had samples to lose');
+  });
+
+  test('old watt workouts become % of FTP that ride at exactly the same watts', async () => {
+    const { resolveTargets } = await import('../frontend/js/workout/targets.js');
+    for (const { id, structure } of before_.structures) {
+      const old = JSON.parse(structure);
+      const now = JSON.parse(db.prepare('SELECT structure FROM workouts WHERE id = ?').get(id).structure);
+      assert.ok(now.every((s) => s.target_watts === undefined && typeof s.target_ftp_pct === 'number'), `workout ${id}`);
+      // The old profile's FTP was 172; at that FTP nothing changes.
+      assert.deepEqual(resolveTargets(now, 172).map((s) => s.target_watts), old.map((s) => s.target_watts), `workout ${id}`);
+      assert.deepEqual(now.map((s) => s.grade_percent), old.map((s) => s.grade_percent), 'terrain kept');
+    }
+    const sweet = JSON.parse(db.prepare("SELECT structure FROM workouts WHERE name = 'Sweet Spot'").get().structure);
+    assert.deepEqual(sweet.map((s) => s.target_ftp_pct), [87.2, 93]);
   });
 
   test('every old row now belongs to the admin', () => {
