@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
-import { hashPasswordSync, MIN_PASSWORD_LENGTH } from '../auth/password.js';
+import { hashPasswordSync, minPasswordLength, passwordLengthError } from '../auth/password.js';
 import { syncLibrary } from './library.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -70,24 +70,16 @@ function bootstrapAdmin(db, env) {
 
   const username = env.ADMIN_USERNAME?.trim();
   const password = env.ADMIN_PASSWORD;
-  if (!username || !password) {
-    if (env.NODE_ENV !== 'test') {
-      console.warn(
-        '\n  No accounts exist yet, so nobody can log in.\n' +
-        '  Set ADMIN_USERNAME and ADMIN_PASSWORD and restart, or run\n' +
-        '  `npm run add-user -- <username> --admin`. Existing rides are kept\n' +
-        '  and will belong to that first admin.\n'
-      );
-    }
-    return;
-  }
+  // Without them the server says so at startup (index.js); the CLI scripts
+  // also run this, and must not nag while you are creating that account.
+  if (!username || !password) return;
   // Fail loudly: a misconfigured first account is better found now than at
   // the login screen.
   if (!USERNAME_PATTERN.test(username)) {
     throw new Error('ADMIN_USERNAME must be 2-32 letters, digits, dots, dashes or underscores');
   }
-  if (password.length < MIN_PASSWORD_LENGTH) {
-    throw new Error(`ADMIN_PASSWORD must be at least ${MIN_PASSWORD_LENGTH} characters`);
+  if (password.length < minPasswordLength()) {
+    throw new Error(passwordLengthError('ADMIN_PASSWORD'));
   }
 
   // The old single-user profile already has the rider's name; use it.
