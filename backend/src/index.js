@@ -29,6 +29,15 @@ server.listen(port, host, () => {
   const scheme = useTls ? 'https' : 'http';
   console.log(`Sisyphus listening on ${scheme}://${host}:${port}`);
 
+  if (db.prepare('SELECT COUNT(*) AS n FROM users').get().n === 0) {
+    console.warn(
+      '\n  No accounts exist yet, so nobody can log in.\n' +
+      '  Set ADMIN_USERNAME and ADMIN_PASSWORD and restart, or run\n' +
+      '  `npm run add-user -- <username> --admin`. Existing rides are kept\n' +
+      '  and will belong to that first admin.\n'
+    );
+  }
+
   // Behind a TLS-terminating proxy (TRUST_PROXY set, as in deploy/compose.yaml)
   // plain HTTP inside the container is expected, so the warning is skipped.
   if (!useTls && !process.env.TRUST_PROXY && host !== '127.0.0.1' && host !== 'localhost') {

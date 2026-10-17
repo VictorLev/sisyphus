@@ -180,8 +180,15 @@ describe('changing a password', () => {
 
     const wrong = await laptop.post('/api/auth/password', { current_password: 'guess-guess', new_password: 'brand-new-pass' });
     assert.equal(wrong.status, 403);
-    const short = await laptop.post('/api/auth/password', { current_password: 'carol-password', new_password: 'short' });
-    assert.equal(short.status, 400);
+    process.env.NODE_ENV = 'production';
+    try {
+      const short = await laptop.post('/api/auth/password', { current_password: 'carol-password', new_password: 'short' });
+      assert.equal(short.status, 400, 'production requires 8+ characters');
+    } finally {
+      process.env.NODE_ENV = 'test';
+    }
+    const empty = await laptop.post('/api/auth/password', { current_password: 'carol-password', new_password: '' });
+    assert.equal(empty.status, 400, 'never an empty password');
 
     const ok = await laptop.post('/api/auth/password', { current_password: 'carol-password', new_password: 'brand-new-pass' });
     assert.equal(ok.status, 204);
@@ -199,8 +206,19 @@ describe('accounts', () => {
     await assert.rejects(addUser('ALICE', 'another-password'), /already exists/);
   });
 
-  test('rejects weak passwords and odd usernames', async () => {
-    await assert.rejects(addUser('dave', 'short'), /at least 8/);
+  test('production requires 8+ characters; development any non-empty password', async () => {
+    process.env.NODE_ENV = 'production';
+    try {
+      await assert.rejects(addUser('dave', 'short'), /at least 8/);
+    } finally {
+      process.env.NODE_ENV = 'test';
+    }
+    await addUser('dave', 'd');
+    await login(base, 'dave', 'd');
+    await assert.rejects(addUser('dora', ''), /must not be empty/);
+  });
+
+  test('rejects odd usernames', async () => {
     await assert.rejects(addUser('d a v e', 'long-enough-pw'), /username/);
   });
 
