@@ -235,6 +235,16 @@ ERG blocks gear writes, which would otherwise fight the trainer's target.
   progress bar and the totals behind it. Computed from the sessions table
   alone (no sample scanning) so the header can ask for it on every load.
 
+**Leaderboard (BUILT)**
+- On the Ride (home) page, under Starred Workouts: every rider ranked by
+  time ridden (default; fair whatever anyone's FTP), distance or rides, for
+  this week (Monday to Sunday) or this month, in the viewer's time zone
+  (`backend/src/periods.js`). Everyone is listed, zeros at the bottom as
+  "no rides yet"; ties share a rank; your row says "you". Each row shows the
+  all-time level (same formula as your own, `backend/src/level.js`).
+- `GET /api/leaderboard?period=week|month&tz=<minutes east of UTC>` returns
+  only display names, levels and the period's totals for each rider.
+
 **Badges (BUILT)**
 - 47 badges in groups (Pushes, Distance, Time, Big Rides, Consistency,
   Power, FTP, Workouts, Oddities, Secrets), several in bronze/silver/gold
