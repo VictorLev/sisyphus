@@ -16,11 +16,24 @@ BASE=http://127.0.0.1:$PORT
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 WORK=$(mktemp -d)
 
+# On GitHub Actions, failures are also raised as annotations, which show on
+# the run's summary page without opening the log.
+annotate() {
+  [ -n "${GITHUB_ACTIONS:-}" ] || return 0
+  # Annotation messages are one line; encode newlines and percent signs.
+  local msg=${2//'%'/'%25'}
+  msg=${msg//$'\n'/'%0A'}
+  echo "::error title=$1::$msg"
+}
+
 cleanup() {
   local status=$?
   if [ $status -ne 0 ]; then
     echo "--- smoke test FAILED; last container logs:"
-    docker logs "$NAME" 2>&1 | tail -60 || true
+    local logs
+    logs=$(docker logs "$NAME" 2>&1 | tail -40 || true)
+    echo "$logs"
+    annotate "Smoke test: container logs" "$logs"
   fi
   docker rm -f "$NAME" >/dev/null 2>&1 || true
   docker volume rm "$VOLUME" >/dev/null 2>&1 || true
@@ -30,7 +43,9 @@ cleanup() {
 trap cleanup EXIT
 
 step() { echo "== $*"; }
-fail() { echo "FAIL: $*" >&2; exit 1; }
+fail() { echo "FAIL: $*" >&2; annotate "Smoke test failed" "$*"; exit 1; }
+# Any command that fails without calling fail() still says where it was.
+trap 'annotate "Smoke test failed" "line $LINENO: $BASH_COMMAND"' ERR
 
 wait_healthy() {
   for _ in $(seq 1 40); do
@@ -55,6 +70,7 @@ docker run --rm -v "$VOLUME:/data" \
 step "start the image with first-run admin credentials"
 docker run -d --name "$NAME" -v "$VOLUME:/data" -p "127.0.0.1:$PORT:3000" \
   -e ADMIN_USERNAME=smoke-admin -e ADMIN_PASSWORD=smoke-only-password -e TRUST_PROXY=1 \
+  -e BACKUP_DIR=/backups \
   "$IMAGE" >/dev/null
 wait_healthy
 
