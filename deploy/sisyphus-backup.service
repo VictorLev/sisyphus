@@ -1,0 +1,10 @@
+[Unit]
+Description=Back up the Sisyphus database
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/sisyphus/deploy
+# Online backup through the running app container; keeps the last 14.
+ExecStart=/usr/bin/docker compose exec -T app node scripts/backup.js --tag nightly --keep 14

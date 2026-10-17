@@ -1,35 +1,48 @@
-# Runs Sisyphus on a home server behind HTTPS.
+# Runs Sisyphus on a home server, reachable from anywhere through a
+# Cloudflare Tunnel.
 #
 # HTTPS is not optional: Web Bluetooth only works on localhost or a secure
-# origin, so without it Chrome on another machine cannot reach the trainer.
-# Caddy issues a certificate from its own local authority (see README.md in
-# this folder for the one-time step of trusting it on the riding PC).
+# origin. cloudflared opens an outbound connection to Cloudflare, which
+# serves the public hostname with a real certificate and forwards requests
+# down the tunnel to the app. Nothing is port-forwarded and no port is
+# published on the server. See README.md in this folder.
+#
+# Every value below comes from deploy/.env (never committed).
 
 services:
   app:
-    image: ghcr.io/victorlev/sisyphus:latest
+    # Pin a commit SHA in .env (IMAGE_TAG=<sha>) to roll back; leave it unset
+    # to follow main.
+    image: ghcr.io/victorlev/sisyphus:${IMAGE_TAG:-latest}
     restart: unless-stopped
+    environment:
+      # Only used to create the very first account on an empty database.
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      # One proxy (cloudflared) sits in front, so trust its X-Forwarded-*
+      # headers: the real client IP for login rate limiting, and HTTPS for
+      # the Secure cookie flag.
+      TRUST_PROXY: "1"
+      BACKUP_DIR: /backups
     volumes:
       - sisyphus-data:/data
+      # Backups land on the host, outside the Docker volume, so they are easy
+      # to copy off the machine. Must be writable by uid 1000 (update.sh
+      # creates it that way).
+      - ./backups:/backups
     expose:
       - "3000"
 
-  caddy:
-    image: caddy:2
+  cloudflared:
+    image: cloudflare/cloudflared:${CLOUDFLARED_TAG:-latest}
     restart: unless-stopped
     depends_on:
       - app
-    ports:
-      - "${HTTP_PORT:-80}:80"
-      - "${HTTPS_PORT:-443}:443"
+    # The tunnel's public hostname is pointed at http://app:3000 in the
+    # Cloudflare dashboard; the token carries the rest of the configuration.
+    command: tunnel --no-autoupdate run
     environment:
-      SITE_ADDRESS: ${SITE_ADDRESS:?Set SITE_ADDRESS in deploy/.env}
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy-data:/data
-      - caddy-config:/config
+      TUNNEL_TOKEN: ${TUNNEL_TOKEN:?Set TUNNEL_TOKEN in deploy/.env}
 
 volumes:
   sisyphus-data:
-  caddy-data:
-  caddy-config:

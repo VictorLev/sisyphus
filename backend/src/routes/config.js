@@ -31,14 +31,16 @@ const DEFAULTS = {
   },
 };
 
-const selectConfig = db.prepare('SELECT value FROM app_config WHERE key = ?');
+// Each rider has their own profile and settings. A rider with nothing saved
+// yet simply reads the defaults.
+const selectConfig = db.prepare('SELECT value FROM user_config WHERE user_id = ? AND key = ?');
 const upsertConfig = db.prepare(
-  `INSERT INTO app_config (key, value, updated_at) VALUES (@key, @value, datetime('now'))
-   ON CONFLICT(key) DO UPDATE SET value = @value, updated_at = datetime('now')`
+  `INSERT INTO user_config (user_id, key, value, updated_at) VALUES (@userId, @key, @value, datetime('now'))
+   ON CONFLICT(user_id, key) DO UPDATE SET value = @value, updated_at = datetime('now')`
 );
 
-function read(key) {
-  const row = selectConfig.get(key);
+export function readConfig(userId, key) {
+  const row = selectConfig.get(userId, key);
   const stored = row ? JSON.parse(row.value) : {};
   return { ...DEFAULTS[key], ...stored };
 }
@@ -77,13 +79,13 @@ function validateSettings(s) {
 }
 
 for (const key of ['profile', 'settings']) {
-  router.get(`/${key}`, (req, res) => res.json(read(key)));
+  router.get(`/${key}`, (req, res) => res.json(readConfig(req.user.id, key)));
 
   router.put(`/${key}`, (req, res) => {
     const { value, error } = sanitise(key, req.body ?? {});
     if (error) return res.status(400).json({ error });
 
-    const merged = { ...read(key), ...value };
+    const merged = { ...readConfig(req.user.id, key), ...value };
     if (key === 'settings') {
       const invalid = validateSettings(merged);
       if (invalid) return res.status(400).json({ error: invalid });
@@ -91,7 +93,7 @@ for (const key of ['profile', 'settings']) {
       // shouldn't fail the save, it should just pull the start gear in.
       merged.start_gear = Math.min(Math.max(1, Math.round(merged.start_gear)), merged.gear_count);
     }
-    upsertConfig.run({ key, value: JSON.stringify(merged) });
+    upsertConfig.run({ userId: req.user.id, key, value: JSON.stringify(merged) });
     res.json(merged);
   });
 }

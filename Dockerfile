@@ -19,12 +19,17 @@ COPY frontend frontend
 COPY --from=deps /app/backend/node_modules backend/node_modules
 
 # The SQLite file lives in /data so it survives image updates (mount a volume).
-RUN mkdir -p /data && chown node:node /data
+# /backups is where scripts/backup.js writes (bind-mounted from the host).
+RUN mkdir -p /data /backups && chown node:node /data /backups
 USER node
 VOLUME /data
 EXPOSE 3000
 
+# Run from backend/ so the admin commands work as plain npm scripts:
+#   docker compose exec app npm run add-user -- alice
+WORKDIR /app/backend
+
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s \
   CMD node -e "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 
-CMD ["node", "backend/src/index.js"]
+CMD ["node", "src/index.js"]

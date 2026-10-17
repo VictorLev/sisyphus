@@ -8,6 +8,11 @@
 // Failed saves are parked in localStorage instead and retried on the next
 // load. localStorage is per-origin and survives reloads and crashes, which
 // covers every case except closing the browser on a different origin.
+//
+// Each parked ride remembers which rider it belongs to, so a ride can never
+// be retried into someone else's log on a shared machine. Rides parked
+// before accounts existed carry no rider; they can only come from the
+// original single-user install and are saved for whoever logs in first.
 
 const KEY = 'sisyphus.pendingRides';
 // An hour at 1 Hz is ~3600 samples; a handful of those stays well inside the
@@ -35,25 +40,32 @@ function write(rides) {
   }
 }
 
-export function stashRide(payload) {
+const belongsTo = (ride, userId) => ride.userId == null || ride.userId === userId;
+
+export function stashRide(payload, userId = null) {
   const rides = read();
-  rides.push({ savedAt: new Date().toISOString(), payload });
+  rides.push({ savedAt: new Date().toISOString(), userId, payload });
   return write(rides);
 }
 
-export function pendingCount() {
-  return read().length;
+export function pendingCount(userId = null) {
+  return read().filter((ride) => belongsTo(ride, userId)).length;
 }
 
 // Tries to save every parked ride. Whatever succeeds is removed; whatever
 // fails stays for next time, so a retry can never lose a ride.
-export async function flushPending(createSession) {
+export async function flushPending(createSession, userId = null) {
   const rides = read();
   if (rides.length === 0) return { saved: 0, remaining: 0 };
 
   const stillPending = [];
   let saved = 0;
   for (const ride of rides) {
+    // Another rider's ride stays parked for them.
+    if (!belongsTo(ride, userId)) {
+      stillPending.push(ride);
+      continue;
+    }
     try {
       await createSession(ride.payload);
       saved += 1;
@@ -62,5 +74,5 @@ export async function flushPending(createSession) {
     }
   }
   write(stillPending);
-  return { saved, remaining: stillPending.length };
+  return { saved, remaining: stillPending.filter((ride) => belongsTo(ride, userId)).length };
 }

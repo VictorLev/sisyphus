@@ -2,7 +2,7 @@ import 'dotenv/config';
 import http from 'node:http';
 import https from 'node:https';
 import { readFileSync } from 'node:fs';
-import { createApp } from './app.js';
+import { createApp, db } from './app.js';
 
 const app = createApp();
 // 7479 spells SISY on a phone keypad, and unlike 3000 it is unlikely to
@@ -29,7 +29,9 @@ server.listen(port, host, () => {
   const scheme = useTls ? 'https' : 'http';
   console.log(`Sisyphus listening on ${scheme}://${host}:${port}`);
 
-  if (!useTls && host !== '127.0.0.1' && host !== 'localhost') {
+  // Behind a TLS-terminating proxy (TRUST_PROXY set, as in deploy/compose.yaml)
+  // plain HTTP inside the container is expected, so the warning is skipped.
+  if (!useTls && !process.env.TRUST_PROXY && host !== '127.0.0.1' && host !== 'localhost') {
     console.warn(
       '\n  Serving plain HTTP on a non-local address.\n' +
       '  Opening this from another machine will work, but the trainer will NOT\n' +
@@ -38,3 +40,15 @@ server.listen(port, host, () => {
     );
   }
 });
+
+// Node as PID 1 in a container ignores SIGTERM unless it is handled, so
+// `docker compose up` after an update used to wait out the 10-second grace
+// period and then kill the app mid-write. Closing the database checkpoints
+// the WAL into the main file, so the volume holds one tidy file at rest.
+for (const signal of ['SIGTERM', 'SIGINT']) {
+  process.once(signal, () => {
+    server.close();
+    db.close();
+    process.exit(0);
+  });
+}

@@ -1,4 +1,4 @@
-import { listWorkouts, deleteWorkout, setWorkoutStarred } from '../api/client.js';
+import { listWorkouts, deleteWorkout, setWorkoutStarred, copyWorkout } from '../api/client.js';
 import { showView } from './views.js';
 
 const STAR_ON = '★';
@@ -9,8 +9,10 @@ function totalMinutes(workout) {
 }
 
 // Shared row renderer: the home screen shows only starred workouts with a
-// Start button, the library shows everything with full management.
-export function renderWorkoutRow(workout, { onStart, onEdit, onDelete, onToggleStar, compact }) {
+// Start button, the Workouts page shows everything with full management.
+// Library workouts are shared and read-only, so they get Copy instead of
+// Edit and Delete.
+export function renderWorkoutRow(workout, { onStart, onEdit, onDelete, onCopy, onToggleStar, compact }) {
   const li = document.createElement('li');
 
   const info = document.createElement('div');
@@ -23,6 +25,12 @@ export function renderWorkoutRow(workout, { onStart, onEdit, onDelete, onToggleS
   meta.textContent = `${workout.structure.length} segments · ${totalMinutes(workout)} min` +
     (grades.length ? ` · ${grades.length} with terrain` : '');
   info.appendChild(name);
+  if (workout.library && compact) {
+    const tag = document.createElement('span');
+    tag.className = 'workout-tag';
+    tag.textContent = 'Library';
+    info.appendChild(tag);
+  }
   info.appendChild(meta);
   li.appendChild(info);
 
@@ -46,7 +54,14 @@ export function renderWorkoutRow(workout, { onStart, onEdit, onDelete, onToggleS
   startBtn.addEventListener('click', () => onStart(workout));
   actions.appendChild(startBtn);
 
-  if (!compact) {
+  if (!compact && workout.library) {
+    const copyBtn = document.createElement('button');
+    copyBtn.type = 'button';
+    copyBtn.className = 'secondary';
+    copyBtn.textContent = 'Copy to My Workouts';
+    copyBtn.addEventListener('click', () => onCopy(workout));
+    actions.appendChild(copyBtn);
+  } else if (!compact) {
     const editBtn = document.createElement('button');
     editBtn.type = 'button';
     editBtn.className = 'secondary';
@@ -68,6 +83,7 @@ export function renderWorkoutRow(workout, { onStart, onEdit, onDelete, onToggleS
 
 export function initWorkouts({ onStartRide, onEditWorkout, onLibraryChanged }) {
   const listEl = document.getElementById('workouts-list');
+  const libraryEl = document.getElementById('library-list');
   const summaryEl = document.getElementById('workouts-summary');
 
   async function refresh() {
@@ -79,20 +95,32 @@ export function initWorkouts({ onStartRide, onEditWorkout, onLibraryChanged }) {
       return;
     }
 
+    const own = workouts.filter((w) => !w.library);
+    const library = workouts.filter((w) => w.library);
     const starred = workouts.filter((w) => w.starred).length;
-    summaryEl.textContent = workouts.length === 0
-      ? 'No workouts yet.'
-      : `${workouts.length} workout${workouts.length > 1 ? 's' : ''} · ${starred} on the home screen`;
+    summaryEl.textContent =
+      `${own.length} of your own · ${library.length} in the library · ${starred} on the home screen`;
 
     listEl.innerHTML = '';
-    if (workouts.length === 0) {
-      listEl.innerHTML = '<li class="empty">Nothing here yet. Build one.</li>';
-      return;
+    libraryEl.innerHTML = '';
+    if (own.length === 0) {
+      listEl.innerHTML = '<li class="empty">Nothing here yet. Build one, or copy one from the library.</li>';
     }
     for (const workout of workouts) {
-      listEl.appendChild(renderWorkoutRow(workout, {
+      const target = workout.library ? libraryEl : listEl;
+      target.appendChild(renderWorkoutRow(workout, {
         onStart: onStartRide,
         onEdit: onEditWorkout,
+        // Copy, then open the copy in the builder: editing is why it was copied.
+        onCopy: async (w) => {
+          try {
+            const copy = await copyWorkout(w.id);
+            onLibraryChanged?.();
+            onEditWorkout(copy);
+          } catch (err) {
+            alert(`Could not copy: ${err.message}`);
+          }
+        },
         onToggleStar: async (w) => {
           await setWorkoutStarred(w.id, !w.starred);
           await refresh();

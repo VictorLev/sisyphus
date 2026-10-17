@@ -1,6 +1,7 @@
 import { listSessions, getSession, getWorkout, deleteSession } from '../api/client.js';
 import { showView } from './views.js';
 import { drawPowerChart, drawWeeklyChart } from './chart.js';
+import { resolveTargets } from '../workout/targets.js';
 
 function formatDuration(startIso, endIso) {
   const ms = new Date(endIso) - new Date(startIso);
@@ -320,8 +321,11 @@ export function initChronicle() {
     if (session.workout_id) {
       try {
         const workout = await getWorkout(session.workout_id);
+        // % FTP targets are drawn at the FTP the ride was ridden at; rides
+        // from before that was recorded fall back to today's.
+        const structure = resolveTargets(workout.structure, session.ftp ?? riderFtp);
         let cursor = 0;
-        targetSeries = workout.structure.map((seg) => {
+        targetSeries = structure.map((seg) => {
           const entry = { startSec: cursor, endSec: cursor + seg.duration_sec, watts: seg.target_watts };
           cursor += seg.duration_sec;
           return entry;

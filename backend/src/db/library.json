@@ -1,0 +1,238 @@
+[
+  {
+    "key": "recovery-spin",
+    "name": "Recovery Spin",
+    "structure": [
+      { "duration_sec": 300, "target_ftp_pct": 45, "label": "Warmup" },
+      { "duration_sec": 1200, "target_ftp_pct": 50, "label": "Easy spin" },
+      { "duration_sec": 300, "target_ftp_pct": 40, "label": "Cooldown" }
+    ]
+  },
+  {
+    "key": "endurance-45",
+    "name": "Endurance 45",
+    "structure": [
+      { "duration_sec": 300, "target_ftp_pct": 50, "label": "Warmup" },
+      { "duration_sec": 300, "target_ftp_pct": 60, "label": "Build" },
+      { "duration_sec": 1800, "target_ftp_pct": 68, "label": "Endurance" },
+      { "duration_sec": 300, "target_ftp_pct": 50, "label": "Cooldown" }
+    ]
+  },
+  {
+    "key": "endurance-90",
+    "name": "Endurance 90",
+    "structure": [
+      { "duration_sec": 600, "target_ftp_pct": 55, "label": "Warmup" },
+      { "duration_sec": 1500, "target_ftp_pct": 68, "label": "Endurance" },
+      { "duration_sec": 300, "target_ftp_pct": 78, "label": "Tempo lift" },
+      { "duration_sec": 1500, "target_ftp_pct": 68, "label": "Endurance" },
+      { "duration_sec": 300, "target_ftp_pct": 78, "label": "Tempo lift" },
+      { "duration_sec": 900, "target_ftp_pct": 68, "label": "Endurance" },
+      { "duration_sec": 300, "target_ftp_pct": 50, "label": "Cooldown" }
+    ]
+  },
+  {
+    "key": "tempo-3x10",
+    "name": "Tempo 3x10",
+    "structure": [
+      { "duration_sec": 600, "target_ftp_pct": 55, "label": "Warmup" },
+      { "duration_sec": 600, "target_ftp_pct": 82, "label": "Tempo 1" },
+      { "duration_sec": 300, "target_ftp_pct": 55, "label": "Recover" },
+      { "duration_sec": 600, "target_ftp_pct": 82, "label": "Tempo 2" },
+      { "duration_sec": 300, "target_ftp_pct": 55, "label": "Recover" },
+      { "duration_sec": 600, "target_ftp_pct": 82, "label": "Tempo 3" },
+      { "duration_sec": 300, "target_ftp_pct": 50, "label": "Cooldown" }
+    ]
+  },
+  {
+    "key": "sweet-spot-3x10",
+    "name": "Sweet Spot 3x10",
+    "structure": [
+      { "duration_sec": 600, "target_ftp_pct": 55, "label": "Warmup" },
+      { "duration_sec": 600, "target_ftp_pct": 90, "label": "Sweet spot 1" },
+      { "duration_sec": 300, "target_ftp_pct": 55, "label": "Recover" },
+      { "duration_sec": 600, "target_ftp_pct": 90, "label": "Sweet spot 2" },
+      { "duration_sec": 300, "target_ftp_pct": 55, "label": "Recover" },
+      { "duration_sec": 600, "target_ftp_pct": 90, "label": "Sweet spot 3" },
+      { "duration_sec": 300, "target_ftp_pct": 50, "label": "Cooldown" }
+    ]
+  },
+  {
+    "key": "sweet-spot-2x20",
+    "name": "Sweet Spot 2x20",
+    "structure": [
+      { "duration_sec": 600, "target_ftp_pct": 55, "label": "Warmup" },
+      { "duration_sec": 1200, "target_ftp_pct": 89, "label": "Sweet spot 1" },
+      { "duration_sec": 300, "target_ftp_pct": 55, "label": "Recover" },
+      { "duration_sec": 1200, "target_ftp_pct": 89, "label": "Sweet spot 2" },
+      { "duration_sec": 300, "target_ftp_pct": 50, "label": "Cooldown" }
+    ]
+  },
+  {
+    "key": "threshold-4x8",
+    "name": "Threshold 4x8",
+    "structure": [
+      { "duration_sec": 600, "target_ftp_pct": 55, "label": "Warmup" },
+      { "duration_sec": 480, "target_ftp_pct": 100, "label": "Threshold 1" },
+      { "duration_sec": 240, "target_ftp_pct": 55, "label": "Recover" },
+      { "duration_sec": 480, "target_ftp_pct": 100, "label": "Threshold 2" },
+      { "duration_sec": 240, "target_ftp_pct": 55, "label": "Recover" },
+      { "duration_sec": 480, "target_ftp_pct": 100, "label": "Threshold 3" },
+      { "duration_sec": 240, "target_ftp_pct": 55, "label": "Recover" },
+      { "duration_sec": 480, "target_ftp_pct": 100, "label": "Threshold 4" },
+      { "duration_sec": 300, "target_ftp_pct": 50, "label": "Cooldown" }
+    ]
+  },
+  {
+    "key": "over-unders",
+    "name": "Over-Unders 3x9",
+    "structure": [
+      { "duration_sec": 600, "target_ftp_pct": 55, "label": "Warmup" },
+      { "duration_sec": 120, "target_ftp_pct": 95, "label": "Under" },
+      { "duration_sec": 60, "target_ftp_pct": 108, "label": "Over" },
+      { "duration_sec": 120, "target_ftp_pct": 95, "label": "Under" },
+      { "duration_sec": 60, "target_ftp_pct": 108, "label": "Over" },
+      { "duration_sec": 120, "target_ftp_pct": 95, "label": "Under" },
+      { "duration_sec": 60, "target_ftp_pct": 108, "label": "Over" },
+      { "duration_sec": 300, "target_ftp_pct": 55, "label": "Recover" },
+      { "duration_sec": 120, "target_ftp_pct": 95, "label": "Under" },
+      { "duration_sec": 60, "target_ftp_pct": 108, "label": "Over" },
+      { "duration_sec": 120, "target_ftp_pct": 95, "label": "Under" },
+      { "duration_sec": 60, "target_ftp_pct": 108, "label": "Over" },
+      { "duration_sec": 120, "target_ftp_pct": 95, "label": "Under" },
+      { "duration_sec": 60, "target_ftp_pct": 108, "label": "Over" },
+      { "duration_sec": 300, "target_ftp_pct": 55, "label": "Recover" },
+      { "duration_sec": 120, "target_ftp_pct": 95, "label": "Under" },
+      { "duration_sec": 60, "target_ftp_pct": 108, "label": "Over" },
+      { "duration_sec": 120, "target_ftp_pct": 95, "label": "Under" },
+      { "duration_sec": 60, "target_ftp_pct": 108, "label": "Over" },
+      { "duration_sec": 120, "target_ftp_pct": 95, "label": "Under" },
+      { "duration_sec": 60, "target_ftp_pct": 108, "label": "Over" },
+      { "duration_sec": 300, "target_ftp_pct": 50, "label": "Cooldown" }
+    ]
+  },
+  {
+    "key": "vo2max-5x3",
+    "name": "VO2max 5x3",
+    "structure": [
+      { "duration_sec": 600, "target_ftp_pct": 55, "label": "Warmup" },
+      { "duration_sec": 60, "target_ftp_pct": 100, "label": "Opener" },
+      { "duration_sec": 180, "target_ftp_pct": 55, "label": "Recover" },
+      { "duration_sec": 180, "target_ftp_pct": 115, "label": "VO2 1" },
+      { "duration_sec": 180, "target_ftp_pct": 50, "label": "Recover" },
+      { "duration_sec": 180, "target_ftp_pct": 115, "label": "VO2 2" },
+      { "duration_sec": 180, "target_ftp_pct": 50, "label": "Recover" },
+      { "duration_sec": 180, "target_ftp_pct": 115, "label": "VO2 3" },
+      { "duration_sec": 180, "target_ftp_pct": 50, "label": "Recover" },
+      { "duration_sec": 180, "target_ftp_pct": 115, "label": "VO2 4" },
+      { "duration_sec": 180, "target_ftp_pct": 50, "label": "Recover" },
+      { "duration_sec": 180, "target_ftp_pct": 115, "label": "VO2 5" },
+      { "duration_sec": 420, "target_ftp_pct": 50, "label": "Cooldown" }
+    ]
+  },
+  {
+    "key": "thirty-thirties",
+    "name": "30/30s",
+    "structure": [
+      { "duration_sec": 600, "target_ftp_pct": 55, "label": "Warmup" },
+      { "duration_sec": 30, "target_ftp_pct": 125, "label": "On" },
+      { "duration_sec": 30, "target_ftp_pct": 50, "label": "Off" },
+      { "duration_sec": 30, "target_ftp_pct": 125, "label": "On" },
+      { "duration_sec": 30, "target_ftp_pct": 50, "label": "Off" },
+      { "duration_sec": 30, "target_ftp_pct": 125, "label": "On" },
+      { "duration_sec": 30, "target_ftp_pct": 50, "label": "Off" },
+      { "duration_sec": 30, "target_ftp_pct": 125, "label": "On" },
+      { "duration_sec": 30, "target_ftp_pct": 50, "label": "Off" },
+      { "duration_sec": 30, "target_ftp_pct": 125, "label": "On" },
+      { "duration_sec": 30, "target_ftp_pct": 50, "label": "Off" },
+      { "duration_sec": 30, "target_ftp_pct": 125, "label": "On" },
+      { "duration_sec": 30, "target_ftp_pct": 50, "label": "Off" },
+      { "duration_sec": 30, "target_ftp_pct": 125, "label": "On" },
+      { "duration_sec": 30, "target_ftp_pct": 50, "label": "Off" },
+      { "duration_sec": 30, "target_ftp_pct": 125, "label": "On" },
+      { "duration_sec": 30, "target_ftp_pct": 50, "label": "Off" },
+      { "duration_sec": 300, "target_ftp_pct": 55, "label": "Recover" },
+      { "duration_sec": 30, "target_ftp_pct": 125, "label": "On" },
+      { "duration_sec": 30, "target_ftp_pct": 50, "label": "Off" },
+      { "duration_sec": 30, "target_ftp_pct": 125, "label": "On" },
+      { "duration_sec": 30, "target_ftp_pct": 50, "label": "Off" },
+      { "duration_sec": 30, "target_ftp_pct": 125, "label": "On" },
+      { "duration_sec": 30, "target_ftp_pct": 50, "label": "Off" },
+      { "duration_sec": 30, "target_ftp_pct": 125, "label": "On" },
+      { "duration_sec": 30, "target_ftp_pct": 50, "label": "Off" },
+      { "duration_sec": 30, "target_ftp_pct": 125, "label": "On" },
+      { "duration_sec": 30, "target_ftp_pct": 50, "label": "Off" },
+      { "duration_sec": 30, "target_ftp_pct": 125, "label": "On" },
+      { "duration_sec": 30, "target_ftp_pct": 50, "label": "Off" },
+      { "duration_sec": 30, "target_ftp_pct": 125, "label": "On" },
+      { "duration_sec": 30, "target_ftp_pct": 50, "label": "Off" },
+      { "duration_sec": 30, "target_ftp_pct": 125, "label": "On" },
+      { "duration_sec": 30, "target_ftp_pct": 50, "label": "Off" },
+      { "duration_sec": 300, "target_ftp_pct": 50, "label": "Cooldown" }
+    ]
+  },
+  {
+    "key": "ramp-test",
+    "name": "Ramp Test",
+    "structure": [
+      { "duration_sec": 300, "target_ftp_pct": 50, "label": "Warmup" },
+      { "duration_sec": 60, "target_ftp_pct": 55, "label": "Step 1" },
+      { "duration_sec": 60, "target_ftp_pct": 61, "label": "Step 2" },
+      { "duration_sec": 60, "target_ftp_pct": 67, "label": "Step 3" },
+      { "duration_sec": 60, "target_ftp_pct": 73, "label": "Step 4" },
+      { "duration_sec": 60, "target_ftp_pct": 79, "label": "Step 5" },
+      { "duration_sec": 60, "target_ftp_pct": 85, "label": "Step 6" },
+      { "duration_sec": 60, "target_ftp_pct": 91, "label": "Step 7" },
+      { "duration_sec": 60, "target_ftp_pct": 97, "label": "Step 8" },
+      { "duration_sec": 60, "target_ftp_pct": 103, "label": "Step 9" },
+      { "duration_sec": 60, "target_ftp_pct": 109, "label": "Step 10" },
+      { "duration_sec": 60, "target_ftp_pct": 115, "label": "Step 11" },
+      { "duration_sec": 60, "target_ftp_pct": 121, "label": "Step 12" },
+      { "duration_sec": 60, "target_ftp_pct": 127, "label": "Step 13" },
+      { "duration_sec": 60, "target_ftp_pct": 133, "label": "Step 14" },
+      { "duration_sec": 60, "target_ftp_pct": 139, "label": "Step 15" },
+      { "duration_sec": 60, "target_ftp_pct": 145, "label": "Step 16" },
+      { "duration_sec": 60, "target_ftp_pct": 151, "label": "Step 17" },
+      { "duration_sec": 60, "target_ftp_pct": 157, "label": "Step 18" },
+      { "duration_sec": 60, "target_ftp_pct": 163, "label": "Step 19" },
+      { "duration_sec": 60, "target_ftp_pct": 169, "label": "Step 20" },
+      { "duration_sec": 300, "target_ftp_pct": 40, "label": "Cooldown" }
+    ]
+  },
+  {
+    "key": "quick-spin-20",
+    "name": "Quick Spin 20",
+    "structure": [
+      { "duration_sec": 240, "target_ftp_pct": 50, "label": "Warmup" },
+      { "duration_sec": 720, "target_ftp_pct": 70, "label": "Steady" },
+      { "duration_sec": 240, "target_ftp_pct": 45, "label": "Cooldown" }
+    ]
+  },
+  {
+    "key": "lunch-sweet-spot-30",
+    "name": "Lunch Break Sweet Spot",
+    "structure": [
+      { "duration_sec": 300, "target_ftp_pct": 55, "label": "Warmup" },
+      { "duration_sec": 480, "target_ftp_pct": 90, "label": "Sweet spot 1" },
+      { "duration_sec": 120, "target_ftp_pct": 55, "label": "Recover" },
+      { "duration_sec": 480, "target_ftp_pct": 90, "label": "Sweet spot 2" },
+      { "duration_sec": 420, "target_ftp_pct": 50, "label": "Cooldown" }
+    ]
+  },
+  {
+    "key": "sprint-openers",
+    "name": "Sprint Openers",
+    "structure": [
+      { "duration_sec": 480, "target_ftp_pct": 55, "label": "Warmup" },
+      { "duration_sec": 15, "target_ftp_pct": 180, "label": "Sprint" },
+      { "duration_sec": 165, "target_ftp_pct": 50, "label": "Recover" },
+      { "duration_sec": 15, "target_ftp_pct": 180, "label": "Sprint" },
+      { "duration_sec": 165, "target_ftp_pct": 50, "label": "Recover" },
+      { "duration_sec": 15, "target_ftp_pct": 180, "label": "Sprint" },
+      { "duration_sec": 165, "target_ftp_pct": 50, "label": "Recover" },
+      { "duration_sec": 60, "target_ftp_pct": 100, "label": "Threshold touch" },
+      { "duration_sec": 120, "target_ftp_pct": 50, "label": "Recover" },
+      { "duration_sec": 300, "target_ftp_pct": 45, "label": "Cooldown" }
+    ]
+  }
+]
