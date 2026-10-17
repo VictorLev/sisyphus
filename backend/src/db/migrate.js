@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { hashPasswordSync, minPasswordLength, passwordLengthError } from '../auth/password.js';
 import { syncLibrary } from './library.js';
+import { toPercentOfFtp } from '../workout-structure.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -60,6 +61,34 @@ export function migrate(db, env = {}) {
   syncLibrary(db);
   bootstrapAdmin(db, env);
   claimOrphans(db);
+  workoutsToPercentOfFtp(db);
+}
+
+// Riders' own workouts are stored in % of FTP. Older ones (and any that an
+// old client saves in watts) are converted at their owner's FTP, so at that
+// FTP every target is the same number of watts as before. Workouts with no
+// owner yet wait until claimOrphans gives them one. Idempotent: a converted
+// workout has no target_watts left.
+function workoutsToPercentOfFtp(db) {
+  const rows = db.prepare(
+    "SELECT id, user_id, structure FROM workouts WHERE user_id IS NOT NULL AND structure LIKE '%target_watts%'"
+  ).all();
+  if (rows.length === 0) return;
+  const profile = db.prepare("SELECT value FROM user_config WHERE user_id = ? AND key = 'profile'");
+  const update = db.prepare('UPDATE workouts SET structure = ? WHERE id = ?');
+  const ftpOf = (userId) => {
+    try {
+      const ftp = Number(JSON.parse(profile.get(userId)?.value ?? '{}').ftp);
+      return ftp > 0 ? ftp : 200;
+    } catch {
+      return 200;
+    }
+  };
+  db.transaction(() => {
+    for (const row of rows) {
+      update.run(JSON.stringify(toPercentOfFtp(JSON.parse(row.structure), ftpOf(row.user_id))), row.id);
+    }
+  })();
 }
 
 // The first account, from ADMIN_USERNAME / ADMIN_PASSWORD, only while no

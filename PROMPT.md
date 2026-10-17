@@ -173,9 +173,12 @@ The original single-user model follows.
   current power zone + level top right, the intensity timeline along the
   bottom, End Ride bottom-left and the gear bottom-right.
 - Power displayed as **10-second smoothed** average (storage keeps raw) ✓
-- Workout builder: ordered `duration + target watts` segments, manual
-  targets (no FTP auto-scaling) ✓, with a live bar preview — width by
-  duration, height by watts, coloured by power zone — plus Z1–Z6 quick-add
+- Workout builder: ordered `duration + target % of FTP` segments ✓ (since
+  v1.1: riders' own workouts are stored in % FTP like the library, so they
+  scale with FTP; older watt workouts were converted once at their owner's
+  FTP, keeping the same watts at that FTP; the API still accepts
+  `target_watts` and converts it on save), with a live bar preview — width by
+  duration, height by % FTP, coloured by power zone — plus Z1–Z6 quick-add
   buttons, zone gridlines, and running duration/load. Zone colours are a
   heat progression through the app's own palette (stone, slate, bronze,
   gold, ember, rust) rather than the neon bands other apps use: zone colour

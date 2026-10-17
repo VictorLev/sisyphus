@@ -38,8 +38,15 @@ describe('workouts API', () => {
     assert.equal(res.status, 201);
     const created = await res.json();
     assert.equal(created.name, 'Test');
-    assert.deepEqual(created.structure, validWorkout.structure);
+    // Workouts are stored in % of FTP: 150 W at the default FTP of 200.
+    assert.deepEqual(created.structure, [{ duration_sec: 60, target_ftp_pct: 75, label: 'Work' }]);
     assert.equal(created.starred, false);
+  });
+
+  test('% FTP segments are stored as given', async () => {
+    const structure = [{ duration_sec: 300, target_ftp_pct: 88.5, label: 'SS' }];
+    const created = await (await postJson('/api/workouts', { name: 'Pct', structure })).json();
+    assert.deepEqual(created.structure, structure);
   });
 
   test('rejects an empty name and an empty structure', async () => {

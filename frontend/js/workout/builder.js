@@ -1,5 +1,5 @@
 import { createWorkout, updateWorkout } from '../api/client.js';
-import { ZONES, zoneForWatts, wattsForZone, zoneRangeLabel, estimatedLoad } from '../zones.js';
+import { ZONES, zoneForWatts, zoneRangeLabel, estimatedLoad } from '../zones.js';
 import { showView } from '../ui/views.js';
 
 export function initBuilder({ onSaved }) {
@@ -7,7 +7,7 @@ export function initBuilder({ onSaved }) {
   const segmentList = document.getElementById('segment-list');
   const labelInput = document.getElementById('segment-label');
   const durationInput = document.getElementById('segment-duration');
-  const wattsInput = document.getElementById('segment-watts');
+  const pctInput = document.getElementById('segment-pct');
   const gradeInput = document.getElementById('segment-grade');
   const addBtn = document.getElementById('add-segment-btn');
   const saveBtn = document.getElementById('save-workout-btn');
@@ -26,8 +26,17 @@ export function initBuilder({ onSaved }) {
   function setFtp(value) {
     ftp = value > 0 ? value : null;
     renderZonePicker();
-    renderPreview();
+    render();
+    updatePctHint();
   }
+
+  // The watts the typed % means for this rider, under the input.
+  const pctHintEl = document.getElementById('segment-pct-watts');
+  function updatePctHint() {
+    const w = wattsAt(Number(pctInput.value));
+    pctHintEl.textContent = w != null && Number.isFinite(w) ? `≈ ${w} W at your FTP of ${ftp} W` : '\u00a0';
+  }
+  pctInput.addEventListener('input', updatePctHint);
 
   function clock(totalSec) {
     const s = Math.round(totalSec);
@@ -35,6 +44,15 @@ export function initBuilder({ onSaved }) {
     const m = Math.floor((s % 3600) / 60);
     return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
   }
+
+  // Targets are % of FTP, so a workout fits every rider and keeps fitting as
+  // FTP changes; the watts shown are the current rider's, for reference.
+  const round1 = (n) => Math.round(n * 10) / 10;
+  const wattsAt = (pct) => (ftp ? Math.round((pct / 100) * ftp) : null);
+  const pctForZone = (zone) => {
+    const top = Number.isFinite(zone.max) ? zone.max : zone.min + 0.25;
+    return Math.round(((zone.min + top) / 2) * 100);
+  };
 
   // Zone buttons append a segment at the middle of the band, so a session
   // can be sketched by intensity before any numbers are typed.
@@ -48,12 +66,12 @@ export function initBuilder({ onSaved }) {
       btn.innerHTML =
         `<strong>${zone.name}</strong><em>${zoneRangeLabel(zone)}</em><span>${zone.label}</span>`;
       btn.title = ftp
-        ? `${zone.label} — about ${wattsForZone(zone, ftp)} W at FTP ${ftp}`
-        : `${zone.label} — set an FTP in Profile for watt values`;
+        ? `${zone.label}: ${pctForZone(zone)}% FTP, about ${wattsAt(pctForZone(zone))} W at your FTP of ${ftp}`
+        : `${zone.label}: ${pctForZone(zone)}% FTP`;
       btn.addEventListener('click', () => {
         segments.push({
           duration_sec: Number(durationInput.value) || 300,
-          target_watts: wattsForZone(zone, ftp),
+          target_ftp_pct: pctForZone(zone),
           label: zone.label,
           grade_percent: 0,
         });
@@ -63,9 +81,8 @@ export function initBuilder({ onSaved }) {
     }
   }
 
-  // Bars are proportional in both axes: width by duration, height by watts
-  // against the workout's own peak, so the session's shape is readable
-  // whatever the absolute numbers.
+  // Bars are proportional in both axes: width by duration, height by % FTP
+  // against the workout's own peak, with the zone boundaries as gridlines.
   function renderPreview() {
     const totalSec = segments.reduce((sum, seg) => sum + seg.duration_sec, 0);
     durationEl.textContent = clock(totalSec);
@@ -73,20 +90,17 @@ export function initBuilder({ onSaved }) {
     const load = estimatedLoad(segments, ftp);
     loadEl.textContent = load == null ? '—' : String(load);
 
-    // Zone gridlines, when an FTP gives them meaning.
     axisEl.innerHTML = '';
-    const peak = Math.max(1, ...segments.map((seg) => seg.target_watts));
-    const ceiling = Math.max(peak * 1.1, ftp ? ftp * 1.3 : peak * 1.1);
-    if (ftp) {
-      for (const zone of ZONES.slice(1)) {
-        const watts = ftp * zone.min;
-        if (watts > ceiling) continue;
-        const line = document.createElement('span');
-        line.className = 'axis-line';
-        line.style.bottom = `${(watts / ceiling) * 100}%`;
-        line.textContent = zone.name;
-        axisEl.appendChild(line);
-      }
+    const peak = Math.max(1, ...segments.map((seg) => seg.target_ftp_pct));
+    const ceiling = Math.max(peak * 1.1, 130);
+    for (const zone of ZONES.slice(1)) {
+      const pct = zone.min * 100;
+      if (pct > ceiling) continue;
+      const line = document.createElement('span');
+      line.className = 'axis-line';
+      line.style.bottom = `${(pct / ceiling) * 100}%`;
+      line.textContent = zone.name;
+      axisEl.appendChild(line);
     }
 
     chartEl.innerHTML = '';
@@ -97,15 +111,16 @@ export function initBuilder({ onSaved }) {
     }
 
     segments.forEach((seg, index) => {
-      const zone = zoneForWatts(seg.target_watts, ftp);
+      const zone = zoneForWatts(seg.target_ftp_pct, 100);
       const bar = document.createElement('button');
       bar.type = 'button';
       bar.className = 'preview-bar';
       bar.style.flex = `${seg.duration_sec} 0 0`;
-      bar.style.height = `${Math.max(4, (seg.target_watts / ceiling) * 100)}%`;
+      bar.style.height = `${Math.max(4, (seg.target_ftp_pct / ceiling) * 100)}%`;
       bar.style.background = zone.color;
       const grade = seg.grade_percent ?? 0;
-      bar.title = `${seg.label || 'Segment ' + (index + 1)} — ${seg.target_watts} W (${zone.name})` +
+      const w = wattsAt(seg.target_ftp_pct);
+      bar.title = `${seg.label || 'Segment ' + (index + 1)}: ${seg.target_ftp_pct}% FTP${w != null ? ` (≈${w} W)` : ''} (${zone.name})` +
         `, ${seg.duration_sec}s${grade ? `, ${grade > 0 ? '+' : ''}${grade}% grade` : ''}\nClick to remove`;
       if (grade) {
         const marker = document.createElement('i');
@@ -136,7 +151,13 @@ export function initBuilder({ onSaved }) {
   // rather than creating a duplicate.
   function loadWorkout(workout) {
     editingId = workout?.id ?? null;
-    segments = workout ? workout.structure.map((seg) => ({ ...seg })) : [];
+    // Stored workouts are % FTP; a stray watts segment is converted at the
+    // rider's FTP so the builder only ever edits percentages.
+    segments = workout
+      ? workout.structure.map(({ target_watts, ...seg }) => (
+        target_watts === undefined ? { ...seg } : { ...seg, target_ftp_pct: round1((target_watts / (ftp || 200)) * 100) }
+      ))
+      : [];
     nameInput.value = workout?.name ?? '';
     titleEl.textContent = workout ? 'EDIT WORKOUT' : 'BUILD A WORKOUT';
     saveBtn.textContent = workout ? 'Save Changes' : 'Save Workout';
@@ -156,7 +177,8 @@ export function initBuilder({ onSaved }) {
       detail.className = 'segment-row-detail';
       const grade = segment.grade_percent ?? 0;
       const terrain = grade > 0 ? ` ▲${grade}%` : grade < 0 ? ` ▼${Math.abs(grade)}%` : '';
-      detail.textContent = `${segment.duration_sec}s @ ${segment.target_watts}W${terrain}`;
+      const w = wattsAt(segment.target_ftp_pct);
+      detail.textContent = `${segment.duration_sec}s @ ${segment.target_ftp_pct}% FTP${w != null ? ` (≈${w} W)` : ''}${terrain}`;
       li.appendChild(label);
       li.appendChild(detail);
       const removeBtn = document.createElement('button');
@@ -180,22 +202,23 @@ export function initBuilder({ onSaved }) {
     nameInput.value = '';
     labelInput.value = '';
     durationInput.value = '300';
-    wattsInput.value = '150';
+    pctInput.value = '75';
+    updatePctHint();
     gradeInput.value = '0';
     render();
   }
 
   addBtn.addEventListener('click', () => {
     const duration_sec = parseInt(durationInput.value, 10);
-    const target_watts = parseInt(wattsInput.value, 10);
+    const target_ftp_pct = round1(Number(pctInput.value));
     const label = labelInput.value.trim();
 
     if (!Number.isInteger(duration_sec) || duration_sec <= 0) {
       alert('Duration must be a positive number of seconds.');
       return;
     }
-    if (!Number.isInteger(target_watts) || target_watts < 0) {
-      alert('Target watts must be zero or a positive number.');
+    if (!Number.isFinite(target_ftp_pct) || target_ftp_pct < 0 || target_ftp_pct > 300) {
+      alert('The target must be between 0 and 300 % of FTP.');
       return;
     }
 
@@ -204,7 +227,7 @@ export function initBuilder({ onSaved }) {
       alert('Grade must be between -20% and 20%.');
       return;
     }
-    segments.push({ duration_sec, target_watts, label, grade_percent });
+    segments.push({ duration_sec, target_ftp_pct, label, grade_percent });
     labelInput.value = '';
     render();
   });

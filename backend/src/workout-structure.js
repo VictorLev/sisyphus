@@ -57,13 +57,15 @@ export function validateStructure(structure) {
   return null;
 }
 
-// Turns % FTP targets into watts for one rider. The same rule as the
-// frontend's workout/targets.js, which applies it at ride start; here it is
-// used to make a rider's editable copy of a library workout.
-export function toWatts(structure, ftp) {
-  return structure.map(({ target_ftp_pct, ...segment }) => (
-    target_ftp_pct === undefined
+// Workouts are stored in % of FTP, so they scale with each rider. A segment
+// that arrives in watts (an old client, or a hand-made API call) is
+// converted at the rider's FTP, to one decimal: at that FTP the watts are
+// unchanged.
+export function toPercentOfFtp(structure, ftp) {
+  const base = ftp > 0 ? ftp : 200;
+  return structure.map(({ target_watts, ...segment }) => (
+    target_watts === undefined
       ? segment
-      : { ...segment, target_watts: Math.round((target_ftp_pct / 100) * ftp) }
+      : { ...segment, target_ftp_pct: Math.round((target_watts / base) * 1000) / 10 }
   ));
 }

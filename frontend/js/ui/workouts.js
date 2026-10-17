@@ -1,4 +1,5 @@
-import { listWorkouts, deleteWorkout, setWorkoutStarred, copyWorkout } from '../api/client.js';
+import { listWorkouts, deleteWorkout, setWorkoutStarred, copyWorkout, createWorkout, getProfile } from '../api/client.js';
+import { toCsv, toZwo, parseWorkoutFile, fileSlug } from '../workout/files.js';
 import { showView } from './views.js';
 
 const STAR_ON = '★';
@@ -12,7 +13,7 @@ function totalMinutes(workout) {
 // Start button, the Workouts page shows everything with full management.
 // Library workouts are shared and read-only, so they get Copy instead of
 // Edit and Delete.
-export function renderWorkoutRow(workout, { onStart, onEdit, onDelete, onCopy, onToggleStar, compact }) {
+export function renderWorkoutRow(workout, { onStart, onEdit, onDelete, onCopy, onExport, onToggleStar, compact }) {
   const li = document.createElement('li');
 
   const info = document.createElement('div');
@@ -77,14 +78,104 @@ export function renderWorkoutRow(workout, { onStart, onEdit, onDelete, onCopy, o
     actions.appendChild(delBtn);
   }
 
+  if (!compact && onExport) {
+    const exportBtn = document.createElement('button');
+    exportBtn.type = 'button';
+    exportBtn.className = 'secondary';
+    exportBtn.textContent = 'Export';
+    exportBtn.title = 'Download this workout in the format chosen above';
+    exportBtn.addEventListener('click', () => onExport(workout));
+    actions.appendChild(exportBtn);
+  }
+
   li.appendChild(actions);
   return li;
+}
+
+// Hands the browser a file to save.
+function download(filename, text, type) {
+  const url = URL.createObjectURL(new Blob([text], { type }));
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.append(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function exportWorkout(workout, format) {
+  if (format === 'zwo') download(`${fileSlug(workout.name)}.zwo`, toZwo(workout), 'application/xml');
+  else download(`${fileSlug(workout.name)}.csv`, toCsv(workout), 'text/csv');
 }
 
 export function initWorkouts({ onStartRide, onEditWorkout, onLibraryChanged }) {
   const listEl = document.getElementById('workouts-list');
   const libraryEl = document.getElementById('library-list');
   const summaryEl = document.getElementById('workouts-summary');
+  const formatEl = document.getElementById('workout-file-format');
+  const statusEl = document.getElementById('workout-files-status');
+  const fileInput = document.getElementById('import-workouts-input');
+  let ownWorkouts = [];
+
+  function setStatus(message, isError = false) {
+    statusEl.textContent = message;
+    statusEl.style.color = isError ? '#d98c6a' : '';
+  }
+
+  // Remembered per browser: whoever exports .zwo usually always does.
+  try { formatEl.value = localStorage.getItem('sisyphus.workoutFileFormat') || 'csv'; } catch { /* storage off */ }
+  formatEl.addEventListener('change', () => {
+    try { localStorage.setItem('sisyphus.workoutFileFormat', formatEl.value); } catch { /* storage off */ }
+  });
+
+  document.getElementById('export-all-btn').addEventListener('click', () => {
+    if (ownWorkouts.length === 0) {
+      setStatus('You have no workouts of your own to export yet.', true);
+      return;
+    }
+    if (formatEl.value === 'zwo') {
+      // A .zwo holds one workout, so this is one file each (Chrome may ask
+      // once to allow several downloads).
+      ownWorkouts.forEach((w, i) => setTimeout(() => exportWorkout(w, 'zwo'), i * 250));
+      setStatus(`Exporting ${ownWorkouts.length} .zwo file${ownWorkouts.length > 1 ? 's' : ''}.`);
+    } else {
+      download('sisyphus-workouts.csv', toCsv(ownWorkouts), 'text/csv');
+      setStatus(`Exported ${ownWorkouts.length} workout${ownWorkouts.length > 1 ? 's' : ''} to one CSV file.`);
+    }
+  });
+
+  document.getElementById('import-workouts-btn').addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', async () => {
+    const files = [...fileInput.files];
+    fileInput.value = ''; // choosing the same file again must fire again
+    if (files.length === 0) return;
+    let ftp = 200;
+    try { ftp = (await getProfile()).ftp || 200; } catch { /* default FTP for any watts column */ }
+
+    const imported = [];
+    const problems = [];
+    for (const file of files) {
+      try {
+        const workouts = parseWorkoutFile(file.name, await file.text(), { ftp });
+        for (const w of workouts) {
+          await createWorkout(w);
+          imported.push(w.name);
+        }
+      } catch (err) {
+        problems.push(`${file.name}: ${err.message}`);
+      }
+    }
+    if (imported.length) {
+      await refresh();
+      onLibraryChanged?.();
+    }
+    const done = imported.length
+      ? `Imported ${imported.length} workout${imported.length > 1 ? 's' : ''}: ${imported.join(', ')}.`
+      : '';
+    setStatus([done, ...problems].filter(Boolean).join(' '), problems.length > 0);
+  });
+
 
   async function refresh() {
     let workouts;
@@ -98,6 +189,7 @@ export function initWorkouts({ onStartRide, onEditWorkout, onLibraryChanged }) {
     // FTP tests are started from Profile, not listed with the workouts.
     workouts = workouts.filter((w) => !w.test);
     const own = workouts.filter((w) => !w.library);
+    ownWorkouts = own;
     const library = workouts.filter((w) => w.library);
     const starred = workouts.filter((w) => w.starred).length;
     summaryEl.textContent =
@@ -113,6 +205,7 @@ export function initWorkouts({ onStartRide, onEditWorkout, onLibraryChanged }) {
       target.appendChild(renderWorkoutRow(workout, {
         onStart: onStartRide,
         onEdit: onEditWorkout,
+        onExport: (w) => exportWorkout(w, formatEl.value),
         // Copy, then open the copy in the builder: editing is why it was copied.
         onCopy: async (w) => {
           try {
