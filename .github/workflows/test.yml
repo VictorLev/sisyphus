@@ -15,6 +15,24 @@ env:
   REGISTRY_IMAGE: ghcr.io/victorlev/sisyphus
 
 jobs:
+  # Branch names say what kind of change they carry, and so which part of
+  # the version the next release bumps (README.md -> Branches and releases).
+  branch-name:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check the branch name
+        env:
+          # Through env, never inlined: a branch name is user input.
+          BRANCH: ${{ github.head_ref }}
+        run: |
+          if printf '%s' "$BRANCH" | grep -Eq '^(feat|fix|breaking|chore|docs|ci)/[a-z0-9]+(-[a-z0-9]+)*$'; then
+            echo "Branch name '$BRANCH' follows the convention."
+          else
+            echo "::error title=Branch name::'$BRANCH' should be <type>/<short-kebab-name>, type one of feat, fix, breaking, chore, docs, ci (e.g. feat/leaderboard). Rename with: git branch -m <new-name>, push it, and reopen the PR."
+            exit 1
+          fi
+
   test:
     runs-on: ubuntu-latest
     steps:
