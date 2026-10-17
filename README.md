@@ -217,8 +217,8 @@ that doesn't follow this.
 names; they are decided at release time and live only in tags. To pick the
 next tag, look at what merged since the last one (`git log --merges
 <last-tag>..origin/main`): any `breaking/` means a major bump, otherwise any
-`feat/` means minor, otherwise it's a patch. Merging to `main` puts the change
-on staging; pushing the tag releases it to prod (see
+`feat/` means minor, otherwise it's a patch. Merging to `main` publishes the
+change but doesn't deploy it; pushing the tag releases it (see
 [deploy/README.md](deploy/README.md#shipping-a-change)).
 
 ### Generating test rides

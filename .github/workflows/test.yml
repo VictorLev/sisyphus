@@ -2,7 +2,7 @@ name: ci
 
 # Release flow:
 #   pull request / any push  -> tests + build the image and smoke-test it
-#   push to main             -> publish :latest and :<sha>  (staging follows :latest)
+#   push to main             -> publish :latest and :<sha>  (nothing deploys it)
 #   push a tag v1.2.3        -> promote that commit's image to :stable and :v1.2.3
 #                               (prod follows :stable)
 on:
@@ -104,9 +104,8 @@ jobs:
           cache-to: type=gha,mode=max
 
   # A release does not rebuild: it re-tags the image main already published
-  # for that commit, so prod runs the exact bytes staging ran. Tag only
-  # commits that have been on main (and so on staging); otherwise there is
-  # no image to promote and this fails.
+  # (and CI already smoke-tested) for that commit. Tag only commits that have
+  # been on main; otherwise there is no image to promote and this fails.
   release:
     needs: [test, image]
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
