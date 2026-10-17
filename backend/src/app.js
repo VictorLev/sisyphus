@@ -8,6 +8,7 @@ import configRouter from './routes/config.js';
 import recordsRouter from './routes/records.js';
 import levelRouter from './routes/level.js';
 import ftpRouter from './routes/ftp.js';
+import badgesRouter from './routes/badges.js';
 import { createAuthRouter } from './routes/auth.js';
 import { loadUser, requireUser } from './auth/middleware.js';
 import { LoginLimiter } from './auth/rate-limit.js';
@@ -68,6 +69,7 @@ export function createApp({ loginLimits, trustProxy = trustProxyFromEnv(process.
   app.use('/api/records', recordsRouter);
   app.use('/api/level', levelRouter);
   app.use('/api/ftp', ftpRouter);
+  app.use('/api/badges', badgesRouter);
   app.use('/api', configRouter);
 
   return app;

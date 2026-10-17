@@ -232,6 +232,20 @@ ERG blocks gear writes, which would otherwise fight the trainer's target.
   progress bar and the totals behind it. Computed from the sessions table
   alone (no sample scanning) so the header can ask for it on every load.
 
+**Badges (BUILT)**
+- 47 badges in groups (Pushes, Distance, Time, Big Rides, Consistency,
+  Power, FTP, Workouts, Oddities, Secrets), several in bronze/silver/gold
+  tiers. Defined in `backend/src/badges.js`, a pure function over the
+  rider's log; like Feats, computed on demand and never stored, so
+  deleting a ride takes back what only it earned. Each earned badge names
+  the ride (or FTP change) that earned it; locked ones carry progress.
+- Secrets arrive as "???" with a hint until earned. Date and hour badges
+  use the rider's local time: rides save `tz_offset_min` (older rides are
+  read as UTC).
+- Shown on Feats (grouped grid), on the summary after a ride (new ones),
+  and on a ride's Chronicle page ("Earned on this ride"). Framing only;
+  no penalties: even "Humbled" (a lower FTP test result) is a badge.
+
 **Profile and Settings pages (BUILT)**
 - **Profile**: name, FTP, weight, max HR. FTP annotates live workout
   targets as `% FTP`; weight and max HR are stored for later use.

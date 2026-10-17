@@ -20,6 +20,7 @@ import { initSisyphusLoop } from './ui/sisyphus-loop.js';
 import { initChronicle, setChronicleFtp } from './ui/chronicle.js';
 import { initWorkouts } from './ui/workouts.js';
 import { initFeats } from './ui/feats.js';
+import { initBadges, showRideBadges } from './ui/badges.js';
 import { requireLogin, initAccount } from './ui/login.js';
 import { initTrainerButton } from './ui/trainer-button.js';
 import { initLogPanel } from './ui/log-panel.js';
@@ -109,6 +110,7 @@ function editWorkout(workout) {
 initSisyphusLoop();
 const chronicle = initChronicle();
 initFeats({ onOpenRide: (id) => chronicle.openDetail(id) });
+initBadges({ onOpenRide: (id) => chronicle.openDetail(id) });
 initProfile();
 initSettings({ onSaved: (saved) => applySettings(saved) });
 initAccount(currentUser);
@@ -573,6 +575,8 @@ async function endRide() {
     // Kept with the ride so a % FTP workout's targets can be redrawn as the
     // watts that were actually chased, even after the FTP changes.
     ftp: riderFtp,
+    // Minutes east of UTC, so date and time badges use the rider's local time.
+    tz_offset_min: -new Date(rideStartedAt).getTimezoneOffset(),
     samples: recorder.getSamples(),
   };
 
@@ -581,6 +585,7 @@ async function endRide() {
     refreshLevel();
     showSummary(session);
     if (activeWorkout?.test) showFtpResult(document.getElementById('summary-ftp-result'), session.id);
+    showRideBadges(document.getElementById('summary-badges'), session.id, { onOpenRide: (id) => chronicle.openDetail(id) });
   } catch (err) {
     // Never drop the ride. Park it and retry on the next load — the rider
     // cannot pedal the hour again.
@@ -635,6 +640,7 @@ function updateGearDisplay(gear) {
 
 function showSummary(session) {
   document.getElementById('summary-ftp-result').hidden = true;
+  document.getElementById('summary-badges').hidden = true;
   const statsEl = document.getElementById('summary-stats');
   statsEl.innerHTML = '';
   const entries = [

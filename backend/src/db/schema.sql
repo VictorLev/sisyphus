@@ -72,7 +72,11 @@ CREATE TABLE IF NOT EXISTS sessions (
   -- The rider's FTP when the ride started. Library workouts are written in
   -- % of FTP, so this is what turns them back into the watts that were
   -- actually chased; NULL for rides from before it was recorded.
-  ftp REAL
+  ftp REAL,
+  -- The rider's UTC offset in minutes (east positive) when the ride started,
+  -- so badges about the day or the hour use their local time. NULL for
+  -- rides from before it was recorded, which are read as UTC.
+  tz_offset_min INTEGER
 );
 
 CREATE TABLE IF NOT EXISTS session_samples (

@@ -41,6 +41,11 @@ night, and you push it up again tomorrow.
 - **Feats** — longest and furthest ride, best average and peak power, and a
   power curve (best 5s / 1min / 5min / 20min sustained).
 - **Levelling** — XP from time and distance ridden, so it can never go backwards.
+- **Badges** — 47 of them on the Feats page: ride counts, distance and time,
+  big rides, streaks, power, FTP gains, finished workouts, some funny ones
+  (Coffee Break, Spin Doctor, Night Owl…) and secrets that stay "???" until
+  someone finds them. Computed from the log, so they can't go stale; the
+  summary after a ride shows any new ones.
 - **Installable** as a desktop app (PWA) with an offline shell.
 
 ## What you need
