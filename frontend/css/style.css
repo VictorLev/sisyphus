@@ -1680,12 +1680,31 @@ button.secondary:hover:not(:disabled) {
 
 /* --------------------------------------------------------- trainer button */
 
-/* Title and the trainer button side by side, their tops aligned. */
-.brand {
+/* The trainer button sits on the title's line and spans exactly the height
+   of its letters: the pixel font's capitals are 1em tall, so the button is
+   --title-size tall. The font draws its capitals slightly above its line
+   box (by ~8% of the size), hence the small negative margin to line the
+   tops up. Both scale with the title, so they stay aligned at any width. */
+.brand-row {
+  --title-size: clamp(1.5rem, 2.6vw, 2.4rem);
   display: flex;
   align-items: flex-start;
   flex-wrap: wrap;
   gap: 0.75rem 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.brand-row .title {
+  font-size: var(--title-size);
+  margin: 0;
+  line-height: 1;
+}
+
+.brand-row .trainer-btn {
+  height: var(--title-size);
+  margin-top: calc(var(--title-size) * -0.08);
+  padding-top: 0;
+  padding-bottom: 0;
 }
 
 .trainer-btn {
