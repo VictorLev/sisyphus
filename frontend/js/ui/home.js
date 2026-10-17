@@ -2,32 +2,18 @@ import { listWorkouts } from '../api/client.js';
 import { renderWorkoutRow } from './workouts.js';
 import { showView } from './views.js';
 
+// Connecting the trainer lives in the header (ui/trainer-button.js); the
+// home screen only reacts to it, enabling Free Ride once connected.
 export function initHome({ trainerConnection, onStartRide }) {
-  const connectBtn = document.getElementById('connect-btn');
-  const statusEl = document.getElementById('connection-status');
   const freeRideBtn = document.getElementById('free-ride-btn');
   const workoutListEl = document.getElementById('workout-list');
   const openWorkoutsBtn = document.getElementById('open-workouts-btn');
 
-  connectBtn.addEventListener('click', async () => {
-    connectBtn.disabled = true;
-    statusEl.textContent = 'Connecting…';
-    try {
-      await trainerConnection.connect();
-    } catch (err) {
-      statusEl.textContent = `Connection failed: ${err.message}`;
-    } finally {
-      connectBtn.disabled = false;
-    }
-  });
-
-  trainerConnection.addEventListener('connected', (event) => {
-    statusEl.textContent = `Connected: ${event.detail.deviceName || 'trainer'}`;
+  trainerConnection.addEventListener('connected', () => {
     freeRideBtn.disabled = false;
   });
 
   trainerConnection.addEventListener('disconnected', () => {
-    statusEl.textContent = 'Not connected';
     freeRideBtn.disabled = true;
   });
 

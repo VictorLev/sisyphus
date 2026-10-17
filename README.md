@@ -59,7 +59,9 @@ your trainer supports:
 | Virtual gears + terrain | Set Target Resistance (`0x04`) |
 | ERG mode | Set Target Power (`0x05`) |
 
-The app ships a diagnostics page (**Settings → Hardware diagnostics**) that reads
+If the trainer misbehaves, **Settings → Log** lists Bluetooth events, warnings and
+errors from your browser, with a Copy button for bug reports. The app also ships
+a diagnostics page (**Settings → Hardware diagnostics**) that reads
 your trainer's feature bits and tells you which of these it accepts. Run it first
 if you're unsure.
 
@@ -114,7 +116,7 @@ is accepted.
 2. **Settings** → adjust the gear range if needed. The defaults are 12 gears
    across trainer resistance 0–8; raise the max if the top gears feel too easy.
 3. **Workouts** → star a library workout, or **Build** your own.
-4. **Ride** → *Connect Trainer*, pick **Virtual Gears** or **ERG**, and start a
+4. Press **Connect trainer** beside the title, then on **Ride** pick **Virtual Gears** or **ERG**, and start a
    workout or a free ride.
 5. Shift with **`+`** (or `=`) and **`−`** during the ride. Press **End Ride** to
    save the session — it then appears in the Chronicle and updates your Feats.

@@ -1677,3 +1677,124 @@ button.secondary:hover:not(:disabled) {
   color: var(--color-bronze-bright);
   margin: 0.25rem 0 0.75rem;
 }
+
+/* --------------------------------------------------------- trainer button */
+
+/* Title and the trainer button side by side, the button vertically centred
+   on the title. */
+.brand {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.5rem;
+}
+
+.trainer-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  background: transparent;
+  color: var(--color-bronze-bright);
+  border: var(--border-accent);
+  padding: 0.5rem 0.95rem;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.trainer-btn:hover:not(:disabled) {
+  background: rgba(176, 141, 87, 0.12);
+}
+
+/* The state, at a glance: stone = not connected, pulsing bronze =
+   connecting, lit gold = connected, rust = failed. */
+.trainer-dot {
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+  background: var(--color-stone-light);
+  flex: none;
+}
+
+.trainer-btn[data-state='connecting'] .trainer-dot {
+  background: var(--color-bronze);
+  animation: trainer-pulse 0.9s ease-in-out infinite alternate;
+}
+
+.trainer-btn[data-state='connected'] {
+  border-color: var(--color-bronze);
+}
+
+.trainer-btn[data-state='connected'] .trainer-dot {
+  background: var(--color-bronze-bright);
+  box-shadow: 0 0 8px rgba(224, 192, 136, 0.7);
+}
+
+.trainer-btn[data-state='failed'] {
+  border-color: #b4533c;
+  color: #d98c6a;
+}
+
+.trainer-btn[data-state='failed'] .trainer-dot {
+  background: #b4533c;
+}
+
+@keyframes trainer-pulse {
+  from { opacity: 0.35; }
+  to { opacity: 1; }
+}
+
+/* ------------------------------------------------------------------- log */
+
+.log-list {
+  list-style: none;
+  margin: 0.75rem 0 0;
+  padding: 0.5rem 0.75rem;
+  max-height: 18rem;
+  overflow-y: auto;
+  background: var(--color-bg);
+  border: var(--border);
+  border-radius: 2px;
+  font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+
+.log-entry {
+  display: grid;
+  grid-template-columns: auto 3.2rem 1fr;
+  gap: 0.6rem;
+  padding: 0.2rem 0;
+  border-bottom: 1px solid rgba(58, 54, 50, 0.6);
+}
+
+.log-entry:last-child {
+  border-bottom: none;
+}
+
+.log-entry time {
+  color: var(--color-text-dim);
+  white-space: nowrap;
+}
+
+.log-level {
+  text-transform: uppercase;
+  color: var(--color-text-dim);
+}
+
+.log-warn .log-level {
+  color: var(--color-bronze-bright);
+}
+
+.log-error .log-level,
+.log-error .log-message {
+  color: #d98c6a;
+}
+
+.log-message {
+  overflow-wrap: anywhere;
+}
+
+.log-empty {
+  color: var(--color-text-dim);
+  padding: 0.3rem 0;
+}
