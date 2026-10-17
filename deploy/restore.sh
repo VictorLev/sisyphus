@@ -21,10 +21,9 @@ if [ "$(cd "$(dirname "$1")" && pwd)" != "$(pwd)/backups" ]; then
 fi
 
 # Hold the deploy lock so the update timer cannot restart the app mid-restore.
-# Opened read-only: flock works on any open file, and the timer (root) and a
-# person running restore.sh (victor) can then share one lock file whoever
-# created it.
-lock=/run/lock/sisyphus-deploy.lock
+# The same per-instance lock as update.sh, opened read-only so whoever
+# created the file, everyone can take it.
+lock=/run/lock/sisyphus-deploy-$(basename "$(pwd)").lock
 [ -e "$lock" ] || : > "$lock"
 exec 9<"$lock"
 flock 9
@@ -40,5 +39,6 @@ docker compose run --rm --no-deps -T --entrypoint sh "$SERVICE" -c "
   rm -f /data/sisyphus.db-wal /data/sisyphus.db-shm
   mv /data/sisyphus.db.restoring /data/sisyphus.db
 "
-docker compose start "$SERVICE"
+# up rather than start: on a first staging refresh there is no container yet.
+docker compose up -d --no-deps "$SERVICE"
 echo "Restored $name. The previous database is saved as the newest pre-restore backup."

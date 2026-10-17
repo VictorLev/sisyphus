@@ -1,8 +1,18 @@
 name: ci
 
+# Release flow:
+#   pull request / any push  -> tests + build the image and smoke-test it
+#   push to main             -> publish :latest and :<sha>  (staging follows :latest)
+#   push a tag v1.2.3        -> promote that commit's image to :stable and :v1.2.3
+#                               (prod follows :stable)
 on:
   push:
+    branches: ['**']
+    tags: ['v*']
   pull_request:
+
+env:
+  REGISTRY_IMAGE: ghcr.io/victorlev/sisyphus
 
 jobs:
   test:
@@ -22,11 +32,32 @@ jobs:
       - name: Run tests
         run: npm test
 
-  # Builds the Docker image and publishes it to GitHub's container registry.
-  # Only for pushes to main, and only once the tests pass. The home server
-  # pulls it from there (deploy/update.sh); nothing ever connects to it.
+  # Builds the image exactly as it will be published and runs it: upgrade
+  # from a pre-accounts database, login, admin CLI, backup, restart. Nothing
+  # is pushed, so this is safe on pull requests from forks too.
+  image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          tags: sisyphus:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Smoke-test the image
+        run: scripts/smoke-image.sh sisyphus:ci
+
+  # Publishes to GitHub's container registry, only from main and only once
+  # both the tests and the image smoke test pass. The homelab pulls from
+  # there; nothing ever connects to it.
   publish:
-    needs: test
+    needs: [test, image]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
@@ -43,12 +74,40 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # Same inputs as the smoke-tested build, so the layers come from cache.
       - uses: docker/build-push-action@v6
         with:
           context: .
           push: true
           tags: |
-            ghcr.io/victorlev/sisyphus:latest
-            ghcr.io/victorlev/sisyphus:${{ github.sha }}
+            ${{ env.REGISTRY_IMAGE }}:latest
+            ${{ env.REGISTRY_IMAGE }}:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  # A release does not rebuild: it re-tags the image main already published
+  # for that commit, so prod runs the exact bytes staging ran. Tag only
+  # commits that have been on main (and so on staging); otherwise there is
+  # no image to promote and this fails.
+  release:
+    needs: [test, image]
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Promote ${{ github.ref_name }} to stable
+        run: |
+          docker buildx imagetools create \
+            --tag "$REGISTRY_IMAGE:stable" \
+            --tag "$REGISTRY_IMAGE:${{ github.ref_name }}" \
+            "$REGISTRY_IMAGE:${{ github.sha }}"
