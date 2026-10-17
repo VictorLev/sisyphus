@@ -445,13 +445,14 @@
               data point is written to the ride log.</p>
             <h2 style="margin-top:1.5rem">Scenery</h2>
             <label class="field">
-              YouTube virtual rides, one per line
-              <textarea id="setting-scenery-videos" rows="5" spellcheck="false"
-                placeholder="Swiss Alps | https://www.youtube.com/watch?v=..."></textarea>
+              YouTube virtual rides, separated by commas
+              <textarea id="setting-scenery-videos" rows="3" spellcheck="false"
+                placeholder="Swiss Alps | https://youtu.be/..., Dolomites | https://youtu.be/..."></textarea>
             </label>
-            <p class="hint">Plays in the middle of the ride screen, muted to
-              start (unmute in the player). Name a video by putting text before
-              its link; with several, pick one during the ride.</p>
+            <p class="hint">Each ride starts on one picked at random (not the
+              one you watched last time), muted to start; unmute in the player.
+              Name a video by putting text before its link. To switch, use the
+              picker on the ride screen.</p>
             <p class="tools-link"><a href="probe.html">Hardware diagnostics (probe)</a></p>
             <p id="settings-status" class="status"></p>
             <div class="live-controls" style="margin-top:1.25rem">
