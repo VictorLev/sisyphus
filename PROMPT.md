@@ -243,8 +243,10 @@ ERG blocks gear writes, which would otherwise fight the trainer's target.
 
 **Phase 2**
 - FTP: manual entry is BUILT (Profile page; annotates targets as %FTP).
-  The **FTP test** is BUILT: "FTP Test (20 min)" in the library (warm-up,
-  openers, a 5-minute hard effort, recovery, 20 minutes all out). It always
+  The **FTP test** is BUILT: started from **Profile → FTP Test** (warm-up,
+  openers, a 5-minute hard effort, recovery, 20 minutes all out). Underneath
+  it is a library workout ("FTP Test (20 min)"), hidden from the Workouts
+  list and the home screen, so a test ride is an ordinary ride. It always
   runs in virtual gears, since ERG would pin the test at the current FTP.
   The estimate is 95% of the best 20 minutes, computed from the samples on
   the server (same sliding window as Feats); the rider chooses whether to

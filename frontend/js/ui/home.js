@@ -40,7 +40,8 @@ export function initHome({ trainerConnection, onStartRide }) {
   async function refreshWorkoutList() {
     workoutListEl.innerHTML = '<li>Loading…</li>';
     try {
-      const workouts = (await listWorkouts()).filter((w) => w.starred);
+      // FTP tests live on Profile, even if one was starred before they moved.
+      const workouts = (await listWorkouts()).filter((w) => w.starred && !w.test);
       workoutListEl.innerHTML = '';
       if (workouts.length === 0) {
         workoutListEl.innerHTML =
