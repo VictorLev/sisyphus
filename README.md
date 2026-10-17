@@ -200,6 +200,27 @@ npm start       # start normally
 npm test        # run the test suite
 ```
 
+### Branches and releases
+
+Branch names say what kind of change they carry, and so which part of the
+version the next release bumps. CI rejects a pull request from a branch
+that doesn't follow this.
+
+| Branch | Bumps | Example |
+| --- | --- | --- |
+| `feat/<name>` | minor: v1.0.0 → v1.1.0 | `feat/leaderboard` |
+| `fix/<name>` | patch: v1.1.0 → v1.1.1 | `fix/virtual-gears` |
+| `breaking/<name>` | major: v1.1.1 → v2.0.0 | a change the previous version can't run alongside, e.g. a migration that drops or renames columns, so rollback stops working |
+| `chore/`, `docs/`, `ci/` | nothing on its own; ships with the next release | `ci/node-24-actions` |
+
+`<name>` is short lowercase kebab-case. Version numbers are never in branch
+names; they are decided at release time and live only in tags. To pick the
+next tag, look at what merged since the last one (`git log --merges
+<last-tag>..origin/main`): any `breaking/` means a major bump, otherwise any
+`feat/` means minor, otherwise it's a patch. Merging to `main` puts the change
+on staging; pushing the tag releases it to prod (see
+[deploy/README.md](deploy/README.md#shipping-a-change)).
+
 ### Generating test rides
 
 Filling the Chronicle by actually riding is slow, so there is a generator:

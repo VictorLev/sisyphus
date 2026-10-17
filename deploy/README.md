@@ -41,7 +41,8 @@ and GitHub advises against self-hosted runners on public repositories.
 
 ## Shipping a change
 
-1. **Open a pull request.** CI runs the tests and builds the Docker image,
+1. **Open a pull request** from a branch named by the convention in the main
+   README (`feat/…`, `fix/…`, `breaking/…`, `chore/…`, `docs/…`, `ci/…`). CI checks the name, runs the tests and builds the Docker image,
    then smoke-tests it (`scripts/smoke-image.sh`). The smoke test upgrades a
    pre-accounts database, logs in, checks the 401s, runs `add-user` and a
    backup inside the container, and checks that a stop and restart are
@@ -54,8 +55,10 @@ and GitHub advises against self-hosted runners on public repositories.
    account. (Add `-J root@192.168.0.38` if your PC can't reach `10.10.10.x`
    directly.) It's last night's prod data, so you're testing the migration
    on real rides. Anything you do there is wiped at 03:40.
-3. **Release it** when you're happy:
+3. **Release it** when you're happy. The branches merged since the last tag
+   pick the number: any `breaking/` → major, else any `feat/` → minor, else patch.
    ```sh
+   git log --merges --oneline "$(git describe --tags --abbrev=0)"..origin/main
    git tag v1.2.3 origin/main      # or a specific commit that has been on main
    git push origin v1.2.3
    ```
