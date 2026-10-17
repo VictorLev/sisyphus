@@ -204,17 +204,17 @@
     "name": "FTP Test (20 min)",
     "test": {"kind": "ftp", "window_sec": 1200, "factor": 0.95},
     "structure": [
-      { "duration_sec": 600, "target_ftp_pct": 55, "label": "Warmup" },
-      { "duration_sec": 60, "target_ftp_pct": 100, "label": "Opener" },
-      { "duration_sec": 60, "target_ftp_pct": 50, "label": "Easy" },
-      { "duration_sec": 60, "target_ftp_pct": 100, "label": "Opener" },
-      { "duration_sec": 60, "target_ftp_pct": 50, "label": "Easy" },
-      { "duration_sec": 60, "target_ftp_pct": 100, "label": "Opener" },
-      { "duration_sec": 180, "target_ftp_pct": 50, "label": "Easy" },
-      { "duration_sec": 300, "target_ftp_pct": 105, "label": "5 min hard" },
-      { "duration_sec": 600, "target_ftp_pct": 50, "label": "Recover" },
-      { "duration_sec": 1200, "target_ftp_pct": 100, "label": "TEST: 20 min all out" },
-      { "duration_sec": 600, "target_ftp_pct": 45, "label": "Cooldown" }
+      { "duration_sec": 600, "target_ftp_pct": 55, "label": "Warmup", "phase": "Warm-up" },
+      { "duration_sec": 60, "target_ftp_pct": 100, "label": "Opener", "phase": "Openers" },
+      { "duration_sec": 60, "target_ftp_pct": 50, "label": "Easy", "phase": "Openers" },
+      { "duration_sec": 60, "target_ftp_pct": 100, "label": "Opener", "phase": "Openers" },
+      { "duration_sec": 60, "target_ftp_pct": 50, "label": "Easy", "phase": "Openers" },
+      { "duration_sec": 60, "target_ftp_pct": 100, "label": "Opener", "phase": "Openers" },
+      { "duration_sec": 180, "target_ftp_pct": 50, "label": "Easy", "phase": "Openers" },
+      { "duration_sec": 300, "target_ftp_pct": 105, "label": "5 min hard", "phase": "5 min hard" },
+      { "duration_sec": 600, "target_ftp_pct": 50, "label": "Recover", "phase": "Recover" },
+      { "duration_sec": 1200, "target_ftp_pct": 100, "label": "TEST: 20 min all out", "phase": "The test" },
+      { "duration_sec": 600, "target_ftp_pct": 45, "label": "Cooldown", "phase": "Cool-down" }
     ]
   },
   {

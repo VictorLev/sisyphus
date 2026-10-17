@@ -1,7 +1,11 @@
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
 :root {
-  --color-bg: #14120f;
+  --color-bg: #14120f; /* inset wells: inputs, lists, stat tiles */
+  /* The page behind the panels: lighter than the wells so those still read
+     as recessed, darker than the panels (--color-surface) so they still
+     stand out. */
+  --color-page: #27231e;
   --color-surface: #211e1a;
   --color-surface-raised: #2b2723;
   --color-stone: #3a3632;
@@ -27,7 +31,7 @@ body {
 
 body {
   margin: 0;
-  background: radial-gradient(circle at 50% 0%, #24201b 0%, var(--color-bg) 60%);
+  background: radial-gradient(circle at 50% 0%, #342e28 0%, var(--color-page) 65%);
   background-attachment: fixed;
   color: var(--color-text);
   font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -36,8 +40,8 @@ body {
 }
 
 /* A cracked-earth texture, barely there: it sits on its own fixed layer
-   behind everything at very low opacity so the page still reads as near
-   black, with a vignette pulling the edges darker still. Kept as a separate
+   behind everything at low opacity so the page reads as dark stone, with a
+   vignette pulling the edges darker still. Kept as a separate
    layer rather than a body background so the opacity can be tuned without
    touching the gradient above. */
 body::before {
@@ -49,11 +53,13 @@ body::before {
   background-image: url('../media/texture.jpg');
   background-size: cover;
   background-position: center;
-  opacity: 0.07;
+  opacity: 0.01;
   /* Mute the ochre so it reads as ancient stone rather than a brown tint. */
-  filter: grayscale(0.35) contrast(0.9);
-  -webkit-mask-image: radial-gradient(ellipse at 50% 35%, #000 20%, transparent 78%);
-  mask-image: radial-gradient(ellipse at 50% 35%, #000 20%, transparent 78%);
+  filter: grayscale(0.35) contrast(1.1);
+  /* A soft vignette: the texture fades towards the corners, but only
+     partly, so the pattern still reaches the edges. */
+  -webkit-mask-image: radial-gradient(ellipse at 50% 35%, #000 35%, rgba(0, 0, 0, 0.45) 100%);
+  mask-image: radial-gradient(ellipse at 50% 35%, #000 35%, rgba(0, 0, 0, 0.45) 100%);
 }
 
 #app {
@@ -1624,7 +1630,7 @@ button.secondary:hover:not(:disabled) {
 }
 
 .login-dialog::backdrop {
-  background: var(--color-bg);
+  background: var(--color-page);
 }
 
 .login-dialog .title {
@@ -1676,4 +1682,358 @@ button.secondary:hover:not(:disabled) {
   font-size: 2rem;
   color: var(--color-bronze-bright);
   margin: 0.25rem 0 0.75rem;
+}
+
+/* --------------------------------------------------------- trainer button */
+
+/* The trainer button sits on the title's line and spans exactly the height
+   of its letters: the pixel font's capitals are 1em tall, so the button is
+   --title-size tall. The font draws its capitals slightly above its line
+   box (by ~8% of the size), hence the small negative margin to line the
+   tops up. Both scale with the title, so they stay aligned at any width. */
+.brand-row {
+  --title-size: clamp(1.5rem, 2.6vw, 2.4rem);
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.brand-row .title {
+  font-size: var(--title-size);
+  margin: 0;
+  line-height: 1;
+}
+
+.brand-row .trainer-btn {
+  height: var(--title-size);
+  margin-top: calc(var(--title-size) * -0.08);
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.trainer-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  background: transparent;
+  color: var(--color-bronze-bright);
+  border: var(--border-accent);
+  padding: 0.5rem 0.95rem;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.trainer-btn:hover:not(:disabled) {
+  background: rgba(176, 141, 87, 0.12);
+}
+
+/* The state, at a glance: stone = not connected, pulsing bronze =
+   connecting, lit gold = connected, rust = failed. */
+.trainer-dot {
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+  background: var(--color-stone-light);
+  flex: none;
+}
+
+.trainer-btn[data-state='connecting'] .trainer-dot {
+  background: var(--color-bronze);
+  animation: trainer-pulse 0.9s ease-in-out infinite alternate;
+}
+
+.trainer-btn[data-state='connected'] {
+  border-color: var(--color-bronze);
+}
+
+.trainer-btn[data-state='connected'] .trainer-dot {
+  background: var(--color-bronze-bright);
+  box-shadow: 0 0 8px rgba(224, 192, 136, 0.7);
+}
+
+.trainer-btn[data-state='failed'] {
+  border-color: #b4533c;
+  color: #d98c6a;
+}
+
+.trainer-btn[data-state='failed'] .trainer-dot {
+  background: #b4533c;
+}
+
+@keyframes trainer-pulse {
+  from { opacity: 0.35; }
+  to { opacity: 1; }
+}
+
+/* ------------------------------------------------------------------- log */
+
+.log-list {
+  list-style: none;
+  margin: 0.75rem 0 0;
+  padding: 0.5rem 0.75rem;
+  max-height: 18rem;
+  overflow-y: auto;
+  background: var(--color-bg);
+  border: var(--border);
+  border-radius: 2px;
+  font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+
+.log-entry {
+  display: grid;
+  grid-template-columns: auto 3.2rem 1fr;
+  gap: 0.6rem;
+  padding: 0.2rem 0;
+  border-bottom: 1px solid rgba(58, 54, 50, 0.6);
+}
+
+.log-entry:last-child {
+  border-bottom: none;
+}
+
+.log-entry time {
+  color: var(--color-text-dim);
+  white-space: nowrap;
+}
+
+.log-level {
+  text-transform: uppercase;
+  color: var(--color-text-dim);
+}
+
+.log-warn .log-level {
+  color: var(--color-bronze-bright);
+}
+
+.log-error .log-level,
+.log-error .log-message {
+  color: #d98c6a;
+}
+
+.log-message {
+  overflow-wrap: anywhere;
+}
+
+.log-empty {
+  color: var(--color-text-dim);
+  padding: 0.3rem 0;
+}
+
+/* ------------------------------------------------------ Profile: FTP Test */
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.ftp-test-panel h3 {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--color-bronze);
+  margin: 1.5rem 0 0.5rem;
+}
+
+.ftp-test-intro {
+  margin: 0 0 1rem;
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.ftp-test-figure {
+  margin: 0 0 1.25rem;
+}
+
+/* The workout's shape: bars as wide as each segment is long and as tall as
+   its target, coloured by power zone like the builder's preview. */
+.ftp-test-chart {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 170px;
+  margin-top: 1.4rem; /* room for the "Measured" tag above the test bar */
+  background: rgba(0, 0, 0, 0.3);
+  border: var(--border);
+  border-radius: 2px;
+}
+
+.ftp-test-bar {
+  position: relative;
+  min-width: 3px;
+  border-radius: 2px 2px 0 0;
+  /* A faint top edge, so the darkest zone still separates from the panel. */
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  z-index: 1;
+  cursor: default;
+  outline: none;
+  transition: filter 0.12s ease;
+}
+
+.ftp-test-bar:hover,
+.ftp-test-bar:focus-visible {
+  filter: brightness(1.25);
+}
+
+.ftp-test-bar:focus-visible {
+  outline: 2px solid var(--color-bronze-bright);
+  outline-offset: 2px;
+}
+
+/* The only part that counts: framed and tagged. */
+.ftp-test-bar.is-measured {
+  outline: 2px dashed var(--color-bronze-bright);
+  outline-offset: 2px;
+}
+
+.ftp-test-measured {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--color-bronze-bright);
+  white-space: nowrap;
+}
+
+/* Your FTP as a reference line across the chart. */
+.ftp-test-ftpline {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 0;
+  border-top: 1px dashed var(--color-stone-light);
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* The label floats just above the line, at the right-hand end. */
+.ftp-test-ftpline span {
+  position: absolute;
+  right: 0.3rem;
+  bottom: 3px;
+  font-size: 0.6rem;
+  line-height: 1;
+  color: var(--color-text-dim);
+}
+
+.ftp-test-time {
+  position: relative;
+  height: 1.1rem;
+  margin-top: 0.3rem;
+  font-size: 0.65rem;
+  color: var(--color-text-dim);
+}
+
+.ftp-test-time span {
+  position: absolute;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+.ftp-test-time span:first-child {
+  transform: none;
+}
+
+.ftp-test-time span:last-child {
+  transform: translateX(-100%);
+}
+
+.ftp-test-figure figcaption {
+  margin-top: 0.4rem;
+  min-height: 1.5em;
+}
+
+/* Part by part: also the text version of the chart. */
+.ftp-test-phases {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.ftp-test-phases thead th {
+  text-align: left;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--color-bronze-dim);
+  padding: 0 0.5rem 0.4rem;
+  border-bottom: var(--border);
+}
+
+.ftp-test-phases td,
+.ftp-test-phases tbody th {
+  padding: 0.5rem;
+  border-bottom: 1px solid rgba(58, 54, 50, 0.7);
+  vertical-align: top;
+  text-align: left;
+}
+
+.ftp-test-phases td:first-child {
+  white-space: nowrap;
+  color: var(--color-text-dim);
+}
+
+.ftp-test-phases tbody th {
+  white-space: nowrap;
+  font-weight: 700;
+  color: var(--color-bronze-bright);
+}
+
+.ftp-test-phases tr.is-measured {
+  background: rgba(224, 192, 136, 0.07);
+}
+
+.ftp-test-phases tr.is-measured td:first-child {
+  box-shadow: inset 2px 0 0 var(--color-bronze-bright);
+}
+
+.ftp-test-tips {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--color-text-dim);
+}
+
+.ftp-test-tips li + li {
+  margin-top: 0.35rem;
+}
+
+kbd {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 0.75rem;
+  padding: 0 0.3rem;
+  border: 1px solid var(--color-stone-light);
+  border-radius: 2px;
+  color: var(--color-text);
+}
+
+/* The Start button leads the panel, right under the intro, with its one
+   precondition beside it. */
+.ftp-test-start {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  margin: 0 0 0.5rem;
+}
+
+.ftp-test-start .hint {
+  margin: 0;
+  flex: 1 1 14rem;
 }

@@ -1,3 +1,5 @@
+// First, so everything after it, including a failed login, is logged.
+import { installLogCapture, logEvent } from './log.js';
 import { TrainerConnection } from './ble/connection.js';
 import { TrainerControl } from './ble/trainer-control.js';
 import { GearModel } from './gears.js';
@@ -19,6 +21,10 @@ import { initChronicle, setChronicleFtp } from './ui/chronicle.js';
 import { initWorkouts } from './ui/workouts.js';
 import { initFeats } from './ui/feats.js';
 import { requireLogin, initAccount } from './ui/login.js';
+import { initTrainerButton } from './ui/trainer-button.js';
+import { initLogPanel } from './ui/log-panel.js';
+
+installLogCapture();
 import { resolveTargets } from './workout/targets.js';
 import { showFtpResult, initFtpHistory, initFtpTestPanel } from './ui/ftp-test.js';
 
@@ -62,6 +68,7 @@ let resistancePerGrade = 0.4; // resistance units added per +1% of grade
 
 initViews();
 showView('home');
+initTrainerButton(trainerConnection);
 
 const liveScreen = initLiveScreen({
   onPause: (options) => pauseRide(options),
@@ -105,6 +112,7 @@ initFeats({ onOpenRide: (id) => chronicle.openDetail(id) });
 initProfile();
 initSettings({ onSaved: (saved) => applySettings(saved) });
 initAccount(currentUser);
+initLogPanel();
 initFtpHistory();
 initFtpTestPanel({ onStart: (workout) => startRide(workout) });
 updateModeUi();
@@ -187,6 +195,12 @@ document.getElementById('summary-home-btn').addEventListener('click', () => {
   rideMode = preferredMode; // the ride is over; show what's chosen for next time
   updateModeUi();
   showView('home');
+});
+
+// A dropped or deliberately ended connection takes the control point with
+// it; the next connection must set a fresh one up rather than reuse this.
+trainerConnection.addEventListener('disconnected', () => {
+  trainerControl = null;
 });
 
 // Once the trainer is connected, attach the control point (same GATT
@@ -570,6 +584,7 @@ async function endRide() {
   } catch (err) {
     // Never drop the ride. Park it and retry on the next load — the rider
     // cannot pedal the hour again.
+    logEvent('error', `Could not save the ride: ${err.message}`);
     const kept = stashRide(payload, currentUser?.id);
     if (kept) {
       alert(

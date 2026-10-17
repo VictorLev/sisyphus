@@ -1,8 +1,12 @@
+import { logEvent } from '../log.js';
+
 async function request(path, options) {
+  const method = options?.method ?? 'GET';
   let res;
   try {
     res = await fetch(path, options);
   } catch {
+    logEvent('error', `${method} ${path}: the server could not be reached`);
     // fetch rejects with a bare "Failed to fetch" for any network-level
     // failure, which reads like data loss when the shell is being served
     // from the service worker cache and only the API is unreachable. Say
@@ -18,11 +22,17 @@ async function request(path, options) {
     // whatever is on screen (ui/login.js listens for this) rather than
     // navigating away, so a ride being saved at that moment is parked by
     // the caller's error handling, not thrown away with the page.
+    logEvent('warn', `${method} ${path}: 401, not logged in (session ended?)`);
     window.dispatchEvent(new CustomEvent('sisyphus:unauthorized'));
     throw new Error('You are not logged in. Log in again to continue.');
   }
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
+    // A 401 from the auth routes is an answer (logged out, wrong password),
+    // not a fault; everything else is worth keeping.
+    if (!(res.status === 401 && path.startsWith('/api/auth/'))) {
+      logEvent(res.status >= 500 ? 'error' : 'warn', `${method} ${path}: ${res.status} ${body.error ?? ''}`.trim());
+    }
     const err = new Error(body.error || `${path} failed with ${res.status}`);
     err.status = res.status;
     throw err;

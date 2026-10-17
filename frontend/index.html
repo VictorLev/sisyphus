@@ -8,14 +8,22 @@
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="icon" href="/icons/favicon-64.png" sizes="64x64" type="image/png" />
   <link rel="apple-touch-icon" href="/icons/icon-192.png" />
-  <meta name="theme-color" content="#14120f" />
+  <meta name="theme-color" content="#1c1915" />
 </head>
 <body>
   <main id="app">
     <header id="app-chrome">
       <div class="view-header">
-        <div>
-          <h1 class="title">SISYPHUS</h1>
+        <div class="brand">
+          <div class="brand-row">
+            <h1 class="title">SISYPHUS</h1>
+            <!-- The whole trainer connection: one button. Its label and dot
+                 say the state; pressing it while connected disconnects. -->
+            <button id="connect-btn" type="button" class="trainer-btn" data-state="idle">
+              <span class="trainer-dot" aria-hidden="true"></span>
+              <span id="connect-label">Connect trainer</span>
+            </button>
+          </div>
           <p class="tagline">Push the boulder. Every day.</p>
         </div>
         <canvas id="sisyphus-canvas" aria-hidden="true"></canvas>
@@ -62,12 +70,6 @@
       <div class="home-grid">
         <div class="home-col">
           <div class="panel">
-            <h2>Trainer</h2>
-            <button id="connect-btn" type="button">Connect Trainer</button>
-            <p id="connection-status" class="status">Not connected</p>
-          </div>
-
-          <div class="panel">
             <h2>Ride Mode</h2>
             <div class="mode-select">
               <button id="mode-gears-btn" type="button" class="mode-btn">Virtual Gears</button>
@@ -80,7 +82,7 @@
             <h2>Free Ride</h2>
             <button id="free-ride-btn" type="button" disabled>Start Free Ride</button>
             <p class="hint">No targets, no segments — just ride. Always uses
-              virtual gears.</p>
+              virtual gears. Connect the trainer (top of the page) first.</p>
           </div>
         </div>
 
@@ -223,27 +225,66 @@
               <button id="save-profile-btn" type="button">Save Profile</button>
             </div>
           </div>
-        </div>
-
-        <div class="home-col">
-          <div class="panel" id="ftp-test-panel" hidden>
-            <h2>FTP Test</h2>
-            <p class="hint" id="ftp-test-description">&nbsp;</p>
-            <p class="hint">It runs in virtual gears, so you set the pace:
-              ride the 20-minute block as hard as you can hold it evenly.
-              Afterwards the app works out your FTP (95% of your best 20
-              minutes) and asks before changing it. Connect the trainer on
-              the Ride tab first.</p>
-            <div class="live-controls" style="margin-top:1.25rem">
-              <button id="ftp-test-start-btn" type="button">Start the FTP Test</button>
-            </div>
-          </div>
 
           <div class="panel">
             <h2>FTP History</h2>
             <ul id="ftp-history" class="workout-list"></ul>
-            <p class="hint">Every FTP you've had: from a test, or saved
-              under Rider.</p>
+            <p class="hint">Every FTP you've had: from an FTP Test, or saved
+              above under Rider.</p>
+          </div>
+        </div>
+
+        <div class="home-col">
+          <div class="panel ftp-test-panel" id="ftp-test-panel" hidden>
+            <h2>FTP Test</h2>
+            <p class="ftp-test-intro">Your <strong>FTP</strong> (functional
+              threshold power) is roughly the highest power you could hold
+              for an hour. Sisyphus uses it for your power zones and to turn
+              the library's % targets into watts, so an accurate FTP makes
+              every workout the right difficulty.</p>
+
+            <div class="ftp-test-start">
+              <button id="ftp-test-start-btn" type="button">Start the FTP Test</button>
+              <p class="hint">63 minutes. Connect the trainer first, with the
+                button at the top of the page.</p>
+            </div>
+
+            <figure class="ftp-test-figure">
+              <div class="ftp-test-chart" id="ftp-test-chart" role="img"></div>
+              <div class="ftp-test-time" id="ftp-test-time" aria-hidden="true"></div>
+              <figcaption class="hint" id="ftp-test-readout">Hover a bar for details.</figcaption>
+            </figure>
+
+            <table class="ftp-test-phases">
+              <caption class="sr-only">The FTP test, part by part</caption>
+              <thead><tr><th>When</th><th>Part</th><th>What to do</th></tr></thead>
+              <tbody id="ftp-test-phases"></tbody>
+            </table>
+
+            <h3>Pacing the 20 minutes</h3>
+            <ul class="ftp-test-tips">
+              <li>Start at about your current FTP for the first 5 minutes,
+                then raise it if you feel good. Starting too hard is the most
+                common way to ruin the test.</li>
+              <li>Aim for an even effort and keep the last 3 minutes for
+                whatever you have left.</li>
+              <li>The test runs in <strong>virtual gears</strong>: the trainer
+                doesn't hold a wattage for you, so shift with <kbd>+</kbd> and
+                <kbd>−</kbd> to set the pace.</li>
+            </ul>
+
+            <h3>Your result</h3>
+            <p class="hint">Your new FTP is <strong>95% of your average power
+              over the best 20 minutes</strong>: a 20-minute effort is a little
+              above what you could hold for an hour. After the ride you see the
+              estimate next to your current FTP and choose whether to update
+              it; nothing changes on its own. If the ride ends before a full
+              20 minutes, there's no result.</p>
+
+            <h3>Before you start</h3>
+            <p class="hint">Ride it rested (no hard ride the day before), with
+              a fan and water nearby.</p>
+
           </div>
         </div>
       </div>
@@ -309,6 +350,22 @@
               <button id="change-password-btn" type="button">Change Password</button>
               <button id="logout-btn" type="button" class="secondary">Log Out</button>
             </div>
+          </div>
+
+          <div class="panel">
+            <div class="calendar-header">
+              <h2>Log</h2>
+              <div class="row-actions">
+                <button id="log-copy-btn" type="button" class="secondary">Copy</button>
+                <button id="log-clear-btn" type="button" class="secondary">Clear</button>
+              </div>
+            </div>
+            <ol id="log-list" class="log-list"></ol>
+            <p class="hint">Errors, warnings and trainer events from this
+              browser, newest first: the last 200, kept on this device only.
+              When something goes wrong, press Copy and paste it into your
+              message.</p>
+            <p id="log-status" class="status"></p>
           </div>
         </div>
 

@@ -1,4 +1,5 @@
-import { getFtpEstimate, setFtp, getFtpHistory, listWorkouts } from '../api/client.js';
+import { getFtpEstimate, setFtp, getFtpHistory, listWorkouts, getProfile } from '../api/client.js';
+import { zoneForWatts } from '../zones.js';
 
 // The result of an FTP test ride: the estimate, how it compares with the
 // rider's current FTP, and the choice to adopt it. Nothing changes until the
@@ -102,7 +103,7 @@ export function initFtpHistory() {
     }
     listEl.innerHTML = '';
     if (entries.length === 0) {
-      listEl.append(item('empty', 'No FTP changes yet. Take the FTP Test above to measure yours.'));
+      listEl.append(item('empty', 'No FTP changes yet. Take the FTP Test to measure yours.'));
       return;
     }
     for (const entry of entries) {
@@ -141,24 +142,158 @@ export function initFtpHistory() {
 // Profile → FTP Test: the test lives here rather than in the workout list.
 // It is still a library workout underneath, so a test ride is an ordinary
 // ride in the Chronicle and its result can be read back from there.
+//
+// The chart and the part-by-part table are both built from the workout's
+// segments (their `phase` names), so they can't drift from what is ridden.
+
+// What to do in each part, keyed by the segments' `phase`.
+const PHASE_NOTES = {
+  'Warm-up': 'Easy spinning to get the legs going.',
+  Openers: 'Three 1-minute pushes at your current FTP with easy riding between. They wake the legs up.',
+  '5 min hard': 'Hard but controlled. It uses up your short burst of extra energy, so the test measures what you can sustain.',
+  Recover: 'Easy. Get your breath back and drink.',
+  'The test': 'As hard as you can hold evenly for 20 minutes. The only part that is measured.',
+  'Cool-down': 'Easy spinning.',
+};
+const MEASURED = 'The test';
+
+const clock = (sec) => `${Math.floor(sec / 60)}:${String(Math.round(sec % 60)).padStart(2, '0')}`;
+const watts = (pct, ftp) => Math.round((pct / 100) * ftp);
+
+// Consecutive segments sharing a phase, with their time span and effort range.
+function phasesOf(structure) {
+  const phases = [];
+  let t = 0;
+  for (const seg of structure) {
+    const name = seg.phase ?? seg.label;
+    const last = phases.at(-1);
+    if (last && last.name === name) {
+      last.endSec += seg.duration_sec;
+      last.minPct = Math.min(last.minPct, seg.target_ftp_pct);
+      last.maxPct = Math.max(last.maxPct, seg.target_ftp_pct);
+    } else {
+      phases.push({ name, startSec: t, endSec: t + seg.duration_sec, minPct: seg.target_ftp_pct, maxPct: seg.target_ftp_pct });
+    }
+    t += seg.duration_sec;
+  }
+  return phases;
+}
+
+function effortText(phase, ftp) {
+  if (phase.name === MEASURED) return `Your best, around ${watts(phase.minPct, ftp)} W or more`;
+  if (phase.minPct === phase.maxPct) return `${phase.minPct}% FTP (≈${watts(phase.minPct, ftp)} W)`;
+  return `${phase.minPct}–${phase.maxPct}% FTP (≈${watts(phase.minPct, ftp)}–${watts(phase.maxPct, ftp)} W)`;
+}
+
+function renderChart(workout, ftp) {
+  const chart = document.getElementById('ftp-test-chart');
+  const timeEl = document.getElementById('ftp-test-time');
+  const readout = document.getElementById('ftp-test-readout');
+  const total = workout.structure.reduce((sum, s) => sum + s.duration_sec, 0);
+  const ceiling = Math.max(...workout.structure.map((s) => s.target_ftp_pct)) * 1.15;
+  const measured = phasesOf(workout.structure).find((p) => p.name === MEASURED);
+
+  chart.innerHTML = '';
+  chart.setAttribute('aria-label',
+    `Shape of the test: ${Math.round(total / 60)} minutes, power by segment. ` +
+    (measured ? `The measured 20 minutes run from minute ${Math.round(measured.startSec / 60)} to ${Math.round(measured.endSec / 60)}. ` : '') +
+    'The table below lists every part.');
+
+  // Your FTP as a reference line: everything above it is harder than an hour's effort.
+  const ftpLine = document.createElement('span');
+  ftpLine.className = 'ftp-test-ftpline';
+  ftpLine.style.bottom = `${(100 / ceiling) * 100}%`;
+  const ftpLabel = document.createElement('span');
+  ftpLabel.textContent = 'Your FTP';
+  ftpLine.append(ftpLabel);
+  chart.append(ftpLine);
+
+  const defaultText = 'Hover a bar for details.';
+  for (const seg of workout.structure) {
+    const bar = document.createElement('span');
+    bar.className = 'ftp-test-bar';
+    bar.tabIndex = 0;
+    bar.style.flex = `${seg.duration_sec} 0 0`;
+    bar.style.height = `${(seg.target_ftp_pct / ceiling) * 100}%`;
+    bar.style.background = zoneForWatts(seg.target_ftp_pct, 100).color;
+    const isTest = seg.phase === MEASURED;
+    const detail = isTest
+      ? `${seg.label} · ${clock(seg.duration_sec)} · as hard as you can hold, around ${watts(seg.target_ftp_pct, ftp)} W or more`
+      : `${seg.label} · ${clock(seg.duration_sec)} · ${seg.target_ftp_pct}% FTP ≈ ${watts(seg.target_ftp_pct, ftp)} W`;
+    bar.setAttribute('aria-label', detail);
+    if (isTest) {
+      bar.classList.add('is-measured');
+      const tag = document.createElement('span');
+      tag.className = 'ftp-test-measured';
+      tag.textContent = 'Measured';
+      bar.append(tag);
+    }
+    const show = () => { readout.textContent = detail; };
+    const hide = () => { readout.textContent = defaultText; };
+    bar.addEventListener('mouseenter', show);
+    bar.addEventListener('focus', show);
+    bar.addEventListener('mouseleave', hide);
+    bar.addEventListener('blur', hide);
+    chart.append(bar);
+  }
+  readout.textContent = defaultText;
+
+  // Minute ticks every 10 minutes, plus the end.
+  timeEl.innerHTML = '';
+  const ticks = [];
+  for (let m = 0; m * 60 < total - 300; m += 10) ticks.push(m * 60);
+  ticks.push(total);
+  for (const sec of ticks) {
+    const tick = document.createElement('span');
+    tick.style.left = `${(sec / total) * 100}%`;
+    tick.textContent = `${Math.round(sec / 60)} min`;
+    timeEl.append(tick);
+  }
+}
+
+function renderPhases(workout, ftp) {
+  const body = document.getElementById('ftp-test-phases');
+  body.innerHTML = '';
+  for (const phase of phasesOf(workout.structure)) {
+    const row = document.createElement('tr');
+    if (phase.name === MEASURED) row.className = 'is-measured';
+    const cells = [
+      `${Math.round(phase.startSec / 60)}–${Math.round(phase.endSec / 60)} min`,
+      phase.name,
+      `${effortText(phase, ftp)}. ${PHASE_NOTES[phase.name] ?? ''}`.trim(),
+    ];
+    cells.forEach((text, i) => {
+      const cell = document.createElement(i === 1 ? 'th' : 'td');
+      if (i === 1) cell.scope = 'row';
+      cell.textContent = text;
+      row.append(cell);
+    });
+    body.append(row);
+  }
+}
+
 export function initFtpTestPanel({ onStart }) {
   const panel = document.getElementById('ftp-test-panel');
-  const description = document.getElementById('ftp-test-description');
   const startBtn = document.getElementById('ftp-test-start-btn');
   let testWorkout = null;
+  let ftp = 200;
+
+  function render() {
+    if (!testWorkout) return;
+    renderChart(testWorkout, ftp);
+    renderPhases(testWorkout, ftp);
+  }
 
   async function refresh() {
     try {
-      testWorkout = (await listWorkouts()).find((w) => w.test) ?? null;
+      const [workouts, profile] = await Promise.all([listWorkouts(), getProfile()]);
+      testWorkout = workouts.find((w) => w.test) ?? null;
+      if (profile.ftp > 0) ftp = profile.ftp;
     } catch {
       testWorkout = null;
     }
     panel.hidden = !testWorkout;
-    if (!testWorkout) return;
-    const minutes = Math.round(testWorkout.structure.reduce((sum, s) => sum + s.duration_sec, 0) / 60);
-    description.textContent =
-      `${minutes} minutes: a warm-up with three short openers, 5 minutes hard to take the edge off, ` +
-      `recovery, then 20 minutes all out and a cool-down.`;
+    render();
   }
 
   startBtn.addEventListener('click', () => {
@@ -166,5 +301,12 @@ export function initFtpTestPanel({ onStart }) {
   });
   document.addEventListener('viewchange', (event) => {
     if (event.detail.view === 'profile') refresh();
+  });
+  // A new FTP changes the watts shown.
+  document.addEventListener('profilechange', (event) => {
+    if (event.detail?.ftp > 0) {
+      ftp = event.detail.ftp;
+      render();
+    }
   });
 }
