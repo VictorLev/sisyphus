@@ -7,6 +7,11 @@
 // half-written. Writes BACKUP_DIR/sisyphus-<tag>-<UTC timestamp>.db, checks
 // the copy, then keeps only the newest --keep backups with that tag.
 //
+// The copy is made and checked in a local temp folder, and only then copied
+// into BACKUP_DIR as a plain file. On the homelab BACKUP_DIR is on NFS,
+// where SQLite's own file locking is unreliable; a finished file copied
+// there is fine.
+//
 // Deliberately does NOT import src/db/index.js: that would run migrations,
 // and deploy/update.sh runs this from the NEW image before restarting, so it
 // must copy the database exactly as the old version left it.
@@ -14,7 +19,8 @@
 // Exits non-zero on any failure, which is what makes update.sh stop.
 import 'dotenv/config';
 import Database from 'better-sqlite3';
-import { existsSync, mkdirSync, readdirSync, renameSync, rmSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readdirSync, renameSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import path from 'node:path';
 
 function option(name, fallback) {
@@ -46,36 +52,43 @@ mkdirSync(backupDir, { recursive: true });
 // Milliseconds included, so two backups in the same second cannot collide.
 const stamp = new Date().toISOString().replace(/[-:]/g, '');
 const finalPath = path.join(backupDir, `sisyphus-${tag}-${stamp}.db`);
-// Written under a temporary name and renamed once verified, so a failed or
+// Copied in under a temporary name and renamed once complete, so a failed or
 // interrupted backup can never be mistaken for a good one.
 const partialPath = `${finalPath}.partial`;
+const workDir = mkdtempSync(path.join(tmpdir(), 'sisyphus-backup-'));
+const workPath = path.join(workDir, 'backup.db');
 
+let rides = 0;
 try {
   const source = new Database(dbPath, { readonly: true, fileMustExist: true });
   try {
-    await source.backup(partialPath);
+    await source.backup(workPath);
   } finally {
     source.close();
   }
 
-  const copy = new Database(partialPath);
+  const copy = new Database(workPath);
   try {
     // The copy inherits WAL mode; switch it to a plain rollback journal so
     // the backup is one self-contained file with no -wal/-shm beside it.
     copy.pragma('journal_mode = DELETE');
     const check = copy.pragma('quick_check', { simple: true });
     if (check !== 'ok') throw new Error(`backup failed its integrity check: ${check}`);
-    const { n } = copy.prepare('SELECT COUNT(*) AS n FROM sessions').get();
-    console.log(`Backed up ${n} rides to ${finalPath}`);
+    rides = copy.prepare('SELECT COUNT(*) AS n FROM sessions').get().n;
   } finally {
     copy.close();
   }
+  copyFileSync(workPath, partialPath);
   renameSync(partialPath, finalPath);
+  console.log(`Backed up ${rides} rides to ${finalPath}`);
 } catch (err) {
-  for (const leftover of ['', '-wal', '-shm', '-journal']) rmSync(partialPath + leftover, { force: true });
+  rmSync(partialPath, { force: true });
   console.error(`Backup FAILED: ${err.message}`);
-  process.exit(1);
+  process.exitCode = 1;
+} finally {
+  rmSync(workDir, { recursive: true, force: true });
 }
+if (process.exitCode) process.exit();
 
 // Retention: the timestamp sorts lexically, so the newest are last.
 const prefix = `sisyphus-${tag}-`;

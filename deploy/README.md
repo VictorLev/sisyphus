@@ -1,235 +1,223 @@
-# Running Sisyphus on a home server
+# Running Sisyphus on the homelab
 
 ```
 your PC (WSL2)  --git push-->  GitHub  --tests, build-->  ghcr.io image
                                                               |
-home server  <--every 5 min: git pull + docker compose pull---+
-     |
-     +-- cloudflared --outbound tunnel--> Cloudflare <--HTTPS-- riders' Chrome
+homelab VM  <--every 5 min: update.sh (pull, back up, restart)+
+   |
+   +-- Caddy (shared) ----- https://sisyphus.home ----- Chrome at home
+   +-- cloudflared --tunnel--> Cloudflare <--HTTPS----- riders' Chrome anywhere
 ```
 
-You push to `main`. GitHub Actions runs the tests and, if they pass, publishes
-a Docker image to `ghcr.io/victorlev/sisyphus`. The home server checks for a
-new image every five minutes, backs up the database, and restarts the app,
-but only when the image actually changed.
+You push to `main`. GitHub Actions runs the tests and, if they pass,
+publishes `ghcr.io/victorlev/sisyphus:latest` (and `:<commit sha>`). On the
+homelab VM, `sisyphus-update.timer` runs `update.sh` every five minutes. When
+the image changed, it backs up the database first, then restarts the app.
 
-Riders reach the app at a public hostname (say `https://sisyphus.example.com`)
-through a **Cloudflare Tunnel**. The `cloudflared` container dials *out* to
-Cloudflare; nothing is port-forwarded, and no port is published on the
-server. Cloudflare serves a real certificate, which matters because Chrome
-only allows Web Bluetooth on `localhost` or HTTPS.
+The app is reachable two ways, both HTTPS, because Chrome only allows Web
+Bluetooth on `localhost` or a secure origin:
 
-Nothing connects *to* the server from GitHub either: it only pulls. The
-repository is public, and GitHub advises against self-hosted runners on
-public repositories.
+- **At home:** `https://sisyphus.home`, served by the VM's shared Caddy
+  (`tls internal`) and proxied to `127.0.0.1:3010`. That Caddy also serves
+  Homepage, Pi-hole and the rest, so it has its own compose file and is not
+  touched here.
+- **From anywhere:** a public hostname through a **Cloudflare Tunnel**. The
+  `cloudflared` container dials *out* to Cloudflare; nothing is
+  port-forwarded. Cloudflare's certificate is real, so riders install
+  nothing.
 
-Every rider logs in. Accounts are created by you from the command line;
-there is no sign-up page.
+Nothing connects *to* the VM from GitHub: it only pulls. The repo is public,
+and GitHub advises against self-hosted runners on public repositories.
+
+Every rider logs in. You create the accounts; there is no sign-up page.
+
+## Where things are
+
+| What | Where |
+| --- | --- |
+| Compose file | `/mnt/storage/docker/sisyphus/docker-compose.yml` (this folder's `compose.yaml`) |
+| Secrets | `/mnt/storage/docker/sisyphus/.env` (`chmod 600`; see `.env.example`) |
+| Update script | `/mnt/storage/docker/sisyphus/update.sh` |
+| Restore script | `/mnt/storage/docker/sisyphus/restore.sh` |
+| Database | Docker volume `sisyphus_sisyphus-data`, on the VM's **local** disk (SQLite locks and corrupts on NFS) |
+| Backups | `/mnt/storage/docker/sisyphus/backups/`, on the NFS share, off the VM's disk |
+| Timers | `sisyphus-update.timer` (every 5 min), `sisyphus-backup.timer` (nightly) |
+
+Containers: `sisyphus` (the app) and `sisyphus-tunnel` (cloudflared, only
+with `COMPOSE_PROFILES=tunnel`).
 
 ## Secrets
 
-All secrets live in `deploy/.env` on the server, and nowhere else:
+All of them live only in `.env` beside the compose file:
 
 | Variable | What it is |
 | --- | --- |
+| `ADMIN_USERNAME`, `ADMIN_PASSWORD` | Your account, created the first time the app starts with no accounts |
 | `TUNNEL_TOKEN` | The Cloudflare Tunnel token |
-| `ADMIN_USERNAME`, `ADMIN_PASSWORD` | Your account, created on the very first start |
+| `COMPOSE_PROFILES=tunnel` | Not a secret, but it is the switch that exposes the app |
 | `IMAGE_TAG` (optional) | A commit SHA to pin, for rollback |
 
-`.env` is gitignored and excluded from the image. There is no session
-secret: login tokens are random and only their SHA-256 is stored.
+The compose folder is on the NFS share, which Samba also exports, so keep
+`.env` at `chmod 600`. There is no session secret: login tokens are random,
+and only their SHA-256 is stored.
 
-## One-time server setup
+## Rolling out accounts (one time, in this order)
 
-These steps assume a Debian or Ubuntu VM with Docker (for example a Proxmox
-VM or LXC). Run them on the server.
+The order matters. The tunnel must only open once a build with logins is
+running: before that, anyone with the URL could read and delete the log.
 
-**1. Install Docker** (skip if it is already installed):
-
-```sh
-curl -fsSL https://get.docker.com | sudo sh
-```
-
-**2. Clone the repo:**
+**1. Before merging**, on the VM (`ssh victor@10.10.10.10`):
 
 ```sh
-sudo git clone https://github.com/VictorLev/sisyphus /opt/sisyphus
-```
-
-**3. Create the tunnel.** You need a domain on Cloudflare (the free plan is
-enough). In the Cloudflare dashboard:
-
-1. **Zero Trust → Networks → Tunnels → Create a tunnel** → type
-   **Cloudflared** → name it `sisyphus`.
-2. On the install screen, choose **Docker** and copy the long token after
-   `--token` in the command shown. That is `TUNNEL_TOKEN`. Don't run the
-   command; compose runs cloudflared for you.
-3. **Public hostname**: subdomain `sisyphus`, your domain, service type
-   **HTTP**, URL **`app:3000`**. (`app` is the compose service name;
-   cloudflared reaches it over the compose network.)
-
-**4. Fill in `.env`:**
-
-```sh
-cd /opt/sisyphus/deploy
-sudo cp .env.example .env
-sudo chmod 600 .env
-sudo nano .env      # TUNNEL_TOKEN, ADMIN_USERNAME, ADMIN_PASSWORD
-```
-
-Pick a long `ADMIN_PASSWORD` (at least 8 characters; wrap it in single
-quotes if it contains `$`). It is only read the first time the app starts
-with no accounts. After that, change your password in the app.
-
-**5. Start it and turn on automatic updates and nightly backups:**
-
-```sh
-sudo ./update.sh
-sudo cp sisyphus-update.service sisyphus-update.timer \
-        sisyphus-backup.service sisyphus-backup.timer /etc/systemd/system/
+cd /mnt/storage/docker/sisyphus
+cp docker-compose.yml docker-compose.yml.bak-accounts
+# From a checkout of the multi-user branch, copy in everything from deploy/:
+# compose.yaml (as docker-compose.yml), update.sh, restore.sh, .env.example
+# and the three sisyphus-*.service/.timer files. Diff the compose file
+# against the .bak first: service, container and volume names must match.
+mkdir -p backups                 # as victor, so uid 1000 can write to it
+cp .env.example .env && chmod 600 .env
+nano .env                        # ADMIN_USERNAME, ADMIN_PASSWORD; leave the tunnel lines commented
+sudo cp sisyphus-update.service sisyphus-backup.service sisyphus-backup.timer /etc/systemd/system/
 sudo systemctl daemon-reload
-sudo systemctl enable --now sisyphus-update.timer sisyphus-backup.timer
+sudo systemctl enable --now sisyphus-backup.timer
+sh update.sh                     # still the old image: no backup, just applies the new compose config
 ```
 
-If the first pull fails with `unauthorized` or `denied`, the image is still
-private. On GitHub go to your profile → **Packages** → **sisyphus** →
-**Package settings** → **Change visibility** → **Public**. The code is public
-already, so this exposes nothing new.
+`sisyphus-update.service` replaces the old unit, which ran
+`docker compose pull && up -d` with no backup. The timer itself is
+unchanged.
 
-**6. Log in** at `https://sisyphus.<your domain>` with `ADMIN_USERNAME` and
-`ADMIN_PASSWORD`. *Connect Trainer* should work straight away: the
-certificate is real, so there is nothing to trust or install.
+**2. Merge the PR.** Within five minutes `update.sh` sees the new image and
+takes a `pre-update` backup (using the new image's backup script). Then it
+restarts the app, which creates your admin account and hands it every
+existing ride, workout, star and setting. Check it:
+
+```sh
+journalctl -u sisyphus-update -n 30
+ls -l /mnt/storage/docker/sisyphus/backups/
+```
+
+Then log in at `https://sisyphus.home`.
+
+**3. Open the tunnel.** In the Cloudflare dashboard (you need a domain on
+Cloudflare; the free plan is enough):
+
+1. **Zero Trust → Networks → Tunnels → Create a tunnel** → **Cloudflared** →
+   name it `sisyphus`.
+2. On the install screen choose **Docker** and copy the token after
+   `--token`. Don't run the command; compose runs cloudflared.
+3. **Public hostname**: e.g. `sisyphus.<your domain>`, type **HTTP**, URL
+   **`sisyphus:3000`** (the compose service name, reached over the compose
+   network).
+
+Then on the VM, uncomment `COMPOSE_PROFILES=tunnel` and set `TUNNEL_TOKEN`
+in `.env`, and run `sh update.sh`. Open the public URL, log in, and *Connect
+Trainer* should work: the certificate is real.
+
+**4. Add your friends** (next section).
 
 ## Adding riders
 
 ```sh
-cd /opt/sisyphus/deploy
-sudo docker compose exec app npm run add-user -- alice --name "Alice"
+docker exec sisyphus npm run add-user -- alice --name "Alice"
 ```
 
-It prints a temporary password. Send the rider the URL, their username and
-that password; they can change it under **Settings → Account**. Add
-`--admin` to make another admin (admins have no extra powers in the app
-yet).
+It prints a temporary password. Send the rider the public URL, their
+username and that password; they can change it under **Settings →
+Account**. `--admin` makes another admin (admins have no extra powers in the
+app yet).
 
-| To... | Run (in `/opt/sisyphus/deploy`) |
+| To... | Run on the VM (victor is in the `docker` group) |
 | --- | --- |
-| Add a rider | `sudo docker compose exec app npm run add-user -- <name> [--name "Shown Name"]` |
-| Reset a forgotten password | `sudo docker compose exec app npm run reset-password -- <name>` (also logs them out everywhere) |
-| List accounts | `sudo docker compose exec app npm run list-users` |
+| Add a rider | `docker exec sisyphus npm run add-user -- <name> [--name "Shown Name"]` |
+| Reset a forgotten password | `docker exec sisyphus npm run reset-password -- <name>` (also logs them out everywhere) |
+| List accounts | `docker exec sisyphus npm run list-users` |
 
 Usernames are case-insensitive. After 10 failed logins for one username, or
 20 from one IP address, logins are refused for 15 minutes.
 
 ## Backups
 
-Backups are SQLite online backups (`db.backup()`), so they are consistent
-even while someone is riding. They land in `/opt/sisyphus/deploy/backups/`
-on the host, outside the Docker volume, so you can copy them off the
-machine.
+Backups use SQLite's online backup (`db.backup()`), so they're consistent
+even mid-ride. Each one is built and checked on local disk, then copied into
+`backups/` as a single finished `.db` file. That folder is on the NFS share,
+so a backup survives losing the VM's disk.
 
-- **Before every update.** When `update.sh` sees a new image, it backs up
+- **Before every update.** When `update.sh` sees a new image it backs up
   (tag `pre-update`) *before* restarting. If the backup fails, the update
   stops and the old version keeps running; the next run five minutes later
   tries again. The last 14 are kept.
 - **Nightly** at 03:30 (tag `nightly`), via `sisyphus-backup.timer`. The last
   14 are kept.
-- **By hand:** `sudo docker compose exec app npm run backup -- --tag manual`
+- **By hand:** `docker exec sisyphus npm run backup -- --tag manual`
 
-Check them with `ls -lt /opt/sisyphus/deploy/backups` and
-`journalctl -u sisyphus-backup`. Each backup is a single `.db` file; copying
-one to another machine is a complete copy of every rider's history.
+Check with `ls -lt /mnt/storage/docker/sisyphus/backups` and
+`journalctl -u sisyphus-backup`.
 
 ## Restore
 
 ```sh
-cd /opt/sisyphus/deploy
+cd /mnt/storage/docker/sisyphus
 ls -lt backups/                                   # pick one
-sudo ./restore.sh backups/sisyphus-nightly-20261018T033012.345Z.db
+sh restore.sh backups/sisyphus-nightly-20261018T033012.345Z.db
 ```
 
-`restore.sh` stops the app, backs up the current database first (tag
-`pre-restore`, so a restore can be undone), swaps the backup in, and starts
-the app. It holds the deploy lock, so the update timer can't interfere.
+`restore.sh` stops the app and backs up the current database first (tag
+`pre-restore`, so a restore can be undone). Then it swaps the backup in and
+starts the app. It holds the same lock as `update.sh`, so the timer can't
+restart the app halfway through.
 
 ## Rollback
 
-Every build is published twice: as `latest` and as the full commit SHA. To
-go back to a known-good build:
+Every build is published as `latest` and as its full commit SHA:
 
 ```sh
-cd /opt/sisyphus/deploy
-sudo nano .env       # IMAGE_TAG=<full commit sha>
-sudo ./update.sh
+cd /mnt/storage/docker/sisyphus
+nano .env          # IMAGE_TAG=<full commit sha>
+sh update.sh
 ```
 
-To follow `main` again, remove the line and run `update.sh`. (Or
-`git revert` the bad commit and push; the server follows `main`.)
+Delete the line and run `update.sh` again to follow `main`. (Or
+`git revert` the bad commit and push.)
 
 A rollback does not undo database changes. Migrations only ever *add*
-columns and tables, so an older build usually runs fine on a newer database.
-If it doesn't, restore the `pre-update` backup taken just before the bad
+columns and tables, so an older build usually runs on a newer database. If
+it doesn't, restore the `pre-update` backup taken just before the bad
 version started.
 
-> **Never roll back to a build from before accounts were added** while the
-> tunnel is up. Those builds have no login, so anyone with the URL could
-> read and delete every rider's history.
+> **Never roll back to a build from before accounts were added while the
+> tunnel is on.** Those builds have no login. Comment out
+> `COMPOSE_PROFILES=tunnel` and run `update.sh` first.
 
 ## Day to day
 
 | To... | Do this |
 | --- | --- |
 | Ship a change | Push to `main` and wait about 5 minutes |
-| Deploy right away | `sudo /opt/sisyphus/deploy/update.sh` |
+| Deploy right away | `sudo systemctl start sisyphus-update.service` |
 | See deploy runs | `journalctl -u sisyphus-update` |
-| See app logs | `cd /opt/sisyphus/deploy && sudo docker compose logs -f app` |
-| See tunnel logs | `cd /opt/sisyphus/deploy && sudo docker compose logs -f cloudflared` |
+| See app logs | `docker logs -f sisyphus` |
+| See tunnel logs | `docker logs -f sisyphus-tunnel` |
+| Take the app off the internet | Comment out `COMPOSE_PROFILES=tunnel`, then `sh update.sh` |
 
-The database itself is in the `sisyphus-data` Docker volume. Backing up the
-whole VM (on Proxmox: **Datacenter → Backup**) covers it too.
-
-## Upgrading from the LAN-only (Caddy) setup
-
-Do this once, **before** merging the accounts change into `main`:
-
-1. Create the tunnel (step 3 above) and add `TUNNEL_TOKEN`,
-   `ADMIN_USERNAME` and `ADMIN_PASSWORD` to `/opt/sisyphus/deploy/.env`. The
-   old `SITE_ADDRESS`, `HTTP_PORT` and `HTTPS_PORT` lines can go. Without
-   `TUNNEL_TOKEN` the new compose file refuses to start, and the old
-   version keeps running.
-2. Take a manual backup. The first update after the merge is run by the
-   *old* `update.sh`, which doesn't know how to back up:
-   ```sh
-   cd /opt/sisyphus/deploy
-   sudo docker compose stop app
-   sudo docker compose cp app:/data ./pre-accounts-data
-   sudo docker compose start app
-   ```
-3. Merge. Within five minutes the server pulls, the Caddy container is
-   removed, cloudflared starts, and your admin account is created. Every
-   existing ride, workout, setting and star becomes yours.
-4. Install the nightly backup timer (the `sisyphus-backup.*` lines in
-   step 5).
-5. Optionally clean up: `sudo docker volume rm deploy_caddy-data deploy_caddy-config`,
-   and remove the old Caddy root certificate from the riding PC
-   (`certmgr.msc` → Trusted Root Certification Authorities → "Caddy Local
-   Authority").
+When this folder's files change in the repo, copy them to the VM again; the
+VM has no checkout of the repo.
 
 ## Developing on Windows with WSL2
 
-Keep the code inside WSL (`~/code/sisyphus`), not under `C:\`. File access is
-much faster and the tooling matches the server.
+Keep the code inside WSL (`~/projects/sisyphus`), not under `C:\`. File
+access is much faster and the tooling matches the server.
 
 ```sh
-git clone git@github.com:VictorLev/sisyphus.git ~/code/sisyphus
-cd ~/code/sisyphus
+cd ~/projects/sisyphus
 npm install --prefix backend
 npm run add-user -- me --admin     # once; prints a password
 npm run dev       # then open http://localhost:7479 in Chrome on Windows
 ```
 
 WSL2 forwards `localhost` to Windows, and `localhost` counts as a secure
-context, so Bluetooth works during development with no HTTPS or tunnel. The
-login cookie is only marked `Secure` when the request came over HTTPS, so
-plain `http://localhost` logins work. Run `npm test` before pushing; CI runs
-it again and will not publish a broken build.
+context, so Bluetooth works in development with no HTTPS or tunnel. The
+login cookie is only marked `Secure` over HTTPS, so plain
+`http://localhost` logins work. Run `npm test` before pushing; CI runs it
+again and will not publish a broken build.
