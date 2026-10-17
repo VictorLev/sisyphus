@@ -242,7 +242,8 @@ ERG blocks gear writes, which would otherwise fight the trainer's target.
 - Secrets arrive as "???" with a hint until earned. Date and hour badges
   use the rider's local time: rides save `tz_offset_min` (older rides are
   read as UTC).
-- Shown on Feats (grouped grid), on the summary after a ride (new ones),
+- Shown in their own **Badges** tab (grouped grid), as a count beside the
+  level in the nav (it opens the tab), on the summary after a ride (new ones),
   and on a ride's Chronicle page ("Earned on this ride"). Framing only;
   no penalties: even "Humbled" (a lower FTP test result) is a badge.
 

@@ -20,7 +20,7 @@ import { initSisyphusLoop } from './ui/sisyphus-loop.js';
 import { initChronicle, setChronicleFtp } from './ui/chronicle.js';
 import { initWorkouts } from './ui/workouts.js';
 import { initFeats } from './ui/feats.js';
-import { initBadges, showRideBadges } from './ui/badges.js';
+import { initBadges, showRideBadges, refreshBadgeCount } from './ui/badges.js';
 import { requireLogin, initAccount } from './ui/login.js';
 import { initTrainerButton } from './ui/trainer-button.js';
 import { initLogPanel } from './ui/log-panel.js';
@@ -110,7 +110,7 @@ function editWorkout(workout) {
 initSisyphusLoop();
 const chronicle = initChronicle();
 initFeats({ onOpenRide: (id) => chronicle.openDetail(id) });
-initBadges({ onOpenRide: (id) => chronicle.openDetail(id) });
+initBadges({ onOpenRide: (id) => chronicle.openDetail(id), onOpenBadges: () => showView('badges') });
 initProfile();
 initSettings({ onSaved: (saved) => applySettings(saved) });
 initAccount(currentUser);
@@ -158,6 +158,7 @@ async function loadConfig() {
 }
 loadConfig();
 refreshLevel();
+refreshBadgeCount();
 retryPendingRides();
 
 document.addEventListener('profilechange', (event) => {
@@ -583,6 +584,7 @@ async function endRide() {
   try {
     const session = await createSession(payload);
     refreshLevel();
+    refreshBadgeCount();
     showSummary(session);
     if (activeWorkout?.test) showFtpResult(document.getElementById('summary-ftp-result'), session.id);
     showRideBadges(document.getElementById('summary-badges'), session.id, { onOpenRide: (id) => chronicle.openDetail(id) });
@@ -614,6 +616,7 @@ async function retryPendingRides() {
   const { saved, remaining } = await flushPending(createSession, currentUser?.id);
   if (saved > 0) {
     refreshLevel();
+    refreshBadgeCount();
     home.refreshWorkoutList();
     flashRideNote(`Saved ${saved} ride${saved > 1 ? 's' : ''} that failed earlier.`, 8000);
     console.info(`[app] recovered ${saved} pending ride(s)`);

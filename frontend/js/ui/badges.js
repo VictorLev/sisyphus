@@ -71,8 +71,25 @@ export function badgeTile(badge, { onOpenRide } = {}) {
   return tile;
 }
 
-// Feats → Badges.
-export function initBadges({ onOpenRide }) {
+// The earned count beside the level in the nav; pressing it opens Badges.
+function setNavCount(earned) {
+  const button = document.getElementById('nav-badges');
+  document.getElementById('nav-badges-count').textContent = String(earned);
+  button.title = `${earned} badge${earned === 1 ? '' : 's'} earned`;
+  button.setAttribute('aria-label', button.title);
+  button.hidden = false;
+}
+
+export async function refreshBadgeCount() {
+  try {
+    setNavCount((await getBadges()).earned);
+  } catch { /* the count is a nicety; the Badges tab says what went wrong */ }
+}
+
+// The Badges tab.
+export function initBadges({ onOpenRide, onOpenBadges }) {
+  document.getElementById('nav-badges').addEventListener('click', () => onOpenBadges());
+
   const summaryEl = document.getElementById('badges-summary');
   const groupsEl = document.getElementById('badges-groups');
 
@@ -84,7 +101,8 @@ export function initBadges({ onOpenRide }) {
       summaryEl.textContent = `Could not load badges: ${err.message}`;
       return;
     }
-    summaryEl.textContent = `${data.earned} of ${data.total} earned`;
+    summaryEl.textContent = `${data.earned} of ${data.total} earned. Find the secrets.`;
+    setNavCount(data.earned);
     groupsEl.innerHTML = '';
     const groups = new Map();
     for (const badge of data.badges) {
@@ -106,7 +124,7 @@ export function initBadges({ onOpenRide }) {
   }
 
   document.addEventListener('viewchange', (event) => {
-    if (event.detail.view === 'feats') refresh();
+    if (event.detail.view === 'badges') refresh();
   });
   return { refresh };
 }
