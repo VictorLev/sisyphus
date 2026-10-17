@@ -1680,11 +1680,10 @@ button.secondary:hover:not(:disabled) {
 
 /* --------------------------------------------------------- trainer button */
 
-/* Title and the trainer button side by side, the button vertically centred
-   on the title. */
+/* Title and the trainer button side by side, their tops aligned. */
 .brand {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   flex-wrap: wrap;
   gap: 0.75rem 1.5rem;
 }
