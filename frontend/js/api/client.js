@@ -185,3 +185,9 @@ export function getFtpHistory() {
 export function getBadges() {
   return request('/api/badges');
 }
+
+// Everyone's totals for this week or month, in the viewer's time zone.
+export function getLeaderboard(period) {
+  const tz = -new Date().getTimezoneOffset();
+  return request(`/api/leaderboard?period=${encodeURIComponent(period)}&tz=${tz}`);
+}

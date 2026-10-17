@@ -100,6 +100,25 @@
             <ul id="workout-list" class="workout-list"></ul>
             <button id="open-workouts-btn" type="button" class="secondary">All Workouts</button>
           </div>
+
+          <div class="panel leaderboard-panel">
+            <div class="calendar-header">
+              <h2>Leaderboard</h2>
+              <div class="segmented" role="group" aria-label="Period" id="leaderboard-period">
+                <button type="button" data-value="week">This week</button>
+                <button type="button" data-value="month">This month</button>
+              </div>
+            </div>
+            <div class="leaderboard-sub">
+              <p class="hint" id="leaderboard-range">&nbsp;</p>
+              <div class="segmented segmented-small" role="group" aria-label="Rank by" id="leaderboard-metric">
+                <button type="button" data-value="minutes">Time</button>
+                <button type="button" data-value="distance_km">Distance</button>
+                <button type="button" data-value="rides">Rides</button>
+              </div>
+            </div>
+            <ol id="leaderboard-list" class="leaderboard-list"></ol>
+          </div>
         </div>
       </div>
 

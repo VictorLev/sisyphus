@@ -2224,3 +2224,156 @@ kbd {
   border-radius: 2px;
   padding: 0.55rem 0.6rem;
 }
+
+/* ------------------------------------------------------------ leaderboard */
+
+.leaderboard-panel {
+  margin-top: 1.5rem;
+}
+
+/* Small toggle groups, in the Ride Mode buttons' look. */
+.segmented {
+  display: inline-flex;
+  gap: 0;
+}
+
+.segmented button {
+  background: transparent;
+  color: var(--color-text-dim);
+  border: var(--border);
+  padding: 0.45rem 0.8rem;
+  font-size: 0.78rem;
+  border-radius: 0;
+}
+
+.segmented button + button {
+  border-left: none;
+}
+
+.segmented button:first-child { border-radius: 2px 0 0 2px; }
+.segmented button:last-child { border-radius: 0 2px 2px 0; }
+
+.segmented button:hover:not(:disabled) {
+  background: rgba(176, 141, 87, 0.08);
+  color: var(--color-text);
+}
+
+/* Also while hovered: the hover rule above is more specific. */
+.segmented button[aria-pressed='true'],
+.segmented button[aria-pressed='true']:hover:not(:disabled) {
+  background: var(--color-bronze);
+  border-color: var(--color-bronze);
+  color: #17140f;
+}
+
+.segmented-small button {
+  padding: 0.3rem 0.6rem;
+  font-size: 0.72rem;
+}
+
+.leaderboard-sub {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  margin: 0.25rem 0 0.75rem;
+}
+
+.leaderboard-sub .hint {
+  margin: 0;
+}
+
+.leaderboard-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* rank | who | value, with the bar under who and value. */
+.leaderboard-row {
+  display: grid;
+  grid-template-columns: 2rem 1fr auto;
+  column-gap: 0.75rem;
+  row-gap: 0.35rem;
+  align-items: center;
+  padding: 0.6rem 0.5rem;
+  border-bottom: 1px solid rgba(58, 54, 50, 0.7);
+}
+
+.leaderboard-row:last-child {
+  border-bottom: none;
+}
+
+.leaderboard-row.is-you {
+  background: rgba(224, 192, 136, 0.06);
+  box-shadow: inset 2px 0 0 var(--color-bronze-bright);
+}
+
+.leaderboard-rank {
+  grid-row: span 2;
+  font-family: var(--font-pixel);
+  font-size: 0.85rem;
+  color: var(--color-bronze-bright);
+  text-align: center;
+}
+
+.leaderboard-who {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.leaderboard-name {
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.leaderboard-you {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--color-bronze-bright);
+}
+
+.leaderboard-level {
+  font-size: 0.7rem;
+  color: var(--color-text-dim);
+}
+
+.leaderboard-value {
+  font-variant-numeric: tabular-nums;
+  font-size: 0.85rem;
+  color: var(--color-text);
+  white-space: nowrap;
+}
+
+/* The bar: thin, one colour, rounded ends, scaled to the leader. */
+.leaderboard-bar {
+  grid-column: 2 / -1;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--color-bg);
+  overflow: hidden;
+}
+
+.leaderboard-bar span {
+  display: block;
+  height: 100%;
+  border-radius: 2px;
+  background: var(--color-bronze);
+}
+
+.leaderboard-row.is-you .leaderboard-bar span {
+  background: var(--color-bronze-bright);
+}
+
+.leaderboard-row.is-idle .leaderboard-name,
+.leaderboard-row.is-idle .leaderboard-value,
+.leaderboard-row.is-idle .leaderboard-rank {
+  color: var(--color-text-dim);
+}

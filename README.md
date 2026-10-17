@@ -46,6 +46,9 @@ night, and you push it up again tomorrow.
 - **Feats** — longest and furthest ride, best average and peak power, and a
   power curve (best 5s / 1min / 5min / 20min sustained).
 - **Levelling** — XP from time and distance ridden, so it can never go backwards.
+- **Leaderboard** — on the Ride page: every rider's time, distance or rides
+  for this week or this month (in your time zone), with levels. Everyone is
+  listed, quiet weeks included.
 - **Badges** — 47 of them in their own tab, with your count beside your level: ride counts, distance and time,
   big rides, streaks, power, FTP gains, finished workouts, some funny ones
   (Coffee Break, Spin Doctor, Night Owl…) and secrets that stay "???" until

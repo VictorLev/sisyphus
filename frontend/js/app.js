@@ -21,6 +21,7 @@ import { initChronicle, setChronicleFtp } from './ui/chronicle.js';
 import { initWorkouts } from './ui/workouts.js';
 import { initFeats } from './ui/feats.js';
 import { initBadges, showRideBadges, refreshBadgeCount } from './ui/badges.js';
+import { initLeaderboard } from './ui/leaderboard.js';
 import { requireLogin, initAccount } from './ui/login.js';
 import { initTrainerButton } from './ui/trainer-button.js';
 import { initLogPanel } from './ui/log-panel.js';
@@ -110,6 +111,7 @@ function editWorkout(workout) {
 initSisyphusLoop();
 const chronicle = initChronicle();
 initFeats({ onOpenRide: (id) => chronicle.openDetail(id) });
+initLeaderboard();
 initBadges({ onOpenRide: (id) => chronicle.openDetail(id), onOpenBadges: () => showView('badges') });
 initProfile();
 initSettings({ onSaved: (saved) => applySettings(saved) });
