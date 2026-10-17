@@ -1,7 +1,8 @@
 // Scenery: a YouTube virtual ride playing in the centre of the ride screen.
-// The rider lists links in Settings, one per line, optionally named
-// ("Swiss Alps | https://youtu.be/..."). The player is a plain embed driven
-// over postMessage (enablejsapi), so no YouTube script is loaded here.
+// The rider lists links in Settings, separated by commas, optionally named
+// ("Swiss Alps | https://youtu.be/..."), and each ride starts on one picked
+// at random. The player is a plain embed driven over postMessage
+// (enablejsapi), so no YouTube script is loaded here.
 
 const ID_PATTERN = /^[A-Za-z0-9_-]{11}$/;
 
@@ -36,11 +37,12 @@ export function parseYouTube(link) {
   return { id, start: parseStart(url.searchParams.get('t') ?? url.searchParams.get('start')) };
 }
 
-// One video per line; text around the link becomes its name. Lines without
-// a usable YouTube link are skipped rather than failing the whole list.
+// Videos separated by commas (newlines too, so lists saved one per line
+// before keep working); text around a link becomes its name. Entries
+// without a usable YouTube link are skipped rather than failing the list.
 export function parseSceneryList(text) {
   const videos = [];
-  for (const line of String(text ?? '').split('\n')) {
+  for (const line of String(text ?? '').split(/[,\n]/)) {
     const link = line.match(/https?:\/\/\S+/)?.[0];
     const video = link && parseYouTube(link);
     if (!video) continue;
@@ -66,6 +68,14 @@ function embedUrl({ id, start }) {
   });
   if (start > 0) params.set('start', String(start));
   return `https://www.youtube-nocookie.com/embed/${id}?${params}`;
+}
+
+// A random video for this ride. With two or more, never the one that played
+// last time, so "random" doesn't hand you the same view twice running.
+export function pickScenery(videos, lastId = null, random = Math.random) {
+  if (videos.length === 0) return null;
+  const pool = videos.length > 1 ? videos.filter((v) => v.id !== lastId) : videos;
+  return pool[Math.floor(random() * pool.length)] ?? pool[0];
 }
 
 const CHOICE_KEY = 'sisyphus.scenery';
@@ -132,7 +142,7 @@ export function initScenery({ frameEl, pickerEl, emptyEl }) {
     start() {
       emptyEl.hidden = videos.length > 0;
       if (videos.length === 0) return;
-      const video = videos.find((v) => v.id === rememberedChoice()) ?? videos[0];
+      const video = pickScenery(videos, rememberedChoice());
       pickerEl.value = video.id;
       load(video);
     },
