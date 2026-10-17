@@ -1,5 +1,5 @@
 import db from '../db/index.js';
-import { hashPassword, MIN_PASSWORD_LENGTH } from './password.js';
+import { hashPassword, minPasswordLength, passwordLengthError } from './password.js';
 import { USERNAME_PATTERN, claimOrphans } from '../db/migrate.js';
 
 const selectByUsername = db.prepare('SELECT * FROM users WHERE username = ?'); // column is NOCASE
@@ -28,8 +28,8 @@ export function findUserById(id) {
 }
 
 export function validatePassword(password) {
-  if (typeof password !== 'string' || password.length < MIN_PASSWORD_LENGTH) {
-    return `password must be at least ${MIN_PASSWORD_LENGTH} characters`;
+  if (typeof password !== 'string' || password.length < minPasswordLength()) {
+    return passwordLengthError();
   }
   if (password.length > 200) return 'password is too long';
   return null;

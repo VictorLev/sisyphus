@@ -84,7 +84,7 @@ firmware carries a daily hardware lock only the official Zwift app can clear.)
 git clone <this repo>
 cd sisyphus
 npm install --prefix backend
-npm run add-user -- me --admin   # once: prints your password
+npm run add-user -- me --admin --password me   # once; locally any password works
 npm run dev
 ```
 
@@ -100,7 +100,10 @@ updates.
 There is nothing else to configure. The SQLite file is created on first run
 at `backend/data/sisyphus.db`. To change the port or database location, copy
 `backend/.env.example` to `backend/.env`. More riders: `npm run add-user --
-<name>`; forgotten password: `npm run reset-password -- <name>`.
+<name>`; forgotten password: `npm run reset-password -- <name>`. Both take
+`--password <pw>`; outside production (the Docker image sets
+`NODE_ENV=production`, which requires 8+ characters) any non-empty password
+is accepted.
 
 ## First ride
 

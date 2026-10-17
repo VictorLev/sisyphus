@@ -15,7 +15,18 @@ const KEYLEN = 32;
 // Node refuses N*r*128 above its default 32 MB maxmem, which N=2^15 just hits.
 const maxmem = (n, r) => 256 * n * r;
 
-export const MIN_PASSWORD_LENGTH = 8;
+// Production (the Docker image sets NODE_ENV=production) requires 8
+// characters. Anywhere else, i.e. `npm run dev` and the tests, any non-empty
+// password is accepted so local accounts are quick to type. Read at call
+// time, so the rule follows the environment the process runs in.
+export function minPasswordLength() {
+  return process.env.NODE_ENV === 'production' ? 8 : 1;
+}
+
+export function passwordLengthError(label = 'password') {
+  const min = minPasswordLength();
+  return min > 1 ? `${label} must be at least ${min} characters` : `${label} must not be empty`;
+}
 
 function encode(n, r, p, salt, hash) {
   return `scrypt$${n}$${r}$${p}$${salt.toString('base64')}$${hash.toString('base64')}`;

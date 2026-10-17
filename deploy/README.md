@@ -201,7 +201,7 @@ access is much faster and the tooling matches the server.
 ```sh
 cd ~/projects/sisyphus
 npm install --prefix backend
-npm run add-user -- me --admin     # once; prints a password
+npm run add-user -- me --admin --password me   # once; locally any password works
 npm run dev       # then open http://localhost:7479 in Chrome on Windows
 ```
 
