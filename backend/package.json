@@ -2,12 +2,16 @@
   "name": "sisyphus-backend",
   "version": "0.1.0",
   "private": true,
-  "description": "Backend server for Sisyphus — persists rides, workouts, and records; serves the frontend.",
+  "description": "Backend server for Sisyphus \u2014 persists rides, workouts, and records; serves the frontend.",
   "type": "module",
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
-    "dev": "node --watch src/index.js"
+    "dev": "node --watch src/index.js",
+    "add-user": "node scripts/add-user.js",
+    "reset-password": "node scripts/reset-password.js",
+    "list-users": "node scripts/list-users.js",
+    "backup": "node scripts/backup.js"
   },
   "dependencies": {
     "better-sqlite3": "^11.3.0",

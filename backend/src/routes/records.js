@@ -8,7 +8,8 @@ const POWER_WINDOWS = [5, 60, 300, 1200];
 
 const selectSessions = db.prepare(
   `SELECT s.*, COALESCE(s.workout_name, w.name) AS workout_name
-   FROM sessions s LEFT JOIN workouts w ON w.id = s.workout_id`
+   FROM sessions s LEFT JOIN workouts w ON w.id = s.workout_id
+   WHERE s.user_id = ?`
 );
 const selectSamples = db.prepare(
   'SELECT timestamp_offset_sec, power FROM session_samples WHERE session_id = ? ORDER BY timestamp_offset_sec'
@@ -75,8 +76,9 @@ function entry(key, label, unit, winner, format) {
   };
 }
 
+// Feats are each rider's own: only their rides are scanned.
 router.get('/', (req, res) => {
-  const sessions = selectSessions.all();
+  const sessions = selectSessions.all(req.user.id);
 
   const totals = sessions.reduce(
     (acc, s) => ({

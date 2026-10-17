@@ -1,35 +1,62 @@
-# Runs Sisyphus on a home server behind HTTPS.
+# Sisyphus on the homelab VM. The same file runs both instances, each from
+# its own folder (copied there as docker-compose.yml; see README.md here):
+#   /mnt/storage/docker/sisyphus/          prod: follows :stable, port 3010
+#   /mnt/storage/docker/sisyphus-staging/  staging: follows :latest, port 3011
+# The folder name is the compose project name, so each gets its own volume.
 #
-# HTTPS is not optional: Web Bluetooth only works on localhost or a secure
-# origin, so without it Chrome on another machine cannot reach the trainer.
-# Caddy issues a certificate from its own local authority (see README.md in
-# this folder for the one-time step of trusting it on the riding PC).
+# Two ways in, both HTTPS (Web Bluetooth refuses anything else):
+#   - at home: the VM's shared Caddy serves https://sisyphus.home (tls
+#     internal) and proxies to 127.0.0.1:3010. That Caddy also serves
+#     Homepage, Pi-hole and the rest, so it lives in its own compose file and
+#     is not part of this one.
+#   - from anywhere: cloudflared dials out to Cloudflare, which serves the
+#     public hostname with a real certificate. Nothing is port-forwarded.
+#     It only starts with COMPOSE_PROFILES=tunnel in .env, so the app can be
+#     updated to a build with logins BEFORE it is exposed.
+#
+# Every value below comes from .env beside this file (never committed).
 
 services:
-  app:
-    image: ghcr.io/victorlev/sisyphus:latest
+  sisyphus:
+    container_name: ${CONTAINER_NAME:-sisyphus}
+    # stable = the last release tag (prod). Staging sets IMAGE_TAG=latest to
+    # follow main. Pin a version or commit SHA in .env to roll back.
+    image: ghcr.io/victorlev/sisyphus:${IMAGE_TAG:-stable}
     restart: unless-stopped
+    environment:
+      # Only used to create the very first account on an empty database.
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      # Exactly one proxy sits in front of every request (Caddy at home,
+      # cloudflared from outside), so trust one hop of X-Forwarded-*: the
+      # real client IP for login rate limiting, HTTPS for the Secure cookie.
+      TRUST_PROXY: "1"
+      BACKUP_DIR: /backups
+    ports:
+      # Localhost only: reachable through Caddy (or an SSH tunnel), not
+      # directly from the LAN. (3000 on the VM is Homepage's.)
+      - "127.0.0.1:${HOST_PORT:-3010}:3000"
     volumes:
+      # SQLite stays on the VM's local disk: it corrupts and locks on NFS.
       - sisyphus-data:/data
-    expose:
-      - "3000"
+      # Backups go beside this file, i.e. on the NFS share, off the VM's
+      # disk. Safe because backup.js writes finished files there, never a
+      # live database. The folder must be writable by uid 1000.
+      - ./backups:/backups
 
-  caddy:
-    image: caddy:2
+  # Prod only: staging never sets COMPOSE_PROFILES=tunnel.
+  cloudflared:
+    profiles: ["tunnel"]
+    container_name: sisyphus-tunnel
+    image: cloudflare/cloudflared:${CLOUDFLARED_TAG:-latest}
     restart: unless-stopped
     depends_on:
-      - app
-    ports:
-      - "${HTTP_PORT:-80}:80"
-      - "${HTTPS_PORT:-443}:443"
+      - sisyphus
+    # The tunnel's public hostname points at http://sisyphus:3000 in the
+    # Cloudflare dashboard; the token carries the rest of the configuration.
+    command: tunnel --no-autoupdate run
     environment:
-      SITE_ADDRESS: ${SITE_ADDRESS:?Set SITE_ADDRESS in deploy/.env}
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy-data:/data
-      - caddy-config:/config
+      TUNNEL_TOKEN: ${TUNNEL_TOKEN:-}
 
 volumes:
   sisyphus-data:
-  caddy-data:
-  caddy-config:

@@ -28,11 +28,11 @@ const selectTotals = db.prepare(
           COALESCE(SUM(distance_m), 0) AS distance_m,
           COALESCE(SUM((julianday(ended_at) - julianday(started_at)) * 24 * 60), 0) AS minutes
    FROM sessions
-   WHERE ended_at IS NOT NULL AND started_at IS NOT NULL`
+   WHERE user_id = ? AND ended_at IS NOT NULL AND started_at IS NOT NULL`
 );
 
 router.get('/', (req, res) => {
-  const totals = selectTotals.get();
+  const totals = selectTotals.get(req.user.id);
   const minutes = Math.max(0, totals.minutes ?? 0);
   const km = Math.max(0, (totals.distance_m ?? 0) / 1000);
   const pushes = totals.pushes ?? 0;

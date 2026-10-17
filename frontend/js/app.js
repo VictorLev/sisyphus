@@ -18,6 +18,14 @@ import { initSisyphusLoop } from './ui/sisyphus-loop.js';
 import { initChronicle, setChronicleFtp } from './ui/chronicle.js';
 import { initWorkouts } from './ui/workouts.js';
 import { initFeats } from './ui/feats.js';
+import { requireLogin, initAccount } from './ui/login.js';
+import { resolveTargets } from './workout/targets.js';
+
+// Nothing below loads data until someone is logged in: requireLogin opens
+// the login screen and only resolves once there is a user (or with null
+// when the server is unreachable, so the offline shell still starts).
+const currentUser = await requireLogin();
+if (currentUser) document.getElementById('nav-name').textContent = currentUser.display_name;
 
 const trainerConnection = new TrainerConnection();
 const gears = new GearModel();
@@ -95,6 +103,7 @@ const chronicle = initChronicle();
 initFeats({ onOpenRide: (id) => chronicle.openDetail(id) });
 initProfile();
 initSettings({ onSaved: (saved) => applySettings(saved) });
+initAccount(currentUser);
 updateModeUi();
 
 // Settings are stored server-side, so the objects are built with defaults and
@@ -147,9 +156,12 @@ document.addEventListener('profilechange', (event) => {
 });
 
 // The header carries just the rider's name and level; the detailed vitals
-// live on the Profile page where they are edited.
+// live on the Profile page where they are edited. The account's display
+// name wins, since it is how other riders will know you; the profile name
+// is the fallback when the server could not be reached to say who you are.
 function renderRiderName(profile) {
-  document.getElementById('nav-name').textContent = profile.name?.trim() || 'Anonymous';
+  document.getElementById('nav-name').textContent =
+    currentUser?.display_name || profile.name?.trim() || 'Anonymous';
 }
 
 // Level is derived from the ride log, so it is refreshed after every Push
@@ -371,6 +383,9 @@ trainerConnection.addEventListener('reading', (event) => {
 });
 
 function startRide(workout) {
+  // Library targets are % of FTP; from here on everything is in watts,
+  // fixed at the FTP the rider has as the ride starts.
+  if (workout) workout = { ...workout, structure: resolveTargets(workout.structure, riderFtp) };
   activeWorkout = workout;
   rollingAverage.reset();
   distanceTracker.reset();
@@ -532,6 +547,9 @@ async function endRide() {
     // The true peak across every raw reading, not the peak of the committed
     // means — a 30s sprint would otherwise be flattened by windowing.
     max_power: recorder.getMaxPower(),
+    // Kept with the ride so a % FTP workout's targets can be redrawn as the
+    // watts that were actually chased, even after the FTP changes.
+    ftp: riderFtp,
     samples: recorder.getSamples(),
   };
 
@@ -542,7 +560,7 @@ async function endRide() {
   } catch (err) {
     // Never drop the ride. Park it and retry on the next load — the rider
     // cannot pedal the hour again.
-    const kept = stashRide(payload);
+    const kept = stashRide(payload, currentUser?.id);
     if (kept) {
       alert(
         `Could not save the Push: ${err.message}\n\n` +
@@ -562,8 +580,8 @@ async function endRide() {
 
 // Any ride parked by a failed save is retried as soon as the app loads.
 async function retryPendingRides() {
-  if (pendingCount() === 0) return;
-  const { saved, remaining } = await flushPending(createSession);
+  if (pendingCount(currentUser?.id) === 0) return;
+  const { saved, remaining } = await flushPending(createSession, currentUser?.id);
   if (saved > 0) {
     refreshLevel();
     home.refreshWorkoutList();

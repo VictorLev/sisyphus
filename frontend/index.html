@@ -101,12 +101,20 @@
 
       <div class="panel">
         <div class="calendar-header">
-          <h2>Library</h2>
+          <h2>Your Workouts</h2>
           <button id="new-workout-btn" type="button">Build a Workout</button>
         </div>
         <ul id="workouts-list" class="workout-list"></ul>
         <p class="hint">Starred workouts (★) appear on the home screen for
           quick access.</p>
+      </div>
+
+      <div class="panel library-panel">
+        <h2>Library</h2>
+        <p class="hint">Built-in workouts, shared by every rider. Targets are a
+          percentage of your FTP, turned into watts when you start. Copy one to
+          make your own editable version.</p>
+        <ul id="library-list" class="workout-list"></ul>
       </div>
     </section>
 
@@ -254,6 +262,30 @@
               trainer accepts 0–20; lower the max if the top gears feel too hard.
               Grade adds resistance on top of your gear — raise the per-grade
               figure to make climbs bite harder.</p>
+          </div>
+
+          <div class="panel">
+            <h2>Account</h2>
+            <p class="hint" id="account-who">&nbsp;</p>
+            <label class="field">
+              Current password
+              <input id="account-current-password" type="password" autocomplete="current-password" />
+            </label>
+            <div class="form-row">
+              <label class="field">
+                New password
+                <input id="account-new-password" type="password" autocomplete="new-password" minlength="8" />
+              </label>
+              <label class="field">
+                Repeat new password
+                <input id="account-confirm-password" type="password" autocomplete="new-password" minlength="8" />
+              </label>
+            </div>
+            <p id="account-status" class="status"></p>
+            <div class="live-controls" style="margin-top:1.25rem">
+              <button id="change-password-btn" type="button">Change Password</button>
+              <button id="logout-btn" type="button" class="secondary">Log Out</button>
+            </div>
           </div>
         </div>
 
@@ -490,6 +522,26 @@
           <button id="pause-cancel-back-btn" type="button" class="secondary pause-back">Back</button>
         </div>
       </div>
+    </dialog>
+
+    <!-- Opens over everything whenever the server says "not logged in".
+         Accounts are made by the admin; there is no sign-up. -->
+    <dialog id="login-dialog" class="panel login-dialog" aria-labelledby="login-title">
+      <form id="login-form">
+        <h1 id="login-title" class="title">SISYPHUS</h1>
+        <p class="tagline">Push the boulder. Every day.</p>
+        <label class="field">
+          Username
+          <input id="login-username" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" required />
+        </label>
+        <label class="field">
+          Password
+          <input id="login-password" type="password" autocomplete="current-password" required />
+        </label>
+        <p id="login-status" class="status" role="alert"></p>
+        <button id="login-submit" type="submit">Log In</button>
+        <p class="hint">No account? Ask whoever runs this server.</p>
+      </form>
     </dialog>
 
     <section data-view="summary" class="view">

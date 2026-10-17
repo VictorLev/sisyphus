@@ -9,3 +9,6 @@ backend/data/*.db-shm
 # web copies under frontend/ are committed. Leading slash anchors this to
 # the repo root so it does not also swallow frontend/media/.
 /media/
+
+# Database backups on the server (deploy/update.sh, sisyphus-backup.timer).
+/deploy/backups/

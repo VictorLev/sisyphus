@@ -1,0 +1,11 @@
+# Staging follows main closely: a merge is on staging within ~5 minutes.
+[Unit]
+Description=Deploy the latest Sisyphus build to staging every 5 minutes
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=5min
+Unit=sisyphus-update@sisyphus-staging.service
+
+[Install]
+WantedBy=timers.target

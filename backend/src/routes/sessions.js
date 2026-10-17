@@ -4,10 +4,13 @@ import db from '../db/index.js';
 const router = Router();
 
 const insertSession = db.prepare(
-  `INSERT INTO sessions (workout_id, workout_name, started_at, ended_at, distance_m)
-   VALUES (@workout_id, @workout_name, @started_at, @ended_at, @distance_m)`
+  `INSERT INTO sessions (user_id, workout_id, workout_name, started_at, ended_at, distance_m, ftp)
+   VALUES (@user_id, @workout_id, @workout_name, @started_at, @ended_at, @distance_m, @ftp)`
 );
-const selectWorkoutName = db.prepare('SELECT name FROM workouts WHERE id = ?');
+// Only a workout the rider can see: their own, or the shared library.
+const selectVisibleWorkout = db.prepare(
+  'SELECT id, name FROM workouts WHERE id = ? AND (user_id = ? OR library_key IS NOT NULL)'
+);
 const insertSample = db.prepare(
   `INSERT INTO session_samples
      (session_id, timestamp_offset_sec, power, cadence, speed, heart_rate, lap_marker)
@@ -35,7 +38,9 @@ const updateAggregates = db.prepare(
        (SELECT AVG(speed) FROM session_samples WHERE session_id = @id))
    WHERE id = @id`
 );
-const selectSessionById = db.prepare('SELECT * FROM sessions WHERE id = ?');
+// Every read and delete is scoped to the rider, so another rider's id
+// behaves exactly like one that does not exist.
+const selectSessionById = db.prepare('SELECT * FROM sessions WHERE id = ? AND user_id = ?');
 
 // The Chronicle needs the workout's name alongside each session, and a
 // duration; both are cheap to derive here rather than in the client.
@@ -44,6 +49,7 @@ const selectAllSessions = db.prepare(
           (SELECT COUNT(*) FROM session_samples ss WHERE ss.session_id = s.id) AS sample_count
    FROM sessions s
    LEFT JOIN workouts w ON w.id = s.workout_id
+   WHERE s.user_id = ?
    ORDER BY s.started_at DESC`
 );
 const selectSamples = db.prepare(
@@ -63,15 +69,22 @@ function validateSamples(samples) {
   return null;
 }
 
-const createSession = db.transaction((body) => {
+const createSession = db.transaction((userId, body) => {
+  // A workout the rider cannot see is dropped rather than rejected: a ride
+  // parked offline may point at a workout deleted since, and the ride
+  // itself must still save.
+  const workout = body.workout_id ? selectVisibleWorkout.get(body.workout_id, userId) : null;
+  const ftp = Number(body.ftp);
   const info = insertSession.run({
-    workout_id: body.workout_id ?? null,
+    user_id: userId,
+    workout_id: workout?.id ?? null,
     // Snapshot the name so the ride keeps its identity if the workout is
     // later deleted or renamed.
-    workout_name: body.workout_id ? (selectWorkoutName.get(body.workout_id)?.name ?? null) : null,
+    workout_name: workout?.name ?? null,
     started_at: body.started_at,
     ended_at: body.ended_at,
     distance_m: body.distance_m ?? null,
+    ftp: Number.isFinite(ftp) && ftp > 0 ? ftp : null,
   });
   const sessionId = info.lastInsertRowid;
 
@@ -105,19 +118,19 @@ router.post('/', (req, res) => {
     return res.status(400).json({ error: samplesError });
   }
 
-  const sessionId = createSession(req.body);
-  const row = selectSessionById.get(sessionId);
+  const sessionId = createSession(req.user.id, req.body);
+  const row = selectSessionById.get(sessionId, req.user.id);
   res.status(201).json(row);
 });
 
 // The Chronicle: every Push, newest first.
 router.get('/', (req, res) => {
-  res.json(selectAllSessions.all());
+  res.json(selectAllSessions.all(req.user.id));
 });
 
 // One session with its full time series, for the ride chart.
 router.get('/:id', (req, res) => {
-  const session = selectSessionById.get(req.params.id);
+  const session = selectSessionById.get(req.params.id, req.user.id);
   if (!session) return res.status(404).json({ error: 'session not found' });
   res.json({ ...session, samples: selectSamples.all(req.params.id) });
 });
@@ -126,13 +139,14 @@ router.get('/:id', (req, res) => {
 // so a mis-recorded ride has to be removable.
 const deleteSamples = db.prepare('DELETE FROM session_samples WHERE session_id = ?');
 const deleteSession = db.prepare('DELETE FROM sessions WHERE id = ?');
-const removeSession = db.transaction((id) => {
+const removeSession = db.transaction((id, userId) => {
+  if (!selectSessionById.get(id, userId)) return 0;
   deleteSamples.run(id);
   return deleteSession.run(id).changes;
 });
 
 router.delete('/:id', (req, res) => {
-  const removed = removeSession(req.params.id);
+  const removed = removeSession(req.params.id, req.user.id);
   if (!removed) return res.status(404).json({ error: 'session not found' });
   res.status(204).end();
 });

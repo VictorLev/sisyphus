@@ -1,9 +1,0 @@
-[Unit]
-Description=Pull and redeploy Sisyphus
-After=network-online.target docker.service
-Wants=network-online.target
-Requires=docker.service
-
-[Service]
-Type=oneshot
-ExecStart=/opt/sisyphus/deploy/update.sh

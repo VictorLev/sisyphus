@@ -13,9 +13,19 @@ async function request(path, options) {
       'your data is safe in the database either way.'
     );
   }
+  if (res.status === 401 && !path.startsWith('/api/auth/')) {
+    // Not logged in, or the session ran out. The login screen opens over
+    // whatever is on screen (ui/login.js listens for this) rather than
+    // navigating away, so a ride being saved at that moment is parked by
+    // the caller's error handling, not thrown away with the page.
+    window.dispatchEvent(new CustomEvent('sisyphus:unauthorized'));
+    throw new Error('You are not logged in. Log in again to continue.');
+  }
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
-    throw new Error(body.error || `${path} failed with ${res.status}`);
+    const err = new Error(body.error || `${path} failed with ${res.status}`);
+    err.status = res.status;
+    throw err;
   }
   // DELETE replies 204 with no body.
   if (res.status === 204) return null;
@@ -108,4 +118,38 @@ export function setWorkoutStarred(id, starred) {
 
 export function getLevel() {
   return request('/api/level');
+}
+
+export function copyWorkout(id) {
+  return request(`/api/workouts/${id}/copy`, { method: 'POST' });
+}
+
+// Resolves to the logged-in user, or null when nobody is logged in.
+export async function getMe() {
+  try {
+    return await request('/api/auth/me');
+  } catch (err) {
+    if (err.status === 401) return null;
+    throw err;
+  }
+}
+
+export function login(username, password) {
+  return request('/api/auth/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password }),
+  });
+}
+
+export function logout() {
+  return request('/api/auth/logout', { method: 'POST' });
+}
+
+export function changePassword(currentPassword, newPassword) {
+  return request('/api/auth/password', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ current_password: currentPassword, new_password: newPassword }),
+  });
 }

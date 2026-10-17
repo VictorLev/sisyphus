@@ -1612,3 +1612,50 @@ button.secondary:hover:not(:disabled) {
   font-weight: 400;
   color: var(--color-bronze-bright);
 }
+
+/* ------------------------------------------------------------------ login */
+
+/* A panel alone on the app's own background: the backdrop is opaque, so
+   nothing of the (empty, logged-out) app shows behind it. */
+.login-dialog {
+  width: min(24rem, calc(100vw - 2rem));
+  color: var(--color-text);
+  padding: 2rem 1.75rem;
+}
+
+.login-dialog::backdrop {
+  background: var(--color-bg);
+}
+
+.login-dialog .title {
+  margin: 0;
+  text-align: center;
+}
+
+.login-dialog .tagline {
+  text-align: center;
+  margin: 0.4rem 0 1.5rem;
+}
+
+.login-dialog button[type='submit'] {
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
+.login-dialog .hint {
+  text-align: center;
+  margin-top: 1rem;
+}
+
+.library-panel {
+  margin-top: 1.5rem;
+}
+
+/* Marks a shared, read-only library workout in the home screen's list. */
+.workout-tag {
+  margin-left: 0.5rem;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--color-bronze);
+}

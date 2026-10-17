@@ -1,9 +1,12 @@
+# Prod deploys once a night, in a quiet window: after the 03:30 backup and
+# the 03:40 staging refresh, and never in the middle of an evening ride.
 [Unit]
-Description=Check for Sisyphus updates every 5 minutes
+Description=Deploy the latest Sisyphus release to prod, nightly
 
 [Timer]
-OnBootSec=2min
-OnUnitActiveSec=5min
+OnCalendar=*-*-* 03:45
+Persistent=true
+Unit=sisyphus-update@sisyphus.service
 
 [Install]
 WantedBy=timers.target

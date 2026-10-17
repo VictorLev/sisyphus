@@ -7,8 +7,10 @@ over Bluetooth from the browser, shows a live bike-computer dashboard, runs
 structured workouts, controls trainer resistance, and keeps a permanent training
 log in a single SQLite file on your own machine.
 
-No accounts, no cloud, no subscription, no 3D world to ride through — just the
-numbers, a workout to follow, and a record of every session.
+No cloud service, no subscription, no 3D world to ride through — just the
+numbers, a workout to follow, and a record of every session. One server can
+host a handful of riders: each logs in and gets their own log, settings,
+Feats and level. Accounts are created by whoever runs the server.
 
 The name is the point: indoor training is the boulder that rolls back down every
 night, and you push it up again tomorrow.
@@ -25,6 +27,9 @@ night, and you push it up again tomorrow.
     of cadence.
 - **Terrain** — workout segments can carry a gradient. Climbs add resistance on
   top of your gear, descents subtract it down to a freewheel.
+- **Workout library** — about a dozen built-in workouts (recovery to VO2max,
+  a ramp test, some short ones) written in % of FTP, so they fit every rider.
+  Ride them as they are, or copy one to edit.
 - **Workout builder** — stack segments of duration + target watts (+ optional
   gradient), with a live bar preview coloured by power zone and Z1–Z6 quick-add.
 - **The Chronicle** — a month calendar of everything you've ridden, weekly
@@ -76,10 +81,11 @@ firmware carries a daily hardware lock only the official Zwift app can clear.)
 git clone <this repo>
 cd sisyphus
 npm install --prefix backend
+npm run add-user -- me --admin   # once: prints your password
 npm run dev
 ```
 
-Then open **http://localhost:7479** in Chrome.
+Then open **http://localhost:7479** in Chrome and log in.
 
 Web Bluetooth requires a secure context, and `localhost` counts as one — so no
 HTTPS setup is needed to run it on the machine beside your bike. If you serve it
@@ -88,18 +94,20 @@ from elsewhere on your network, you will need HTTPS — see
 [deploy/README.md](deploy/README.md) for the Docker setup with automatic
 updates.
 
-There is nothing to configure. The SQLite file is created on first run at
-`backend/data/sisyphus.db`. To change the port or database location, copy
-`backend/.env.example` to `backend/.env`.
+There is nothing else to configure. The SQLite file is created on first run
+at `backend/data/sisyphus.db`. To change the port or database location, copy
+`backend/.env.example` to `backend/.env`. More riders: `npm run add-user --
+<name>`; forgotten password: `npm run reset-password -- <name>`.
 
 ## First ride
 
 1. **Profile** → set your **FTP** and weight. FTP drives the power zones, the
-   `% FTP` labels on targets, and the training-load figures. Nothing is
-   auto-scaled from it — workout targets stay exactly the watts you typed.
+   `% FTP` labels on targets, the training-load figures, and the targets of
+   library workouts (converted to watts when the ride starts). Workouts you
+   build yourself stay exactly the watts you typed.
 2. **Settings** → adjust the gear range if needed. The defaults are 12 gears
    across trainer resistance 0–8; raise the max if the top gears feel too easy.
-3. **Build** → make a workout, or star one of the examples.
+3. **Workouts** → star a library workout, or **Build** your own.
 4. **Ride** → *Connect Trainer*, pick **Virtual Gears** or **ERG**, and start a
    workout or a free ride.
 5. Shift with **`+`** (or `=`) and **`−`** during the ride. Press **End Ride** to
@@ -178,10 +186,11 @@ The unit puts the database at `/var/lib/sisyphus/sisyphus.db`, outside the repo,
 so a `git pull` can never touch your training log. Back it up by copying that
 one file; it is the entire history.
 
-### Don't expose it to the internet
+### Reaching it from outside your home
 
-There is no authentication — anyone who can reach it can read and delete your
-log. Keep it on your LAN or a private tailnet.
+Every API route needs a login, so the server can be exposed — but only over
+HTTPS. The Docker setup in [deploy/README.md](deploy/README.md) does this
+with a Cloudflare Tunnel: real certificate, no port forwarding.
 
 ## Development
 
@@ -196,7 +205,8 @@ npm test        # run the test suite
 Filling the Chronicle by actually riding is slow, so there is a generator:
 
 ```sh
-npm run fake-ride                        # the first workout in your library
+export SISYPHUS_USER=me SISYPHUS_PASSWORD=...   # the account to save it as
+npm run fake-ride                        # the first workout in your list
 npm run fake-ride -- "Aerobic 15's #1"   # by name (partial matches work)
 npm run fake-ride -- "Sweet Spot" 3      # ...ridden 3 days ago
 ```
@@ -218,8 +228,9 @@ against a throwaway database. CI runs them on every push.
 ## Known limits
 
 - **Desktop Chromium browsers only.** Web Bluetooth is not available elsewhere.
-- **Single user, no authentication.** It is designed to run on your own machine.
-  Don't expose it to the internet as-is.
+- **A handful of riders, not a service.** Accounts are made from the command
+  line by the server's owner; there is no sign-up, email or password-reset
+  flow, and login rate limits live in memory (a restart clears them).
 - **Tested against one trainer.** The FTMS implementation follows the spec and is
   covered by tests, but only an Elite Rivo has actually been ridden with it.
 - **Trainer accuracy is the trainer's.** The Rivo *calculates* power from brake

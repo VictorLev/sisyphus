@@ -1,32 +1,29 @@
 import { test, describe, before, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import path from 'node:path';
+import { useTempDb, startServer, addUser, login } from './helpers.js';
 
-// Each run gets a throwaway database. DB_PATH must be set before the app is
-// imported, since the db module opens the file at module load.
-const dir = mkdtempSync(path.join(tmpdir(), 'sisyphus-test-'));
-process.env.DB_PATH = path.join(dir, 'test.db');
+// Each run gets a throwaway database, set before the app is imported.
+const tmp = useTempDb();
 
 let server;
 let base;
+let cookie;
 
 before(async () => {
-  const { createApp } = await import('../backend/src/app.js');
-  // Port 0 lets the OS pick a free port, so tests never collide with a
-  // running dev server.
-  server = createApp().listen(0);
-  await new Promise((resolve) => server.once('listening', resolve));
-  base = `http://127.0.0.1:${server.address().port}`;
+  ({ server, base } = await startServer());
+  // Every route below needs a logged-in rider; auth itself is covered in
+  // auth.test.js and per-rider isolation in isolation.test.js.
+  await addUser('rider', 'rider-password');
+  cookie = (await login(base, 'rider', 'rider-password')).cookie;
 });
 
 after(() => {
   server?.close();
-  rmSync(dir, { recursive: true, force: true });
+  tmp.cleanup();
 });
 
-const api = (path, options) => fetch(base + path, options);
+const api = (path, options = {}) =>
+  fetch(base + path, { ...options, headers: { ...options.headers, Cookie: cookie } });
 const postJson = (path, body, method = 'POST') =>
   api(path, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
 

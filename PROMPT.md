@@ -102,7 +102,35 @@ data — this is still a bike computer, not a storybook.
   Bluetooth still happens client-side in the browser regardless of where the
   server lives.
 
+## Accounts (BUILT)
+
+A handful of friends ride on one server, each from home, in desktop Chrome
+through a Cloudflare Tunnel (see deploy/README.md). No self-signup: the
+owner creates accounts from the CLI (`npm run add-user`), which prints a
+temporary password. Passwords are hashed with Node's built-in scrypt; login
+sessions are random tokens in an HttpOnly, SameSite=Lax cookie (Secure over
+HTTPS), stored only as SHA-256 in `auth_sessions`, 30 days, renewed when
+half used. Failed logins are rate-limited per IP and per username, in
+memory. Every API route except `/api/health` and `/api/auth/*` needs a
+login, and every query is scoped to the rider: another rider's id reads as
+404. Rides, workouts, records, profile, settings, Feats, level and the
+Chronicle are all per rider. The upgrade from the single-user database
+hands every existing row to the first admin (db/migrate.js).
+
+Designed so a cross-rider leaderboard can come later: rides carry
+`user_id`, the rider's `ftp` at ride time, and accounts a `display_name`.
+
 ## Data model (rough)
+
+Since accounts: `users`, `auth_sessions`, `workout_stars` (stars are per
+rider) and `user_config` (per-rider `profile`/`settings`, replacing
+`app_config`, which is kept untouched as the pre-accounts record). `user_id`
+is on `sessions`, `workouts` and `records`. Workouts with a `library_key`
+are the shared, read-only built-in library (`backend/src/db/library.json`),
+whose segments use `target_ftp_pct` instead of `target_watts`; the client
+converts them to watts at ride start (`frontend/js/workout/targets.js`).
+The original single-user model follows.
+
 
 - `workouts`: id, name, created_at, starred (starred workouts are the ones
   pinned to the home screen), structure (JSON: ordered list of
@@ -269,7 +297,7 @@ trainer-control ideas are optional polish rather than planned work:
   (`0x11`) as the *mechanism* behind virtual shifting is fine — what's
   ruled out is route/course content, not the opcode.
 - No calorie tracking
-- No multi-device sync — single machine, local SQLite is the source of truth
+- No multi-device sync — one server, its SQLite file is the source of truth
 - No failure states or penalties in workouts — additive/informational only
 - No phone/tablet support — desktop Chrome only
 

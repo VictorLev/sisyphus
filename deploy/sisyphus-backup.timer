@@ -1,0 +1,10 @@
+[Unit]
+Description=Nightly Sisyphus prod database backup
+
+[Timer]
+OnCalendar=*-*-* 03:30
+# If the server was off at 03:30, back up as soon as it is on again.
+Persistent=true
+
+[Install]
+WantedBy=timers.target

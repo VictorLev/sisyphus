@@ -9,12 +9,30 @@
 //   npm run fake-ride -- "Aerobic 15's #1"  # a workout by name (or partial)
 //   npm run fake-ride -- "Sweet Spot" 3     # ...ridden 3 days ago
 //
-// The server must be running. BASE overrides the URL.
+// The server must be running. BASE overrides the URL. The ride is saved as
+// the account in SISYPHUS_USER / SISYPHUS_PASSWORD:
+//
+//   SISYPHUS_USER=victor SISYPHUS_PASSWORD=... npm run fake-ride
+import { resolveTargets } from '../frontend/js/workout/targets.js';
+
 const BASE = process.env.BASE || 'http://localhost:7479';
 const [nameArg, daysAgoArg] = process.argv.slice(2);
 const daysAgo = Number(daysAgoArg) || 1;
 
-const workouts = await (await fetch(`${BASE}/api/workouts`)).json();
+const { SISYPHUS_USER, SISYPHUS_PASSWORD } = process.env;
+if (!SISYPHUS_USER || !SISYPHUS_PASSWORD) {
+  throw new Error('set SISYPHUS_USER and SISYPHUS_PASSWORD to the account to save the ride as');
+}
+const loginRes = await fetch(`${BASE}/api/auth/login`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ username: SISYPHUS_USER, password: SISYPHUS_PASSWORD }),
+});
+if (!loginRes.ok) throw new Error(`login failed: ${loginRes.status} ${await loginRes.text()}`);
+const cookie = loginRes.headers.getSetCookie().find((c) => c.startsWith('sisyphus_session=')).split(';')[0];
+const api = (path, options = {}) => fetch(`${BASE}${path}`, { ...options, headers: { ...options.headers, Cookie: cookie } });
+
+const workouts = await (await api('/api/workouts')).json();
 if (workouts.length === 0) throw new Error('no workouts to ride — build one first');
 
 const workout = nameArg
@@ -27,6 +45,9 @@ if (!workout) {
   );
 }
 const WORKOUT_NAME = workout.name;
+// Library workouts are in % FTP; ride them at this rider's FTP, as the app does.
+const { ftp } = await (await api('/api/profile')).json();
+const structure = resolveTargets(workout.structure, ftp);
 
 // Power-speed on the flat: P ≈ k·v³, calibrated so 200 W ≈ 32 km/h.
 const speedKmhFor = (watts) => (watts <= 0 ? 0 : Math.cbrt(watts / 0.284) * 3.6);
@@ -38,7 +59,7 @@ let t = 0;
 let distanceM = 0;
 let maxPower = 0;
 
-for (const segment of workout.structure) {
+for (const segment of structure) {
   const target = segment.target_watts;
   const short = segment.duration_sec <= 20; // sprints are attacked, not settled into
   for (let i = 0; i < segment.duration_sec; i++) {
@@ -75,7 +96,7 @@ start.setDate(start.getDate() - daysAgo);
 start.setHours(18, 30, 0, 0);
 const end = new Date(start.getTime() + t * 1000);
 
-const res = await fetch(`${BASE}/api/sessions`, {
+const res = await api('/api/sessions', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
@@ -84,6 +105,7 @@ const res = await fetch(`${BASE}/api/sessions`, {
     ended_at: end.toISOString(),
     distance_m: Number(distanceM.toFixed(1)),
     max_power: maxPower,
+    ftp,
     samples,
   }),
 });
