@@ -55,3 +55,45 @@ export async function setPassword(userId, password) {
   if (invalid) throw new Error(invalid);
   updateHash.run(await hashPassword(password), userId);
 }
+
+// What deleting a rider removes, per table. Used for the dry run and the
+// real thing, so the preview always matches what happens.
+const OWNED = [
+  ['rides', 'SELECT COUNT(*) AS n FROM sessions WHERE user_id = ?'],
+  ['ride samples', 'SELECT COUNT(*) AS n FROM session_samples WHERE session_id IN (SELECT id FROM sessions WHERE user_id = ?)'],
+  ['workouts', 'SELECT COUNT(*) AS n FROM workouts WHERE user_id = ?'],
+  ['stars', 'SELECT COUNT(*) AS n FROM workout_stars WHERE user_id = ?'],
+  ['FTP history entries', 'SELECT COUNT(*) AS n FROM ftp_history WHERE user_id = ?'],
+  ['settings', 'SELECT COUNT(*) AS n FROM user_config WHERE user_id = ?'],
+  ['logins', 'SELECT COUNT(*) AS n FROM auth_sessions WHERE user_id = ?'],
+];
+
+export function countUserData(userId) {
+  return Object.fromEntries(OWNED.map(([label, sql]) => [label, db.prepare(sql).get(userId).n]));
+}
+
+// Deletes an account and everything that belongs to it, in one
+// transaction. Refuses the last admin, so nobody can lock themselves out.
+// Other riders are untouched: nobody else can reference this rider's rides
+// or workouts (they are private), and library workouts are never theirs.
+export function deleteUser(userId) {
+  const user = findUserById(userId);
+  if (!user) throw new Error('no such user');
+  if (user.is_admin) {
+    const { n } = db.prepare('SELECT COUNT(*) AS n FROM users WHERE is_admin = 1').get();
+    if (n <= 1) throw new Error(`"${user.username}" is the only admin; make another admin first`);
+  }
+  const removed = countUserData(userId);
+  db.transaction(() => {
+    db.prepare('DELETE FROM session_samples WHERE session_id IN (SELECT id FROM sessions WHERE user_id = ?)').run(userId);
+    db.prepare('DELETE FROM records WHERE user_id = ? OR session_id IN (SELECT id FROM sessions WHERE user_id = ?)').run(userId, userId);
+    db.prepare('DELETE FROM ftp_history WHERE user_id = ?').run(userId);
+    db.prepare('DELETE FROM sessions WHERE user_id = ?').run(userId);
+    db.prepare('DELETE FROM workout_stars WHERE user_id = ? OR workout_id IN (SELECT id FROM workouts WHERE user_id = ?)').run(userId, userId);
+    db.prepare('DELETE FROM workouts WHERE user_id = ?').run(userId);
+    db.prepare('DELETE FROM user_config WHERE user_id = ?').run(userId);
+    db.prepare('DELETE FROM auth_sessions WHERE user_id = ?').run(userId);
+    db.prepare('DELETE FROM users WHERE id = ?').run(userId);
+  })();
+  return removed;
+}
