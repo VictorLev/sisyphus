@@ -1,10 +1,13 @@
 import { getProfile, saveProfile, getSettings, saveSettings } from '../api/client.js';
 import { t } from '../i18n.js';
+import { initSceneryEditor } from './scenery-editor.js';
 
 // Generic form binding for the profile and settings pages. Both are the same
 // shape — load a JSON document, edit named fields, save it back — so they
 // share one implementation rather than two near-identical modules.
-function bindForm({ fields, load, save, statusEl, onSaved }) {
+// beforeSubmit may return an error message to stop the save; afterLoad gets
+// the loaded document, for fields that are more than one input.
+function bindForm({ fields, load, save, statusEl, onSaved, beforeSubmit, afterLoad }) {
   const inputs = new Map(fields.map((id) => [id, document.getElementById(id)]));
 
   function setStatus(message, isError = false) {
@@ -19,6 +22,7 @@ function bindForm({ fields, load, save, statusEl, onSaved }) {
         const key = id.replace(/^(profile|setting)-/, '').replace(/-/g, '_');
         if (data[key] !== undefined) input.value = data[key];
       }
+      afterLoad?.(data);
       setStatus('');
       return data;
     } catch (err) {
@@ -28,6 +32,11 @@ function bindForm({ fields, load, save, statusEl, onSaved }) {
   }
 
   async function submit() {
+    const problem = beforeSubmit?.();
+    if (problem) {
+      setStatus(problem, true);
+      return;
+    }
     const body = {};
     for (const [id, input] of inputs) {
       const key = id.replace(/^(profile|setting)-/, '').replace(/-/g, '_');
@@ -62,6 +71,7 @@ export function initProfile() {
 }
 
 export function initSettings({ onSaved }) {
+  const scenery = initSceneryEditor();
   const form = bindForm({
     fields: [
       'setting-gear-count',
@@ -73,6 +83,7 @@ export function initSettings({ onSaved }) {
       'setting-sample-interval-sec',
       'setting-default-mode',
       'setting-scenery-videos',
+      'setting-scenery-mode',
       'setting-language',
       'setting-theme',
     ],
@@ -80,6 +91,8 @@ export function initSettings({ onSaved }) {
     save: saveSettings,
     statusEl: document.getElementById('settings-status'),
     onSaved,
+    beforeSubmit: () => scenery.commit(),
+    afterLoad: (data) => scenery.load(data.scenery_videos),
   });
 
   document.getElementById('save-settings-btn').addEventListener('click', () => form.submit());

@@ -951,6 +951,101 @@ button.secondary:hover:not(:disabled) {
   font-size: 0.82rem;
 }
 
+/* ---------------------------------------------- view header with action */
+
+/* A page title on the left with its main action (Save) on the right. */
+.view-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.view-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.4rem;
+}
+
+.view-header-actions .status {
+  margin: 0;
+}
+
+/* -------------------------------------------------------- scenery editor */
+
+.scenery-editor {
+  margin-bottom: 1rem;
+}
+
+.scenery-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.scenery-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2.2fr) 2.6rem;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.scenery-row-head {
+  margin-bottom: 0.4rem;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-bronze);
+}
+
+.scenery-row input {
+  min-width: 0;
+  font: inherit;
+  font-size: 0.9rem;
+  background: var(--color-bg);
+  color: var(--color-text);
+  border: var(--border);
+  border-radius: 2px;
+  padding: 0.6rem 0.7rem;
+}
+
+.scenery-row input:focus {
+  outline: none;
+  border-color: var(--color-bronze);
+}
+
+.scenery-row.is-invalid .scenery-link {
+  border-color: var(--color-danger);
+}
+
+.scenery-remove {
+  padding: 0;
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.scenery-add {
+  margin-top: 0.25rem;
+}
+
+@media (max-width: 600px) {
+  .scenery-row {
+    grid-template-columns: minmax(0, 1fr) 2.6rem;
+  }
+  .scenery-row .scenery-link {
+    grid-column: 1;
+  }
+  .scenery-row .scenery-remove {
+    grid-row: 1 / span 2;
+    grid-column: 2;
+  }
+  .scenery-row-head {
+    display: none;
+  }
+}
+
 /* ----------------------------------------------------------- tools link */
 
 .tools-link {

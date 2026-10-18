@@ -190,6 +190,13 @@ describe('config API', () => {
     assert.equal(settings.default_mode, 'erg');
   });
 
+  test('new accounts start with the default ride, in random order', async () => {
+    const settings = await (await api('/api/settings')).json();
+    assert.match(settings.scenery_videos, /D6tC1pyrsTM/);
+    assert.equal(settings.scenery_mode, 'random');
+    assert.equal((await postJson('/api/settings', { scenery_mode: 'shuffle' }, 'PUT')).status, 400);
+  });
+
   test('the theme is dark unless the rider picks light', async () => {
     assert.equal((await (await api('/api/settings')).json()).theme, 'dark');
     assert.equal((await (await postJson('/api/settings', { theme: 'light' }, 'PUT')).json()).theme, 'light');

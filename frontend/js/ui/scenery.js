@@ -1,12 +1,18 @@
 // Scenery: a YouTube virtual ride playing in the centre of the ride screen.
-// The rider lists links in Settings, separated by commas, optionally named
-// ("Swiss Alps | https://youtu.be/..."), and each ride starts on one picked
-// at random. The player is a plain embed driven over postMessage
+// The rider lists videos in Settings (a name and a link per row, saved as
+// "Swiss Alps | https://youtu.be/..., ..."), and each ride starts on one
+// picked at random or on the next one in order. With no list, the default
+// ride plays. The player is a plain embed driven over postMessage
 // (enablejsapi), so no YouTube script is loaded here.
 
 import { t } from '../i18n.js';
 
 const ID_PATTERN = /^[A-Za-z0-9_-]{11}$/;
+
+// New accounts start with it (backend/src/routes/config.js has the same
+// link), and an empty list falls back to it.
+export const DEFAULT_SCENERY_LINK = 'https://www.youtube.com/watch?v=D6tC1pyrsTM&list=PLiNcRO_l_QWfhgFUDiBBaJ5NEF7xyfb_f&t=60s';
+export const SCENERY_MODES = ['random', 'sequence'];
 
 // "90", "90s", "1m30s", "1h2m3s" -> seconds.
 function parseStart(value) {
@@ -44,14 +50,34 @@ export function parseYouTube(link) {
 // without a usable YouTube link are skipped rather than failing the list.
 export function parseSceneryList(text) {
   const videos = [];
-  for (const line of String(text ?? '').split(/[,\n]/)) {
-    const link = line.match(/https?:\/\/\S+/)?.[0];
-    const video = link && parseYouTube(link);
+  for (const row of sceneryRows(text)) {
+    const video = parseYouTube(row.link);
     if (!video) continue;
-    const name = line.replace(link, '').replace(/^[\s|:–—-]+|[\s|:–—-]+$/g, '');
-    videos.push({ ...video, name: name || t('scenery.n', { n: videos.length + 1 }) });
+    videos.push({ ...video, name: row.name || t('scenery.n', { n: videos.length + 1 }) });
   }
   return videos;
+}
+
+// The saved text as editor rows ({ name, link }), unnamed ones with an
+// empty name. Anything without a link is dropped.
+export function sceneryRows(text) {
+  const rows = [];
+  for (const line of String(text ?? '').split(/[,\n]/)) {
+    const link = line.match(/https?:\/\/\S+/)?.[0];
+    if (!link) continue;
+    rows.push({ name: line.replace(link, '').replace(/^[\s|:–—-]+|[\s|:–—-]+$/g, ''), link });
+  }
+  return rows;
+}
+
+// Editor rows back to the saved text. Commas and bars would split a name,
+// so they become dashes.
+export function serializeSceneryRows(rows) {
+  return rows
+    .map(({ name = '', link = '' }) => ({ name: name.replace(/\s*[,|]\s*/g, ' - ').trim(), link: link.trim() }))
+    .filter((row) => row.link)
+    .map((row) => (row.name ? `${row.name} | ${row.link}` : row.link))
+    .join(', ');
 }
 
 function embedUrl({ id, start }) {
@@ -80,6 +106,14 @@ export function pickScenery(videos, lastId = null, random = Math.random) {
   return pool[Math.floor(random() * pool.length)] ?? pool[0];
 }
 
+// In order: the one after the video that played last time, wrapping
+// around; the first when there's no last one (or it left the list).
+export function nextScenery(videos, lastId = null) {
+  if (videos.length === 0) return null;
+  const i = videos.findIndex((v) => v.id === lastId);
+  return videos[(i + 1) % videos.length];
+}
+
 const CHOICE_KEY = 'sisyphus.scenery';
 
 function rememberedChoice() {
@@ -98,6 +132,7 @@ function rememberChoice(id) {
 
 export function initScenery({ frameEl, pickerEl, emptyEl }) {
   let videos = [];
+  let mode = 'random';
   let iframe = null;
 
   function command(func) {
@@ -136,15 +171,18 @@ export function initScenery({ frameEl, pickerEl, emptyEl }) {
 
   return {
     // From saved settings; takes effect at the next ride start.
-    setList(text) {
+    setList(text, order = 'random') {
       videos = parseSceneryList(text);
+      if (videos.length === 0) videos = parseSceneryList(DEFAULT_SCENERY_LINK);
+      mode = SCENERY_MODES.includes(order) ? order : 'random';
       renderPicker();
     },
 
     start() {
       emptyEl.hidden = videos.length > 0;
       if (videos.length === 0) return;
-      const video = pickScenery(videos, rememberedChoice());
+      const last = rememberedChoice();
+      const video = mode === 'sequence' ? nextScenery(videos, last) : pickScenery(videos, last);
       pickerEl.value = video.id;
       load(video);
     },
