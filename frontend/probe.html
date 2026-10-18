@@ -8,20 +8,21 @@
 </head>
 <body>
   <main id="app">
-    <h1 class="title">HARDWARE PROBE</h1>
-    <p class="tagline">Dev tool — reads what the hardware actually exposes.</p>
+    <h1 class="title" data-i18n="probe.title">HARDWARE PROBE</h1>
+    <p class="tagline" data-i18n="probe.tagline">Dev tool — reads what the hardware actually exposes.</p>
 
     <div class="panel">
-      <h2>Trainer (FTMS)</h2>
-      <p>Reads Fitness Machine Feature (0x2ACC) and decodes which control
-         modes the Rivo accepts.</p>
-      <button id="probe-trainer-btn" type="button">Probe Trainer</button>
-      <button id="test-resistance-btn" type="button" class="secondary">Test Resistance Sweep</button>
+      <h2 data-i18n="probe.trainer">Trainer (FTMS)</h2>
+      <p data-i18n="probe.intro">Reads Fitness Machine Feature (0x2ACC) and decodes which control
+         modes the trainer accepts. The output below stays in English: it uses
+         the Bluetooth specification's names.</p>
+      <button id="probe-trainer-btn" type="button" data-i18n="probe.probe">Probe Trainer</button>
+      <button id="test-resistance-btn" type="button" class="secondary" data-i18n="probe.sweep">Test Resistance Sweep</button>
     </div>
 
     <div class="panel">
-      <button id="copy-btn" type="button" class="secondary">Copy Log</button>
-      <button id="clear-btn" type="button" class="secondary">Clear</button>
+      <button id="copy-btn" type="button" class="secondary" data-i18n="probe.copy">Copy Log</button>
+      <button id="clear-btn" type="button" class="secondary" data-i18n="log.clear">Clear</button>
     </div>
 
     <pre id="log" style="white-space:pre-wrap;word-break:break-word;background:var(--color-stone);border:2px solid var(--color-bronze);border-radius:4px;padding:1rem;font-size:0.75rem;max-height:60vh;overflow:auto"></pre>

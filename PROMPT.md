@@ -235,6 +235,20 @@ ERG blocks gear writes, which would otherwise fight the trainer's target.
   progress bar and the totals behind it. Computed from the sessions table
   alone (no sample scanning) so the header can ask for it on every load.
 
+**Languages (BUILT)**
+- English and French (Canada). Settings → Language: `auto` (Default: the
+  first of Chrome's languages that is French or English; anything else means
+  English), `fr` or `en`. Stored in the rider's settings and mirrored in
+  localStorage so the login screen is already in the right language;
+  changing it reloads the page once.
+- `frontend/js/i18n.js` + `i18n/en.js` / `i18n/fr.js`. Static HTML keeps its
+  English inline (`data-i18n*` attributes); French replaces it. Dates and
+  numbers use fr-CA/en-CA formats; French plurals treat 0 and 1 as singular.
+  Québec terms: base d'entraînement, Poussée (a Push), Chronique, Exploits.
+- Server-made text is translated client-side by id (badges, library
+  workouts, segment labels, FTP test parts, Feats records); auth errors carry
+  a `code`. Diagnostic logs stay English.
+
 **Leaderboard (BUILT)**
 - On the Ride (home) page, under Starred Workouts: every rider ranked by
   time ridden (default; fair whatever anyone's FTP), distance or rides, for

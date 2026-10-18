@@ -42,6 +42,9 @@ function toResponse(row) {
     // Library workouts are shared and read-only; the client offers "Copy to
     // my workouts" instead of Edit and Delete.
     library: row.library_key != null,
+    // The library entry's stable key, so the client can show its name in the
+    // rider's language.
+    key: row.library_key ?? null,
     // Set on FTP tests: a ride on this workout yields an FTP estimate.
     test: row.test ? JSON.parse(row.test) : null,
   };

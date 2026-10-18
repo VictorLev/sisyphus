@@ -179,9 +179,10 @@ h2 {
   background: transparent;
   color: var(--color-text-dim);
   border: 2px solid transparent;
-  padding: 0.6rem 1.1rem;
+  /* Tight enough that the longer French labels fit on one line too. */
+  padding: 0.6rem 0.8rem;
   font-size: 0.85rem;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.02em;
 }
 
 .main-nav button svg {

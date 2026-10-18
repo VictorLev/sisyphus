@@ -1,4 +1,5 @@
 import { getProfile, saveProfile, getSettings, saveSettings } from '../api/client.js';
+import { t } from '../i18n.js';
 
 // Generic form binding for the profile and settings pages. Both are the same
 // shape — load a JSON document, edit named fields, save it back — so they
@@ -21,7 +22,7 @@ function bindForm({ fields, load, save, statusEl, onSaved }) {
       setStatus('');
       return data;
     } catch (err) {
-      setStatus(`Could not load: ${err.message}`, true);
+      setStatus(t('common.loadFailed', { error: err.message }), true);
       return null;
     }
   }
@@ -34,7 +35,7 @@ function bindForm({ fields, load, save, statusEl, onSaved }) {
     }
     try {
       const saved = await save(body);
-      setStatus('Saved.');
+      setStatus(t('common.saved'));
       onSaved?.(saved);
     } catch (err) {
       setStatus(err.message, true);
@@ -72,6 +73,7 @@ export function initSettings({ onSaved }) {
       'setting-sample-interval-sec',
       'setting-default-mode',
       'setting-scenery-videos',
+      'setting-language',
     ],
     load: getSettings,
     save: saveSettings,

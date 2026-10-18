@@ -1,4 +1,7 @@
 import { logEvent } from '../log.js';
+import { t } from '../i18n.js';
+
+// Button text follows the language; log entries stay English (bug reports).
 
 // The trainer connection, reduced to one button beside the title: it reads
 // "Connect trainer", then "Connecting…", then the trainer's name with a lit
@@ -18,12 +21,12 @@ export function initTrainerButton(trainerConnection) {
 
   if (!('bluetooth' in navigator)) {
     button.disabled = true;
-    show('unavailable', 'No Bluetooth', 'Web Bluetooth needs desktop Chrome (or another Chromium browser).');
+    show('unavailable', t('trainer.noBluetooth'), t('trainer.noBluetoothTitle'));
     logEvent('warn', 'Web Bluetooth is not available in this browser; the trainer cannot connect.');
     return;
   }
 
-  show('idle', 'Connect trainer');
+  show('idle', t('trainer.connect'));
 
   button.addEventListener('click', async () => {
     if (button.dataset.state === 'connected') {
@@ -32,30 +35,30 @@ export function initTrainerButton(trainerConnection) {
     }
     if (button.dataset.state === 'connecting') return;
 
-    show('connecting', 'Connecting…');
+    show('connecting', t('trainer.connecting'));
     try {
       await trainerConnection.connect();
     } catch (err) {
       // Closing Chrome's device picker is a choice, not a failure.
       if (err?.name === 'NotFoundError' && /cancel/i.test(err.message)) {
         logEvent('info', 'Trainer picker closed without choosing a device.');
-        show('idle', 'Connect trainer');
+        show('idle', t('trainer.connect'));
         return;
       }
       logEvent('error', `Trainer connection failed: ${err?.name ?? 'Error'}: ${err?.message ?? err}`);
-      show('failed', 'Connection failed', 'See Settings → Log for details.');
-      resetTimer = setTimeout(() => show('idle', 'Connect trainer'), 5000);
+      show('failed', t('trainer.failed'), t('trainer.failedTitle'));
+      resetTimer = setTimeout(() => show('idle', t('trainer.connect')), 5000);
     }
   });
 
   trainerConnection.addEventListener('connected', (event) => {
-    const name = event.detail.deviceName || 'Trainer';
+    const name = event.detail.deviceName || t('trainer.generic');
     logEvent('info', `Trainer connected: ${name}`);
-    show('connected', name, 'Connected. Click to disconnect.');
+    show('connected', name, t('trainer.connectedTitle'));
   });
 
   trainerConnection.addEventListener('disconnected', () => {
     logEvent('warn', 'Trainer disconnected.');
-    show('idle', 'Connect trainer');
+    show('idle', t('trainer.connect'));
   });
 }

@@ -1,4 +1,5 @@
 import { logEvent } from '../log.js';
+import { t } from '../i18n.js';
 
 async function request(path, options) {
   const method = options?.method ?? 'GET';
@@ -11,11 +12,7 @@ async function request(path, options) {
     // failure, which reads like data loss when the shell is being served
     // from the service worker cache and only the API is unreachable. Say
     // what is actually wrong instead.
-    throw new Error(
-      `Cannot reach the Sisyphus server at ${window.location.host}. ` +
-      'It may not be running, or this page may be open on an old port — ' +
-      'your data is safe in the database either way.'
-    );
+    throw new Error(t('error.unreachable', { host: window.location.host }));
   }
   if (res.status === 401 && !path.startsWith('/api/auth/')) {
     // Not logged in, or the session ran out. The login screen opens over
@@ -24,7 +21,7 @@ async function request(path, options) {
     // the caller's error handling, not thrown away with the page.
     logEvent('warn', `${method} ${path}: 401, not logged in (session ended?)`);
     window.dispatchEvent(new CustomEvent('sisyphus:unauthorized'));
-    throw new Error('You are not logged in. Log in again to continue.');
+    throw new Error(t('error.notLoggedIn'));
   }
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
@@ -33,8 +30,11 @@ async function request(path, options) {
     if (!(res.status === 401 && path.startsWith('/api/auth/'))) {
       logEvent(res.status >= 500 ? 'error' : 'warn', `${method} ${path}: ${res.status} ${body.error ?? ''}`.trim());
     }
-    const err = new Error(body.error || `${path} failed with ${res.status}`);
+    // Known errors have a code and a translation; others keep the server's text.
+    const message = body.code ? t(`error.${body.code}`, { minutes: body.minutes ?? '' }) : null;
+    const err = new Error(message && !message.startsWith('error.') ? message : body.error || `${path} failed with ${res.status}`);
     err.status = res.status;
+    err.code = body.code ?? null;
     throw err;
   }
   // DELETE replies 204 with no body.

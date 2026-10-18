@@ -4,13 +4,15 @@ import { drawPowerChart, drawWeeklyChart } from './chart.js';
 import { resolveTargets } from '../workout/targets.js';
 import { showFtpResult } from './ftp-test.js';
 import { showRideBadges } from './badges.js';
+import { t, tp, num, locale } from '../i18n.js';
+import { rideName } from '../workout/names.js';
 
 function formatDuration(startIso, endIso) {
   const ms = new Date(endIso) - new Date(startIso);
   if (!Number.isFinite(ms) || ms <= 0) return '--';
   const mins = Math.round(ms / 60000);
   if (mins < 60) return `${mins} min`;
-  return `${Math.floor(mins / 60)}h ${String(mins % 60).padStart(2, '0')}m`;
+  return `${Math.floor(mins / 60)} h ${String(mins % 60).padStart(2, '0')}`;
 }
 
 function durationMinutes(session) {
@@ -49,8 +51,8 @@ function trainingLoad(session) {
 
 function formatDate(iso) {
   const d = new Date(iso);
-  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) +
-    ' ' + d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+  return d.toLocaleDateString(locale(), { month: 'short', day: 'numeric' }) +
+    ' ' + d.toLocaleTimeString(locale(), { hour: '2-digit', minute: '2-digit' });
 }
 
 // Buckets sessions into ISO-ish weeks (Monday start) for the totals chart.
@@ -76,7 +78,7 @@ function weeklyTotals(sessions, weekCount = 8) {
     .map((w) => ({
       ...w,
       minutes: Math.round(w.minutes),
-      label: w.date.toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' }),
+      label: w.date.toLocaleDateString(locale(), { month: 'numeric', day: 'numeric' }),
     }));
 }
 
@@ -103,7 +105,7 @@ export function initChronicle() {
     return Array.from({ length: 7 }, (_, i) => {
       const d = new Date(base);
       d.setDate(base.getDate() + i);
-      return d.toLocaleDateString(undefined, { weekday: 'short' }).slice(0, 2);
+      return d.toLocaleDateString(locale(), { weekday: 'short' }).replace('.', '').slice(0, 2);
     });
   })();
 
@@ -128,10 +130,10 @@ export function initChronicle() {
     const year = viewMonth.getFullYear();
     const month = viewMonth.getMonth();
 
-    calendarMonthEl.textContent = viewMonth.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+    calendarMonthEl.textContent = viewMonth.toLocaleDateString(locale(), { month: 'long', year: 'numeric' });
 
     calendarWeekdaysEl.innerHTML = '';
-    for (const name of [...weekdayNames, 'Week']) {
+    for (const name of [...weekdayNames, t('chronicle.week')]) {
       const el = document.createElement('span');
       el.textContent = name;
       calendarWeekdaysEl.appendChild(el);
@@ -170,7 +172,7 @@ export function initChronicle() {
         // 35%..100% opacity by volume relative to the month's busiest day.
         const strength = 0.35 + 0.65 * Math.min(1, entry.minutes / busiest);
         cell.style.background = `rgba(176, 141, 87, ${strength.toFixed(2)})`;
-        cell.title = `${entry.rides} ride${entry.rides > 1 ? 's' : ''} · ${Math.round(entry.minutes)} min`;
+        cell.title = `${tp('unit.rides', entry.rides)} · ${Math.round(entry.minutes)} min`;
         if (entry.rides > 1) {
           const badge = document.createElement('span');
           badge.className = 'day-rides';
@@ -211,16 +213,16 @@ export function initChronicle() {
         result.className = 'week-result';
         if (minutes === 0) result.classList.add('is-empty');
         result.innerHTML =
-          `<strong>${km.toFixed(1)} km</strong>` +
-          `<span><em>Load</em>${Math.round(load)}</span>` +
-          `<span><em>Time</em>${formatClock(minutes)}</span>`;
+          `<strong>${num(km, 1)} km</strong>` +
+          `<span><em>${t('chronicle.load')}</em>${Math.round(load)}</span>` +
+          `<span><em>${t('chronicle.time')}</em>${formatClock(minutes)}</span>`;
         calendarGridEl.appendChild(result);
       }
     }
 
     calendarTotalsEl.textContent = monthRides === 0
-      ? 'No Pushes this month.'
-      : `${monthRides} Push${monthRides > 1 ? 'es' : ''} · ${Math.round(monthMinutes)} min · ${(monthDistance / 1000).toFixed(1)} km`;
+      ? t('chronicle.noneThisMonth')
+      : `${tp('unit.pushes', monthRides)} · ${Math.round(monthMinutes)} min · ${num(monthDistance / 1000, 1)} km`;
   }
 
   function shiftMonth(delta) {
@@ -232,8 +234,8 @@ export function initChronicle() {
     const totalMin = sessions.reduce((sum, s) => sum + durationMinutes(s), 0);
     const totalKm = sessions.reduce((sum, s) => sum + (s.distance_m ?? 0), 0) / 1000;
     summaryEl.textContent = sessions.length === 0
-      ? 'No Pushes yet.'
-      : `${sessions.length} Pushes · ${Math.round(totalMin)} min · ${totalKm.toFixed(1)} km`;
+      ? t('chronicle.noneYet')
+      : `${tp('unit.pushes', sessions.length)} · ${Math.round(totalMin)} min · ${num(totalKm, 1)} km`;
   }
 
   function renderList() {
@@ -244,9 +246,10 @@ export function initChronicle() {
       : sessions;
 
     if (visible.length === 0) {
-      listEl.innerHTML = sessions.length === 0
-        ? '<li class="empty">Nothing recorded yet. Ride something.</li>'
-        : '<li class="empty">No Pushes on that day.</li>';
+      const empty = document.createElement('li');
+      empty.className = 'empty';
+      empty.textContent = t(sessions.length === 0 ? 'chronicle.empty' : 'chronicle.noneThatDay');
+      listEl.append(empty);
       return;
     }
     for (const session of visible) {
@@ -255,15 +258,15 @@ export function initChronicle() {
       const info = document.createElement('div');
       const name = document.createElement('span');
       name.className = 'workout-name';
-      name.textContent = session.workout_name || 'Free Ride';
+      name.textContent = rideName(session.workout_name) || t('home.freeRide');
       const meta = document.createElement('span');
       meta.className = 'workout-meta';
       const bits = [
         formatDate(session.started_at),
         formatDuration(session.started_at, session.ended_at),
-        `${((session.distance_m ?? 0) / 1000).toFixed(2)} km`,
+        `${num((session.distance_m ?? 0) / 1000, 2)} km`,
       ];
-      if (session.avg_power != null) bits.push(`${Math.round(session.avg_power)} W avg`);
+      if (session.avg_power != null) bits.push(t('chronicle.avgWatts', { watts: Math.round(session.avg_power) }));
       meta.textContent = bits.join(' · ');
       info.appendChild(name);
       info.appendChild(meta);
@@ -272,14 +275,14 @@ export function initChronicle() {
       actions.className = 'row-actions';
       const viewBtn = document.createElement('button');
       viewBtn.type = 'button';
-      viewBtn.textContent = 'View';
+      viewBtn.textContent = t('chronicle.view');
       viewBtn.addEventListener('click', () => openDetail(session.id));
       const delBtn = document.createElement('button');
       delBtn.type = 'button';
       delBtn.className = 'secondary';
-      delBtn.textContent = 'Delete';
+      delBtn.textContent = t('workouts.delete');
       delBtn.addEventListener('click', async () => {
-        if (!confirm(`Delete this Push from ${formatDate(session.started_at)}? This cannot be undone.`)) return;
+        if (!confirm(t('chronicle.confirmDelete', { date: formatDate(session.started_at) }))) return;
         await deleteSession(session.id);
         await refresh();
       });
@@ -294,15 +297,15 @@ export function initChronicle() {
 
   async function openDetail(id) {
     const session = await getSession(id);
-    detailTitleEl.textContent = session.workout_name || 'Free Ride';
+    detailTitleEl.textContent = rideName(session.workout_name) || t('home.freeRide');
 
     const stats = [
-      ['Date', formatDate(session.started_at)],
-      ['Duration', formatDuration(session.started_at, session.ended_at)],
-      ['Distance', `${((session.distance_m ?? 0) / 1000).toFixed(2)} km`],
-      ['Avg Power', session.avg_power != null ? `${Math.round(session.avg_power)} W` : '--'],
-      ['Max Power', session.max_power != null ? `${Math.round(session.max_power)} W` : '--'],
-      ['Avg Cadence', session.avg_cadence != null ? `${Math.round(session.avg_cadence)} rpm` : '--'],
+      [t('stat.date'), formatDate(session.started_at)],
+      [t('stat.duration'), formatDuration(session.started_at, session.ended_at)],
+      [t('stat.distance'), `${num((session.distance_m ?? 0) / 1000, 2)} km`],
+      [t('stat.avgPower'), session.avg_power != null ? `${Math.round(session.avg_power)} W` : '--'],
+      [t('stat.maxPower'), session.max_power != null ? `${Math.round(session.max_power)} W` : '--'],
+      [t('stat.avgCadence'), session.avg_cadence != null ? `${Math.round(session.avg_cadence)} ${t('unit.rpm')}` : '--'],
     ];
     detailStatsEl.innerHTML = '';
     for (const [label, value] of stats) {
@@ -322,7 +325,7 @@ export function initChronicle() {
     let targetSeries = null;
     const ftpResultEl = document.getElementById('detail-ftp-result');
     ftpResultEl.hidden = true;
-    showRideBadges(document.getElementById('detail-badges'), session.id, { title: 'Earned on this ride' });
+    showRideBadges(document.getElementById('detail-badges'), session.id, { title: t('badges.thisRide') });
     if (session.workout_id) {
       try {
         const workout = await getWorkout(session.workout_id);
@@ -350,7 +353,7 @@ export function initChronicle() {
     try {
       sessions = await listSessions();
     } catch (err) {
-      summaryEl.textContent = `Could not load the Chronicle: ${err.message}`;
+      summaryEl.textContent = t('chronicle.loadFailed', { error: err.message });
       return;
     }
     renderSummary();

@@ -1,4 +1,9 @@
 import { ZONES, zoneForWatts } from '../zones.js';
+import { t, num, label as translateLabel } from '../i18n.js';
+
+// A segment's label in the current language when it is one of the common
+// ones (library workouts use them), as typed otherwise.
+const segmentLabel = (label, index) => (label ? translateLabel(label) : t('live.segmentN', { n: index + 1 }));
 
 function formatTime(totalSec) {
   const s = Math.max(0, Math.round(totalSec));
@@ -52,7 +57,7 @@ export function initLiveScreen({ onPause, onResume, onEndRide, onDiscardRide }) 
     currentStep = name;
     for (const [key, el] of Object.entries(steps)) el.hidden = key !== name;
     for (const btn of pauseDialog.querySelectorAll('.pause-back')) {
-      btn.textContent = backResumes ? 'Keep Riding' : 'Back';
+      btn.textContent = t(backResumes ? 'pause.keepRiding' : 'common.back');
     }
     // Land on the safe choice, so a second press of Space or Enter never
     // ends or discards the ride by accident.
@@ -65,11 +70,11 @@ export function initLiveScreen({ onPause, onResume, onEndRide, onDiscardRide }) 
   function showPauseDialog({ distanceM, avgPowerW, timeLeftSec, elapsedSec }, { confirmEnd = false } = {}) {
     if (pauseDialog.open) return;
     document.getElementById('pause-distance').textContent =
-      distanceM != null ? `${(distanceM / 1000).toFixed(2)} km` : '--';
+      distanceM != null ? `${num(distanceM / 1000, 2)} km` : '--';
     document.getElementById('pause-avg-power').textContent =
       avgPowerW != null ? `${Math.round(avgPowerW)} W` : '--';
     const hasEnd = timeLeftSec != null;
-    document.getElementById('pause-time-label').textContent = hasEnd ? 'Time Left' : 'Ridden';
+    document.getElementById('pause-time-label').textContent = t(hasEnd ? 'pause.timeLeft' : 'pause.ridden');
     document.getElementById('pause-time').textContent = formatTime(hasEnd ? timeLeftSec : elapsedSec);
     pauseDialog.showModal();
     backResumes = confirmEnd;
@@ -138,8 +143,8 @@ export function initLiveScreen({ onPause, onResume, onEndRide, onDiscardRide }) 
   }
 
   function targetLabel(watts) {
-    if (!riderFtp) return 'target watts';
-    return `${Math.round((watts / riderFtp) * 100)}% FTP`;
+    if (!riderFtp) return t('live.targetWatts');
+    return t('unit.pctFtp', { n: Math.round((watts / riderFtp) * 100) });
   }
 
   // Zone comes from live smoothed power, so it reflects what the rider is
@@ -154,7 +159,7 @@ export function initLiveScreen({ onPause, onResume, onEndRide, onDiscardRide }) 
     currentZoneId = id;
 
     zoneNameEl.textContent = zone ? zone.name : '--';
-    zoneLabelEl.textContent = zone ? zone.label : riderFtp ? 'Coasting' : 'Set an FTP';
+    zoneLabelEl.textContent = zone ? t(`zone.${zone.id}`) : t(riderFtp ? 'live.coasting' : 'live.setFtp');
     const color = zone ? zone.color : '#3a3632';
     zoneBadgeEl.style.setProperty('--zone-color', color);
     zonePanelEl.style.setProperty('--zone-color', color);
@@ -188,7 +193,7 @@ export function initLiveScreen({ onPause, onResume, onEndRide, onDiscardRide }) 
   // Builds the full timeline once per ride; the step list is drawn as a
   // moving window (see renderSteps).
   function buildTimeline(segments, workoutName) {
-    stepsTitleEl.textContent = workoutName || 'Free Ride';
+    stepsTitleEl.textContent = workoutName || t('home.freeRide');
     timelineEl.innerHTML = '';
     stepsListEl.innerHTML = '';
     timelineSegments = [];
@@ -198,7 +203,11 @@ export function initLiveScreen({ onPause, onResume, onEndRide, onDiscardRide }) 
     if (!segments || segments.length === 0) {
       timelineEl.hidden = true;
       stepsProgressEl.textContent = '';
-      stepsListEl.innerHTML = '<li class="is-done">No steps — just ride.</li>';
+      stepsListEl.innerHTML = '';
+      const none = document.createElement('li');
+      none.className = 'is-done';
+      none.textContent = t('live.noSteps');
+      stepsListEl.appendChild(none);
       return;
     }
 
@@ -281,7 +290,7 @@ export function initLiveScreen({ onPause, onResume, onEndRide, onDiscardRide }) 
       time.textContent = (grade ? `${grade > 0 ? '▲' : '▼'}${Math.abs(grade)}%  ` : '') + stepDuration(segment);
       li.appendChild(watts);
       li.appendChild(time);
-      li.title = segment.label || `Segment ${index + 1}`;
+      li.title = segmentLabel(segment.label, index);
       stepsListEl.appendChild(li);
     });
 
@@ -290,7 +299,7 @@ export function initLiveScreen({ onPause, onResume, onEndRide, onDiscardRide }) 
     if (remaining > 0) {
       const more = document.createElement('li');
       more.className = 'steps-more';
-      more.textContent = `+${remaining} more`;
+      more.textContent = t('live.more', { n: remaining });
       stepsListEl.appendChild(more);
     }
   }
@@ -319,7 +328,7 @@ export function initLiveScreen({ onPause, onResume, onEndRide, onDiscardRide }) 
     if (allSegments.length && from !== renderedFrom) renderSteps(from);
 
     stepsProgressEl.textContent = runnerState.isComplete
-      ? 'done'
+      ? t('live.done')
       : `${runnerState.segmentIndex + 1}/${runnerState.segments.length}`;
   }
 
@@ -334,9 +343,9 @@ export function initLiveScreen({ onPause, onResume, onEndRide, onDiscardRide }) 
 
     if (runnerState.isComplete) {
       targetEl.hidden = false;
-      segmentLabelEl.textContent = 'PUSH COMPLETE';
+      segmentLabelEl.textContent = t('summary.title');
       segmentTargetEl.textContent = '--';
-      segmentTargetLabelEl.textContent = 'target watts';
+      segmentTargetLabelEl.textContent = t('live.targetWatts');
       segmentRemainingEl.textContent = '0:00';
       gradeFigureEl.hidden = true;
       return;
@@ -348,7 +357,7 @@ export function initLiveScreen({ onPause, onResume, onEndRide, onDiscardRide }) 
 
     const segment = runnerState.currentSegment;
     targetEl.hidden = false;
-    segmentLabelEl.textContent = segment.label || `Segment ${runnerState.segmentIndex + 1}`;
+    segmentLabelEl.textContent = segmentLabel(segment.label, runnerState.segmentIndex);
     segmentTargetEl.textContent = segment.target_watts;
     segmentTargetLabelEl.textContent = targetLabel(segment.target_watts);
     segmentRemainingEl.textContent = formatTime(runnerState.remainingInSegmentSec);
@@ -357,7 +366,7 @@ export function initLiveScreen({ onPause, onResume, onEndRide, onDiscardRide }) 
     gradeFigureEl.hidden = grade === 0;
     if (grade !== 0) {
       gradeValueEl.textContent = `${grade > 0 ? '▲' : '▼'}${Math.abs(grade)}%`;
-      gradeLabelEl.textContent = grade > 0 ? 'climbing' : 'descending';
+      gradeLabelEl.textContent = t(grade > 0 ? 'live.climbing' : 'live.descending');
     }
   }
 

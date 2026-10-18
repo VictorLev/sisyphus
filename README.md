@@ -54,6 +54,9 @@ night, and you push it up again tomorrow.
   (Coffee Break, Spin Doctor, Night Owl…) and secrets that stay "???" until
   someone finds them. Computed from the log, so they can't go stale; the
   summary after a ride shows any new ones.
+- **English and French (Canada)** — Settings → Language: Default follows
+  Chrome (French if your browser prefers it, otherwise English), or pick one.
+  Saved with your account, so it follows you between computers.
 - **Installable** as a desktop app (PWA) with an offline shell.
 
 ## What you need
@@ -241,6 +244,26 @@ next tag, look at what merged since the last one (`git log --merges
 `feat/` means minor, otherwise it's a patch. Merging to `main` publishes the
 change but doesn't deploy it; pushing the tag releases it (see
 [deploy/README.md](deploy/README.md#shipping-a-change)).
+
+### Translations
+
+Every word on screen exists in English and in Canadian French.
+
+- **Static page text** is English in `frontend/index.html` (and `probe.html`),
+  marked with `data-i18n="key"` (`data-i18n-html` when it contains markup,
+  `data-i18n-attr="placeholder:key"` for attributes). Its French is in
+  `frontend/js/i18n/fr.js`.
+- **Text from JavaScript** goes through `t('key', { params })` (and `tp()`
+  for plurals) from `frontend/js/i18n.js`; add the key to both
+  `frontend/js/i18n/en.js` and `fr.js`.
+- **Badge names, library workout names and segment labels** are translated
+  in the browser by their stable ids; login errors carry a `code`.
+- **Log entries** (Settings → Log, hardware probe) stay in English on purpose:
+  they are for bug reports.
+
+`tests/i18n.test.js` fails if any key is missing in either language, if the
+French has strays, or if placeholders or markup differ, so a new string can't
+ship untranslated.
 
 ### Generating test rides
 
