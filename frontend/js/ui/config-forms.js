@@ -35,7 +35,7 @@ function bindForm({ fields, load, save, statusEl, onSaved, beforeSubmit, afterLo
     const problem = beforeSubmit?.();
     if (problem) {
       setStatus(problem, true);
-      return;
+      return false;
     }
     const body = {};
     for (const [id, input] of inputs) {
@@ -46,8 +46,10 @@ function bindForm({ fields, load, save, statusEl, onSaved, beforeSubmit, afterLo
       const saved = await save(body);
       setStatus(t('common.saved'));
       onSaved?.(saved);
+      return true;
     } catch (err) {
       setStatus(err.message, true);
+      return false;
     }
   }
 
@@ -95,9 +97,28 @@ export function initSettings({ onSaved }) {
     afterLoad: (data) => scenery.load(data.scenery_videos),
   });
 
-  document.getElementById('save-settings-btn').addEventListener('click', () => form.submit());
+  // The Save button stays quiet (outlined) until a setting changes, then
+  // fills in so it's clear there's something to save.
+  const saveBtn = document.getElementById('save-settings-btn');
+  const statusEl = document.getElementById('settings-status');
+  const setDirty = (dirty) => saveBtn.classList.toggle('secondary', !dirty);
+  setDirty(false);
+  const onEdit = (event) => {
+    const target = event.target;
+    // Only the settings themselves: not the password fields or the log.
+    if (!target.id?.startsWith('setting-') && !target.closest?.('.scenery-editor')) return;
+    if (saveBtn.classList.contains('secondary')) statusEl.textContent = '';
+    setDirty(true);
+  };
+  const view = document.querySelector('[data-view="settings"]');
+  view.addEventListener('input', onEdit);
+  view.addEventListener('change', onEdit);
+
+  saveBtn.addEventListener('click', async () => {
+    if (await form.submit()) setDirty(false);
+  });
   document.addEventListener('viewchange', (event) => {
-    if (event.detail.view === 'settings') form.populate();
+    if (event.detail.view === 'settings') form.populate().then(() => setDirty(false));
   });
   return form;
 }

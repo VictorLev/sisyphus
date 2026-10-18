@@ -41,6 +41,7 @@ export function initSceneryEditor() {
       li.remove();
       // Always leave one row to type into.
       if (!listEl.children.length) addRow();
+      changed();
     });
 
     li.append(nameInput, linkInput, remove);
@@ -48,7 +49,14 @@ export function initSceneryEditor() {
     if (focus) nameInput.focus();
   }
 
-  addBtn.addEventListener('click', () => addRow({}, true));
+  // Adding or removing a row is an edit, like typing: the settings page
+  // lights up its Save button on 'input'.
+  const changed = () => listEl.dispatchEvent(new Event('input', { bubbles: true }));
+
+  addBtn.addEventListener('click', () => {
+    addRow({}, true);
+    changed();
+  });
 
   return {
     // From the saved text.

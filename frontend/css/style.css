@@ -954,7 +954,7 @@ button.secondary:hover:not(:disabled) {
 /* ---------------------------------------------- view header with action */
 
 /* A page title on the left with its main action (Save) on the right. */
-.view-header {
+.page-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -962,15 +962,25 @@ button.secondary:hover:not(:disabled) {
   flex-wrap: wrap;
 }
 
-.view-header-actions {
+.page-header-actions {
   display: flex;
   align-items: center;
   gap: 1rem;
   margin-top: 0.4rem;
 }
 
-.view-header-actions .status {
+.page-header-actions .status {
   margin: 0;
+}
+
+/* Outlined while there's nothing to save; fills in once a setting changes. */
+#save-settings-btn {
+  transition: background-color 0.2s, color 0.2s;
+}
+
+/* Same size in both states: the filled one gets a border to match. */
+#save-settings-btn:not(.secondary) {
+  border: 2px solid var(--color-bronze);
 }
 
 /* -------------------------------------------------------- scenery editor */
