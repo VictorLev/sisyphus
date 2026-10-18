@@ -190,6 +190,13 @@ describe('config API', () => {
     assert.equal(settings.default_mode, 'erg');
   });
 
+  test('the theme is dark unless the rider picks light', async () => {
+    assert.equal((await (await api('/api/settings')).json()).theme, 'dark');
+    assert.equal((await (await postJson('/api/settings', { theme: 'light' }, 'PUT')).json()).theme, 'light');
+    assert.equal((await postJson('/api/settings', { theme: 'pink' }, 'PUT')).status, 400);
+    await postJson('/api/settings', { theme: 'dark' }, 'PUT');
+  });
+
   test('merges partial updates over stored values', async () => {
     await postJson('/api/profile', { name: 'Victor', ftp: 170 }, 'PUT');
     const profile = await (await postJson('/api/profile', { weight_kg: 76 }, 'PUT')).json();

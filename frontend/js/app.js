@@ -1,6 +1,7 @@
 // First, so everything after it, including a failed login, is logged.
 import { installLogCapture, logEvent } from './log.js';
 import { initLanguage, rememberSetting, resolveLanguage, language, t, tp, num } from './i18n.js';
+import { applyTheme } from './theme.js';
 import { TrainerConnection } from './ble/connection.js';
 import { TrainerControl } from './ble/trainer-control.js';
 import { GearModel } from './gears.js';
@@ -138,6 +139,7 @@ function applySettings(settings) {
       return;
     }
   }
+  applyTheme(settings.theme);
   scenery.setList(settings.scenery_videos);
   gears.configure({
     gearCount: settings.gear_count,

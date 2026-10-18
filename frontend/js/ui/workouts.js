@@ -122,7 +122,7 @@ export function initWorkouts({ onStartRide, onEditWorkout, onLibraryChanged }) {
 
   function setStatus(message, isError = false) {
     statusEl.textContent = message;
-    statusEl.style.color = isError ? '#d98c6a' : '';
+    statusEl.style.color = isError ? 'var(--color-error)' : '';
   }
 
   // Remembered per browser: whoever exports .zwo usually always does.

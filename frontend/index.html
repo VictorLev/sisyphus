@@ -4,6 +4,8 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Sisyphus</title>
+  <!-- The theme this browser last used, before anything paints (see js/theme.js). -->
+  <script>try { if (localStorage.getItem('sisyphus.theme') === 'light') document.documentElement.dataset.theme = 'light'; } catch {}</script>
   <link rel="stylesheet" href="css/style.css" />
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="icon" href="/icons/favicon-64.png" sizes="64x64" type="image/png" />
@@ -429,6 +431,13 @@
                 <option value="auto" data-i18n="lang.auto">Default (same as Chrome)</option>
                 <option value="fr" lang="fr">Français</option>
                 <option value="en" lang="en">English</option>
+              </select>
+            </label>
+            <label class="field">
+              <span data-i18n="settings.theme">Theme</span>
+              <select id="setting-theme">
+                <option value="dark" data-i18n="theme.dark">Dark</option>
+                <option value="light" data-i18n="theme.light">Light</option>
               </select>
             </label>
             <h2 data-i18n="settings.ride" style="margin-top:1.5rem">Ride</h2>
