@@ -9,7 +9,7 @@ function bindForm({ fields, load, save, statusEl, onSaved }) {
 
   function setStatus(message, isError = false) {
     statusEl.textContent = message;
-    statusEl.style.color = isError ? '#d98c6a' : '';
+    statusEl.style.color = isError ? 'var(--color-error)' : '';
   }
 
   async function populate() {
@@ -74,6 +74,7 @@ export function initSettings({ onSaved }) {
       'setting-default-mode',
       'setting-scenery-videos',
       'setting-language',
+      'setting-theme',
     ],
     load: getSettings,
     save: saveSettings,

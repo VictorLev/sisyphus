@@ -539,4 +539,7 @@ export const FR = {
   "badge.champion-2027.desc": "Roulez le plus de temps de tout le monde en 2027. Décerné à la fin de l'année.",
   "badge.champion-2028.name": "Champion 2028",
   "badge.champion-2028.desc": "Roulez le plus de temps de tout le monde en 2028. Décerné à la fin de l'année.",
+  "settings.theme": "Thème",
+  "theme.dark": "Sombre",
+  "theme.light": "Clair",
 };

@@ -59,9 +59,15 @@ export function initSisyphusLoop() {
   const ctx = canvas.getContext('2d');
   ctx.imageSmoothingEnabled = false;
 
-  const styles = getComputedStyle(document.documentElement);
-  const figureColor = styles.getPropertyValue('--color-bronze-bright').trim() || '#e0c088';
-  const hillColor = styles.getPropertyValue('--color-bronze-dim').trim() || '#7a6340';
+  let figureColor;
+  let hillColor;
+  const readColors = () => {
+    const styles = getComputedStyle(document.documentElement);
+    figureColor = styles.getPropertyValue('--color-bronze-bright').trim() || '#e0c088';
+    hillColor = styles.getPropertyValue('--color-bronze-dim').trim() || '#7a6340';
+  };
+  readColors();
+  document.addEventListener('themechange', readColors);
 
   const px = (x, y, color) => {
     ctx.fillStyle = color;

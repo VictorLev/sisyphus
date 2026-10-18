@@ -31,6 +31,8 @@ const DEFAULTS = {
     scenery_videos: '',
     // 'auto' follows the browser (French if it prefers French, else English).
     language: 'auto',
+    // 'dark' (the original look) or 'light' (lighter beige).
+    theme: 'dark',
   },
 };
 
@@ -81,6 +83,9 @@ function validateSettings(s) {
   }
   if (s.language != null && !['auto', 'en', 'fr'].includes(s.language)) {
     return "language must be 'auto', 'en' or 'fr'";
+  }
+  if (s.theme != null && !['dark', 'light'].includes(s.theme)) {
+    return "theme must be 'dark' or 'light'";
   }
   if (s.default_mode != null && !['gears', 'erg'].includes(s.default_mode)) {
     return "default_mode must be 'gears' or 'erg'";
