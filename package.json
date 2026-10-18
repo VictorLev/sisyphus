@@ -11,6 +11,7 @@
     "fake-ride": "node scripts/fake-ride.mjs",
     "add-user": "npm --prefix backend run add-user --",
     "reset-password": "npm --prefix backend run reset-password --",
+    "delete-user": "npm --prefix backend run delete-user --",
     "list-users": "npm --prefix backend run list-users",
     "backup": "npm --prefix backend run backup --"
   }
