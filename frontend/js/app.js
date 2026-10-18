@@ -122,6 +122,9 @@ initBadges({ onOpenRide: (id) => chronicle.openDetail(id), onOpenBadges: () => s
 initProfile();
 initSettings({ onSaved: (saved) => applySettings(saved) });
 initAccount(currentUser);
+// The diagnostic log is for whoever fixes bugs: admins only. Entries are
+// still captured for everyone, in case an admin rides on this browser.
+document.getElementById('log-panel').hidden = !currentUser?.is_admin;
 initLogPanel();
 initFtpHistory();
 initFtpTestPanel({ onStart: (workout) => startRide(workout) });
@@ -140,7 +143,7 @@ function applySettings(settings) {
     }
   }
   applyTheme(settings.theme);
-  scenery.setList(settings.scenery_videos);
+  scenery.setList(settings.scenery_videos, settings.scenery_mode);
   gears.configure({
     gearCount: settings.gear_count,
     minResistance: settings.min_resistance,

@@ -1,6 +1,7 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { parseYouTube, parseSceneryList, pickScenery } from '../frontend/js/ui/scenery.js';
+import { readFileSync } from 'node:fs';
+import { parseYouTube, parseSceneryList, pickScenery, sceneryRows, serializeSceneryRows, nextScenery, DEFAULT_SCENERY_LINK } from '../frontend/js/ui/scenery.js';
 
 describe('parseYouTube', () => {
   test('reads the video from a watch link, ignoring playlist parameters', () => {
@@ -86,5 +87,48 @@ describe('pickScenery', () => {
     const one = list.slice(0, 1);
     assert.equal(pickScenery(one, 'aaaaaaaaaaa').id, 'aaaaaaaaaaa', 'with only one, it plays again');
     assert.equal(pickScenery([], null), null);
+  });
+});
+
+describe('the scenery editor\'s rows', () => {
+  test('saved text becomes name and link rows, and back', () => {
+    const text = 'Alps | https://youtu.be/aaaaaaaaaaa, https://youtu.be/bbbbbbbbbbb';
+    const rows = sceneryRows(text);
+    assert.deepEqual(rows, [
+      { name: 'Alps', link: 'https://youtu.be/aaaaaaaaaaa' },
+      { name: '', link: 'https://youtu.be/bbbbbbbbbbb' },
+    ]);
+    assert.equal(serializeSceneryRows(rows), text);
+  });
+
+  test('a comma or bar in a name cannot split the list; empty rows are dropped', () => {
+    const text = serializeSceneryRows([
+      { name: 'Alps, Switzerland', link: 'https://youtu.be/aaaaaaaaaaa' },
+      { name: 'nothing here', link: '  ' },
+      { name: 'A | B', link: ' https://youtu.be/bbbbbbbbbbb ' },
+    ]);
+    assert.deepEqual(parseSceneryList(text).map((v) => [v.name, v.id]), [
+      ['Alps - Switzerland', 'aaaaaaaaaaa'],
+      ['A - B', 'bbbbbbbbbbb'],
+    ]);
+  });
+});
+
+describe('ride order', () => {
+  const videos = ['a', 'b', 'c'].map((id) => ({ id }));
+
+  test('in order plays the one after last time\'s, wrapping around', () => {
+    assert.equal(nextScenery(videos, null).id, 'a');
+    assert.equal(nextScenery(videos, 'a').id, 'b');
+    assert.equal(nextScenery(videos, 'c').id, 'a');
+    assert.equal(nextScenery(videos, 'gone').id, 'a', 'a video no longer listed starts over');
+    assert.equal(nextScenery([], 'a'), null);
+  });
+
+  test('the default ride is a valid link, the same one new accounts get', () => {
+    assert.deepEqual(parseYouTube(DEFAULT_SCENERY_LINK), { id: 'D6tC1pyrsTM', start: 60 });
+    // Read as text: importing the route would open a database.
+    const source = readFileSync(new URL('../backend/src/routes/config.js', import.meta.url), 'utf8');
+    assert.ok(source.includes(`scenery_videos: '${DEFAULT_SCENERY_LINK}'`));
   });
 });

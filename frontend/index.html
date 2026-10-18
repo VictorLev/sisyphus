@@ -345,8 +345,16 @@
     </section>
 
     <section data-view="settings" class="view">
-      <h1 class="title" data-i18n="settings.title">SETTINGS</h1>
-      <p class="tagline" data-i18n="settings.tagline">The knobs behind the ride.</p>
+      <div class="page-header">
+        <div>
+          <h1 class="title" data-i18n="settings.title">SETTINGS</h1>
+          <p class="tagline" data-i18n="settings.tagline">The knobs behind the ride.</p>
+        </div>
+        <div class="page-header-actions">
+          <p id="settings-status" class="status" role="status"></p>
+          <button id="save-settings-btn" type="button" data-i18n="settings.save">Save Settings</button>
+        </div>
+      </div>
 
       <div class="builder-grid">
         <div class="home-col">
@@ -406,7 +414,8 @@
             </div>
           </div>
 
-          <div class="panel">
+          <!-- Admins only (app.js shows it): the diagnostic log for bug reports. -->
+          <div id="log-panel" class="panel" hidden>
             <div class="calendar-header">
               <h2 data-i18n="log.title">Log</h2>
               <div class="row-actions">
@@ -463,19 +472,27 @@
               data point is written to the ride log.</p>
             <h2 style="margin-top:1.5rem" data-i18n="settings.sceneryTitle">Scenery</h2>
             <label class="field">
-              <span data-i18n="settings.scenery">YouTube virtual rides, separated by commas</span>
-              <textarea id="setting-scenery-videos" rows="3" spellcheck="false"
-                placeholder="Swiss Alps | https://youtu.be/..., Dolomites | https://youtu.be/..." data-i18n-attr="placeholder:settings.sceneryPlaceholder"></textarea>
+              <span data-i18n="settings.sceneryMode">Order</span>
+              <select id="setting-scenery-mode">
+                <option value="random" data-i18n="scenery.random">Random</option>
+                <option value="sequence" data-i18n="scenery.sequence">In order</option>
+              </select>
             </label>
-            <p class="hint" data-i18n="settings.sceneryHint">Each ride starts on one picked at random (not the
-              one you watched last time), muted to start; unmute in the player.
-              Name a video by putting text before its link. To switch, use the
-              picker on the ride screen.</p>
-            <p class="tools-link"><a href="probe.html" data-i18n="settings.probe">Hardware diagnostics (probe)</a></p>
-            <p id="settings-status" class="status"></p>
-            <div class="live-controls" style="margin-top:1.25rem">
-              <button id="save-settings-btn" type="button" data-i18n="settings.save">Save Settings</button>
+            <div class="scenery-editor">
+              <div class="scenery-row scenery-row-head" aria-hidden="true">
+                <span data-i18n="scenery.name">Name</span>
+                <span data-i18n="scenery.link">YouTube link</span>
+                <span></span>
+              </div>
+              <ol id="scenery-rows" class="scenery-rows"></ol>
+              <button id="scenery-add-btn" type="button" class="secondary scenery-add" data-i18n="scenery.add">+ Add a video</button>
             </div>
+            <input id="setting-scenery-videos" type="hidden" />
+            <p class="hint" data-i18n="settings.sceneryHint">Random never repeats last ride's video; In order
+              plays the next one each ride. Videos start muted; unmute in the
+              player. To switch mid-ride, use the picker on the ride screen.
+              With no videos, the default ride plays.</p>
+            <p class="tools-link"><a href="probe.html" data-i18n="settings.probe">Hardware diagnostics (probe)</a></p>
           </div>
         </div>
       </div>

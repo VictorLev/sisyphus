@@ -389,4 +389,8 @@ export const EN = {
   "badge.champion-2027.desc": "Ride the most time of everyone in 2027. Awarded when the year ends.",
   "badge.champion-2028.name": "2028 Champion",
   "badge.champion-2028.desc": "Ride the most time of everyone in 2028. Awarded when the year ends.",
+  "scenery.namePlaceholder": "e.g. Swiss Alps",
+  "scenery.linkPlaceholder": "https://www.youtube.com/watch?v=…",
+  "scenery.remove": "Remove this video",
+  "scenery.badLink": "Not a YouTube video link: {link}",
 };
