@@ -200,6 +200,33 @@ describe('the funny ones and the secrets', () => {
   });
 });
 
+describe('yearly champions', () => {
+  const at = (iso) => Date.parse(iso);
+  const champ = (yearTotals, now) => badges([], { yearTotals, now })['champion-2026'];
+
+  test('the most minutes of everyone wins once the year is over, ties shared', () => {
+    const after = at('2027-01-02T00:00:00Z');
+    const won = champ({ 2026: { mine: 3000, best: 3000 } }, after);
+    assert.equal(won.earned, true);
+    assert.equal(won.earned_at, '2027-01-01T12:00:00.000Z');
+    assert.equal(champ({ 2026: { mine: 2999, best: 3000 } }, after).earned, false);
+    assert.equal(champ({}, after).earned, false, 'nobody rode: nobody wins');
+  });
+
+  test('during the year it shows where you stand against the leader', () => {
+    const b = champ({ 2026: { mine: 600, best: 1500 } }, at('2026-10-18T12:00:00Z'));
+    assert.equal(b.earned, false);
+    assert.deepEqual([b.progress.value, b.progress.target], [600, 1500]);
+    assert.equal(champ({ 2026: { mine: 1500, best: 1500 } }, at('2026-12-31T23:00:00Z')).earned, false, 'not before it ends');
+  });
+
+  test('a year that has not started shows no progress', () => {
+    const b = badges([], { yearTotals: {}, now: at('2026-10-18T12:00:00Z') })['champion-2028'];
+    assert.equal(b.earned, false);
+    assert.equal(b.progress, null);
+  });
+});
+
 describe('badges API', () => {
   let server;
   let alice;
@@ -242,6 +269,22 @@ describe('badges API', () => {
     const theirs = await (await bob.get('/api/badges')).json();
     assert.equal(theirs.earned, 0);
     assert.equal(theirs.badges.find((b) => b.id === 'pi').name, '???');
+  });
+
+  test('champion progress compares this year\'s minutes with the leader\'s', async () => {
+    const year = new Date().getUTCFullYear();
+    if (![2026, 2027, 2028].includes(year)) return;
+    const start = `${year}-06-15T12:00:00.000Z`;
+    await bob.post('/api/sessions', {
+      started_at: start, ended_at: new Date(Date.parse(start) + 120 * 60_000).toISOString(), tz_offset_min: 0,
+      samples: [{ timestamp_offset_sec: 0, power: 150, cadence: 80, speed: 25 }],
+    });
+    const find = async (who) => (await (await who.get('/api/badges')).json()).badges.find((b) => b.id === `champion-${year}`);
+    const mine = await find(alice);
+    assert.equal(mine.progress.target, 120, 'Bob leads');
+    assert.ok(mine.progress.value < 120);
+    const his = await find(bob);
+    assert.deepEqual([his.progress.value, his.progress.target], [120, 120]);
   });
 
   test('an out-of-range time zone is ignored, not stored', async () => {

@@ -47,7 +47,14 @@ function prepare(data) {
         workout,
       };
     });
-  return { rides, workouts: data.workouts, ftpHistory: data.ftpHistory };
+  return {
+    rides,
+    workouts: data.workouts,
+    ftpHistory: data.ftpHistory,
+    // Minutes ridden per calendar year: this rider's and the best of anyone's.
+    yearTotals: data.yearTotals ?? {},
+    now: data.now ?? Date.now(),
+  };
 }
 
 // --- evaluators: each returns { earned } or { progress } -------------------
@@ -166,6 +173,21 @@ const ftpUp = (fraction) => ({ ftpHistory }) => {
   return { progress: { value: Math.max(0, Math.round(((best - base) / base) * 100)), target: Math.round(fraction * 100) } };
 };
 
+// The year's champion: the most time ridden of anyone, ties shared. Only
+// awarded once the year is over everywhere (noon UTC on 1 January: the last
+// time zone has finished 31 December), since the lead can change until then.
+// During the year, progress is your minutes against the leader's.
+const yearOver = (year) => Date.UTC(year + 1, 0, 1, 12);
+const champion = (year) => ({ yearTotals, now }) => {
+  const { mine = 0, best = 0 } = yearTotals[year] ?? {};
+  if (now >= yearOver(year)) {
+    if (mine > 0 && mine >= best) return { earned: { earned_at: new Date(yearOver(year)).toISOString(), session_id: null } };
+    return {};
+  }
+  if (now < Date.UTC(year, 0, 1) - 14 * 3600_000) return {}; // not started anywhere yet
+  return { progress: { value: Math.round(mine), target: Math.max(1, Math.round(best)) } };
+};
+
 // --- the badges -------------------------------------------------------------
 
 const H = 3600;
@@ -227,6 +249,13 @@ export const BADGES = [
     }
     return { progress: { value: library.filter((id) => done.has(id)).length, target: library.length } };
   } },
+
+  // Champions: the year's most time ridden, across all riders
+  ...[2026, 2027, 2028].map((year) => ({
+    id: `champion-${year}`, group: 'Champions', tier: 'gold', name: `${year} Champion`,
+    description: `Ride the most time of everyone in ${year}. Awarded when the year ends.`,
+    unit: 'min', evaluate: champion(year),
+  })),
 
   // Oddities: the funny ones, visible from the start
   { id: 'coffee-break', group: 'Oddities', tier: 'fun', name: 'Coffee Break', description: 'A ride under 5 minutes. That counts, right?', evaluate: oneRide((r) => r.durationSec >= 60 && r.durationSec < 300) },

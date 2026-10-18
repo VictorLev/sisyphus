@@ -22,6 +22,12 @@ describe('periods', () => {
     assert.deepEqual(periodRange('month', -300, Date.parse('2026-12-31T23:00:00Z')),
       { from: '2026-12-01T05:00:00.000Z', to: '2027-01-01T05:00:00.000Z' });
   });
+
+  test('a year runs from 1 January to 1 January in the viewer\'s time zone', () => {
+    assert.deepEqual(periodRange('year', -300, Date.parse('2027-01-01T03:00:00Z')),
+      { from: '2026-01-01T05:00:00.000Z', to: '2027-01-01T05:00:00.000Z' }, 'still New Year\'s Eve in Montréal');
+    assert.equal(periodRange('year', 0, Date.parse('2027-01-01T03:00:00Z')).from, '2027-01-01T00:00:00.000Z');
+  });
 });
 
 describe('leaderboard API', () => {
@@ -71,6 +77,14 @@ describe('leaderboard API', () => {
     assert.deepEqual([by.Alice.rides, by.Alice.minutes, by.Alice.distance_km], [2, 90, 42]);
     assert.deepEqual([by.Bob.rides, by.Bob.minutes, by.Bob.distance_km], [1, 45, 20], 'the 2020 ride is not this week');
     assert.deepEqual([by.Carol.rides, by.Carol.minutes], [0, 0]);
+  });
+
+  test('this year counts this year\'s rides only', async () => {
+    const board = await (await alice.get('/api/leaderboard?period=year&tz=0')).json();
+    assert.equal(board.period, 'year');
+    assert.equal(board.from.slice(5), '01-01T00:00:00.000Z');
+    const by = Object.fromEntries(board.riders.map((r) => [r.name, r]));
+    assert.ok(by.Bob.minutes <= 45, 'the 2020 ride is not this year');
   });
 
   test('marks who is asking, and levels come from all-time riding', async () => {

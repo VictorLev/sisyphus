@@ -531,4 +531,12 @@ export const FR = {
   "badge.camus.name": "Il faut imaginer Sisyphe heureux",
   "badge.camus.desc": "Roulez 30 jours différents en 60 jours.",
   "badge.camus.hint": "La lutte elle-même vers les sommets suffit à remplir un cœur.",
+  "badgeGroup.Champions": "Champions",
+  "lb.year": "Cette année",
+  "badge.champion-2026.name": "Champion 2026",
+  "badge.champion-2026.desc": "Roulez le plus de temps de tout le monde en 2026. Décerné à la fin de l'année.",
+  "badge.champion-2027.name": "Champion 2027",
+  "badge.champion-2027.desc": "Roulez le plus de temps de tout le monde en 2027. Décerné à la fin de l'année.",
+  "badge.champion-2028.name": "Champion 2028",
+  "badge.champion-2028.desc": "Roulez le plus de temps de tout le monde en 2028. Décerné à la fin de l'année.",
 };
