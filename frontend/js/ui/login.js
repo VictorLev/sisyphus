@@ -1,4 +1,5 @@
 import { getMe, login, logout, changePassword } from '../api/client.js';
+import { t } from '../i18n.js';
 
 // The login screen is a modal over the app rather than a page of its own.
 // Any 401 opens it where the rider is, so nothing in memory is lost by
@@ -66,7 +67,7 @@ export function initAccount(user) {
   const confirmInput = document.getElementById('account-confirm-password');
   const statusEl = document.getElementById('account-status');
 
-  whoEl.textContent = user ? `Logged in as ${user.display_name} (${user.username}).` : 'Not connected to the server.';
+  whoEl.textContent = user ? t('account.who', { name: user.display_name, username: user.username }) : t('account.offline');
 
   function setStatus(message, isError = false) {
     statusEl.textContent = message;
@@ -75,13 +76,13 @@ export function initAccount(user) {
 
   document.getElementById('change-password-btn').addEventListener('click', async () => {
     if (newInput.value !== confirmInput.value) {
-      setStatus('The new passwords do not match.', true);
+      setStatus(t('account.mismatch'), true);
       return;
     }
     try {
       await changePassword(currentInput.value, newInput.value);
       currentInput.value = newInput.value = confirmInput.value = '';
-      setStatus('Password changed. Other devices have been logged out.');
+      setStatus(t('account.changed'));
     } catch (err) {
       setStatus(err.message, true);
     }

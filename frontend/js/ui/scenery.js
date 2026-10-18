@@ -4,6 +4,8 @@
 // at random. The player is a plain embed driven over postMessage
 // (enablejsapi), so no YouTube script is loaded here.
 
+import { t } from '../i18n.js';
+
 const ID_PATTERN = /^[A-Za-z0-9_-]{11}$/;
 
 // "90", "90s", "1m30s", "1h2m3s" -> seconds.
@@ -47,7 +49,7 @@ export function parseSceneryList(text) {
     const video = link && parseYouTube(link);
     if (!video) continue;
     const name = line.replace(link, '').replace(/^[\s|:–—-]+|[\s|:–—-]+$/g, '');
-    videos.push({ ...video, name: name || `Scenery ${videos.length + 1}` });
+    videos.push({ ...video, name: name || t('scenery.n', { n: videos.length + 1 }) });
   }
   return videos;
 }
@@ -106,7 +108,7 @@ export function initScenery({ frameEl, pickerEl, emptyEl }) {
     rememberChoice(video.id);
     if (!iframe) {
       iframe = document.createElement('iframe');
-      iframe.title = 'Scenery';
+      iframe.title = t('settings.sceneryTitle');
       iframe.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
       // YouTube refuses embeds that arrive without a referrer.
       iframe.referrerPolicy = 'strict-origin-when-cross-origin';

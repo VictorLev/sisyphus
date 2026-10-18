@@ -5,6 +5,8 @@
 //
 // Pure functions, no DOM: the Workouts page calls them, the tests too.
 
+import { t } from '../i18n.js';
+
 const pctOf = (watts, ftp) => Math.round((watts / ftp) * 1000) / 10;
 const round1 = (n) => Math.round(n * 10) / 10;
 
@@ -89,28 +91,28 @@ function parseDuration(text) {
 
 export function fromCsv(text, { ftp = 200, fallbackName = 'Imported workout' } = {}) {
   const rows = parseCsvRows(text.replace(/^﻿/, ''));
-  if (rows.length < 2) throw new Error('The CSV needs a header row and at least one segment.');
+  if (rows.length < 2) throw new Error(t('file.csvEmpty'));
 
   const header = rows[0].cells.map((h) => h.trim().toLowerCase().replace(/\s+/g, '_'));
   const col = (kind) => header.findIndex((h) => COLUMNS[kind].includes(h));
   const at = { workout: col('workout'), label: col('label'), duration: col('duration'), pct: col('pct'), watts: col('watts'), grade: col('grade') };
-  if (at.duration === -1) throw new Error('No duration column (expected "duration_sec").');
-  if (at.pct === -1 && at.watts === -1) throw new Error('No target column (expected "ftp_pct", or "watts").');
+  if (at.duration === -1) throw new Error(t('file.noDuration'));
+  if (at.pct === -1 && at.watts === -1) throw new Error(t('file.noTarget'));
 
   const byName = new Map();
   for (const { cells, line } of rows.slice(1)) {
     const get = (i) => (i === -1 ? '' : (cells[i] ?? '').trim());
     const duration = parseDuration(get(at.duration));
-    if (!Number.isInteger(duration) || duration <= 0) throw new Error(`Line ${line}: duration must be a positive number of seconds (or m:ss).`);
+    if (!Number.isInteger(duration) || duration <= 0) throw new Error(t('file.badDuration', { line }));
 
     let pct;
     if (get(at.pct) !== '') pct = Number(get(at.pct).replace('%', ''));
     else if (get(at.watts) !== '') pct = pctOf(Number(get(at.watts)), ftp);
-    if (!Number.isFinite(pct) || pct < 0 || pct > 300) throw new Error(`Line ${line}: the target must be 0–300 % of FTP.`);
+    if (!Number.isFinite(pct) || pct < 0 || pct > 300) throw new Error(t('file.badTarget', { line }));
 
     const segment = { duration_sec: duration, target_ftp_pct: round1(pct), label: get(at.label) };
     const grade = get(at.grade) === '' ? 0 : Number(get(at.grade).replace('%', ''));
-    if (!Number.isFinite(grade) || grade < -20 || grade > 20) throw new Error(`Line ${line}: grade must be between -20 and 20 %.`);
+    if (!Number.isFinite(grade) || grade < -20 || grade > 20) throw new Error(t('file.badGrade', { line }));
     if (grade) segment.grade_percent = grade;
 
     const name = get(at.workout) || fallbackName;
@@ -173,10 +175,10 @@ function rampSteps(duration, low, high, label) {
 }
 
 export function fromZwo(text, { fallbackName = 'Imported workout' } = {}) {
-  if (!/<workout_file[\s>]/i.test(text)) throw new Error('Not a Zwift workout (.zwo) file.');
+  if (!/<workout_file[\s>]/i.test(text)) throw new Error(t('file.notZwo'));
   const name = unescapeXml((text.match(/<name>([\s\S]*?)<\/name>/i)?.[1] ?? '').trim()) || fallbackName;
   const body = text.match(/<workout>([\s\S]*?)<\/workout>/i)?.[1];
-  if (body == null) throw new Error('The .zwo file has no <workout> section.');
+  if (body == null) throw new Error(t('file.noWorkoutSection'));
 
   const structure = [];
   // Each step: a self-closing tag, or an open tag with text events inside.
@@ -210,8 +212,8 @@ export function fromZwo(text, { fallbackName = 'Imported workout' } = {}) {
       if (duration > 0) structure.push({ duration_sec: duration, target_ftp_pct: 150, label: message || 'Max effort' });
     }
   }
-  if (structure.length === 0) throw new Error('No steps found in the .zwo file.');
-  if (structure.some((s) => !Number.isFinite(s.target_ftp_pct))) throw new Error('A step in the .zwo file has no power target.');
+  if (structure.length === 0) throw new Error(t('file.noSteps'));
+  if (structure.some((s) => !Number.isFinite(s.target_ftp_pct))) throw new Error(t('file.noPower'));
   return [{ name, structure }];
 }
 

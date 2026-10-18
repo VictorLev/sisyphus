@@ -21,10 +21,10 @@
                  say the state; pressing it while connected disconnects. -->
             <button id="connect-btn" type="button" class="trainer-btn" data-state="idle">
               <span class="trainer-dot" aria-hidden="true"></span>
-              <span id="connect-label">Connect trainer</span>
+              <span id="connect-label" data-i18n="trainer.connect">Connect trainer</span>
             </button>
           </div>
-          <p class="tagline">Push the boulder. Every day.</p>
+          <p class="tagline" data-i18n="app.tagline">Push the boulder. Every day.</p>
         </div>
         <canvas id="sisyphus-canvas" aria-hidden="true"></canvas>
       </div>
@@ -32,34 +32,34 @@
       <nav class="main-nav" id="main-nav">
         <button type="button" data-nav="home">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>
-          Ride
+          <span data-i18n="nav.home">Ride</span>
         </button>
         <button type="button" data-nav="workouts">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16M4 12h16M4 19h10"/><circle cx="19" cy="19" r="2"/></svg>
-          Workouts
+          <span data-i18n="nav.workouts">Workouts</span>
         </button>
         <button type="button" data-nav="chronicle">
           <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="1"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
-          Chronicle
+          <span data-i18n="nav.chronicle">Chronicle</span>
         </button>
         <button type="button" data-nav="feats">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M7 6H4v2a3 3 0 0 0 3 3M17 6h3v2a3 3 0 0 1-3 3M9 20h6M12 14v6"/></svg>
-          Feats
+          <span data-i18n="nav.feats">Feats</span>
         </button>
         <button type="button" data-nav="badges">
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="15" r="6"/><path d="M8 3l2.5 6.5M16 3l-2.5 6.5M10.2 15l1.3 1.3 2.5-2.6"/></svg>
-          Badges
+          <span data-i18n="nav.badges">Badges</span>
         </button>
         <button type="button" data-nav="builder">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V9M9 19V5M14 19v-7M19 19v-4"/></svg>
-          Build
+          <span data-i18n="nav.builder">Build</span>
         </button>
         <button type="button" data-nav="profile">
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
-          Profile
+          <span data-i18n="nav.profile">Profile</span>
         </button>
         <div class="nav-rider" id="nav-rider">
-          <span class="nav-level" id="nav-level" title="Level">Lv 1</span>
+          <span class="nav-level" id="nav-level" title="Level" data-i18n-attr="title:nav.level">Lv 1</span>
           <button type="button" class="nav-badges" id="nav-badges" title="Badges earned" aria-label="Badges earned" hidden>
             <span class="nav-badges-medal" aria-hidden="true"></span>
             <span id="nav-badges-count">0</span>
@@ -69,7 +69,7 @@
 
         <button type="button" data-nav="settings" class="nav-settings">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.80 1.87L13.20 1.87L13.90 4.85L15.72 5.60L18.31 3.99L20.01 5.69L18.40 8.28L19.15 10.10L22.13 10.80L22.13 13.20L19.15 13.90L18.40 15.72L20.01 18.31L18.31 20.01L15.72 18.40L13.90 19.15L13.20 22.13L10.80 22.13L10.10 19.15L8.28 18.40L5.69 20.01L3.99 18.31L5.60 15.72L4.85 13.90L1.87 13.20L1.87 10.80L4.85 10.10L5.60 8.28L3.99 5.69L5.69 3.99L8.28 5.60L10.10 4.85Z"/><circle cx="12" cy="12" r="3.1"/></svg>
-          Settings
+          <span data-i18n="nav.settings">Settings</span>
         </button>
       </nav>
     </header>
@@ -78,43 +78,43 @@
       <div class="home-grid">
         <div class="home-col">
           <div class="panel">
-            <h2>Ride Mode</h2>
+            <h2 data-i18n="home.rideMode">Ride Mode</h2>
             <div class="mode-select">
-              <button id="mode-gears-btn" type="button" class="mode-btn">Virtual Gears</button>
+              <button id="mode-gears-btn" type="button" class="mode-btn" data-i18n="mode.gears">Virtual Gears</button>
               <button id="mode-erg-btn" type="button" class="mode-btn is-active">ERG</button>
             </div>
             <p id="mode-description" class="hint"></p>
           </div>
 
           <div class="panel">
-            <h2>Free Ride</h2>
-            <button id="free-ride-btn" type="button" disabled>Start Free Ride</button>
-            <p class="hint">No targets, no segments — just ride. Always uses
+            <h2 data-i18n="home.freeRide">Free Ride</h2>
+            <button id="free-ride-btn" type="button" disabled data-i18n="home.startFreeRide">Start Free Ride</button>
+            <p class="hint" data-i18n="home.freeRideHint">No targets, no segments — just ride. Always uses
               virtual gears. Connect the trainer (top of the page) first.</p>
           </div>
         </div>
 
         <div class="home-col">
           <div class="panel">
-            <h2>Starred Workouts</h2>
+            <h2 data-i18n="home.starred">Starred Workouts</h2>
             <ul id="workout-list" class="workout-list"></ul>
-            <button id="open-workouts-btn" type="button" class="secondary">All Workouts</button>
+            <button id="open-workouts-btn" type="button" class="secondary" data-i18n="home.allWorkouts">All Workouts</button>
           </div>
 
           <div class="panel leaderboard-panel">
             <div class="calendar-header">
-              <h2>Leaderboard</h2>
-              <div class="segmented" role="group" aria-label="Period" id="leaderboard-period">
-                <button type="button" data-value="week">This week</button>
-                <button type="button" data-value="month">This month</button>
+              <h2 data-i18n="lb.title">Leaderboard</h2>
+              <div class="segmented" role="group" aria-label="Period" data-i18n-attr="aria-label:lb.period" id="leaderboard-period">
+                <button type="button" data-value="week" data-i18n="lb.week">This week</button>
+                <button type="button" data-value="month" data-i18n="lb.month">This month</button>
               </div>
             </div>
             <div class="leaderboard-sub">
               <p class="hint" id="leaderboard-range">&nbsp;</p>
-              <div class="segmented segmented-small" role="group" aria-label="Rank by" id="leaderboard-metric">
-                <button type="button" data-value="minutes">Time</button>
-                <button type="button" data-value="distance_km">Distance</button>
-                <button type="button" data-value="rides">Rides</button>
+              <div class="segmented segmented-small" role="group" aria-label="Rank by" data-i18n-attr="aria-label:lb.rankBy" id="leaderboard-metric">
+                <button type="button" data-value="minutes" data-i18n="lb.time">Time</button>
+                <button type="button" data-value="distance_km" data-i18n="lb.distance">Distance</button>
+                <button type="button" data-value="rides" data-i18n="lb.rides">Rides</button>
               </div>
             </div>
             <ol id="leaderboard-list" class="leaderboard-list"></ol>
@@ -125,29 +125,29 @@
     </section>
 
     <section data-view="workouts" class="view">
-      <h1 class="title">WORKOUTS</h1>
+      <h1 class="title" data-i18n="workouts.title">WORKOUTS</h1>
       <p class="tagline" id="workouts-summary">&nbsp;</p>
 
       <div class="panel">
         <div class="calendar-header">
-          <h2>Your Workouts</h2>
+          <h2 data-i18n="workouts.yours">Your Workouts</h2>
           <div class="row-actions workout-file-actions">
             <label class="file-format">
-              <span class="sr-only">File format</span>
-              <select id="workout-file-format" title="Format for Export and Export all">
+              <span class="sr-only" data-i18n="workouts.fileFormat">File format</span>
+              <select id="workout-file-format" title="Format for Export and Export all" data-i18n-attr="title:workouts.formatTitle">
                 <option value="csv">CSV</option>
                 <option value="zwo">Zwift (.zwo)</option>
               </select>
             </label>
-            <button id="import-workouts-btn" type="button" class="secondary">Import</button>
-            <button id="export-all-btn" type="button" class="secondary">Export all</button>
-            <button id="new-workout-btn" type="button">Build a Workout</button>
+            <button id="import-workouts-btn" type="button" class="secondary" data-i18n="workouts.import">Import</button>
+            <button id="export-all-btn" type="button" class="secondary" data-i18n="workouts.exportAll">Export all</button>
+            <button id="new-workout-btn" type="button" data-i18n="workouts.build">Build a Workout</button>
           </div>
           <input id="import-workouts-input" type="file" accept=".csv,.zwo,.txt,text/csv,application/xml,text/xml" multiple hidden />
         </div>
         <p id="workout-files-status" class="status" role="status"></p>
         <ul id="workouts-list" class="workout-list"></ul>
-        <p class="hint">Starred workouts (★) appear on the home screen for
+        <p class="hint" data-i18n="workouts.hint">Starred workouts (★) appear on the home screen for
           quick access. Import and export workouts as CSV (one row per segment:
           label, duration in seconds, % of FTP, grade; opens in any
           spreadsheet) or as Zwift .zwo files, which TrainerRoad, intervals.icu
@@ -156,8 +156,8 @@
       </div>
 
       <div class="panel library-panel">
-        <h2>Library</h2>
-        <p class="hint">Built-in workouts, shared by every rider. Targets are a
+        <h2 data-i18n="workouts.library">Library</h2>
+        <p class="hint" data-i18n="workouts.libraryHint">Built-in workouts, shared by every rider. Targets are a
           percentage of your FTP, turned into watts when you start. Copy one to
           make your own editable version.</p>
         <ul id="library-list" class="workout-list"></ul>
@@ -165,20 +165,20 @@
     </section>
 
     <section data-view="feats" class="view">
-      <h1 class="title">FEATS</h1>
+      <h1 class="title" data-i18n="feats.title">FEATS</h1>
       <p class="tagline" id="feats-totals">&nbsp;</p>
 
       <dl class="summary-stats" id="feats-grid"></dl>
     </section>
 
     <section data-view="badges" class="view">
-      <h1 class="title">BADGES</h1>
+      <h1 class="title" data-i18n="badges.title">BADGES</h1>
       <p class="tagline" id="badges-summary">&nbsp;</p>
       <div id="badges-groups"></div>
     </section>
 
     <section data-view="chronicle" class="view">
-      <h1 class="title">THE CHRONICLE</h1>
+      <h1 class="title" data-i18n="chronicle.title">THE CHRONICLE</h1>
       <p class="tagline" id="chronicle-summary">&nbsp;</p>
 
       <div class="chronicle-grid">
@@ -187,7 +187,7 @@
             <h2 id="calendar-month">Month</h2>
             <div class="row-actions">
               <button id="calendar-prev" type="button" class="secondary">&lsaquo;</button>
-              <button id="calendar-today" type="button" class="secondary">Today</button>
+              <button id="calendar-today" type="button" class="secondary" data-i18n="chronicle.today">Today</button>
               <button id="calendar-next" type="button" class="secondary">&rsaquo;</button>
             </div>
           </div>
@@ -197,45 +197,45 @@
         </div>
 
         <div class="panel">
-          <h2>Weekly Minutes</h2>
+          <h2 data-i18n="chronicle.weekly">Weekly Minutes</h2>
           <canvas id="weekly-chart" class="chart chart-short"></canvas>
         </div>
       </div>
 
       <div class="panel">
         <div class="calendar-header">
-          <h2>Pushes</h2>
-          <button id="clear-day-filter" type="button" class="secondary" hidden>Show all</button>
+          <h2 data-i18n="chronicle.pushes">Pushes</h2>
+          <button id="clear-day-filter" type="button" class="secondary" hidden data-i18n="chronicle.showAll">Show all</button>
         </div>
         <ul id="chronicle-list" class="workout-list"></ul>
       </div>
     </section>
 
     <section data-view="ride-detail" class="view">
-      <h1 class="title" id="ride-detail-title">RIDE</h1>
-      <p class="tagline">Power over time.</p>
+      <h1 class="title" id="ride-detail-title" data-i18n="detail.title">RIDE</h1>
+      <p class="tagline" data-i18n="detail.tagline">Power over time.</p>
 
       <div class="panel" style="margin-bottom:1.5rem">
-        <h2>Power</h2>
+        <h2 data-i18n="detail.power">Power</h2>
         <canvas id="ride-chart" class="chart"></canvas>
-        <p class="hint">Solid line is your power. The dashed step, when shown,
+        <p class="hint" data-i18n="detail.hint">Solid line is your power. The dashed step, when shown,
           is the workout's target for each segment.</p>
       </div>
 
       <dl class="summary-stats" id="ride-detail-stats"></dl>
       <div class="panel ftp-result" id="detail-ftp-result" hidden></div>
       <div class="panel ride-badges" id="detail-badges" hidden></div>
-      <button id="detail-back-btn" type="button" class="secondary">Back to the Chronicle</button>
+      <button id="detail-back-btn" type="button" class="secondary" data-i18n="detail.back">Back to the Chronicle</button>
     </section>
 
     <section data-view="profile" class="view">
-      <h1 class="title">PROFILE</h1>
-      <p class="tagline">Who is pushing the boulder.</p>
+      <h1 class="title" data-i18n="profile.title">PROFILE</h1>
+      <p class="tagline" data-i18n="profile.tagline">Who is pushing the boulder.</p>
 
       <div class="builder-grid">
         <div class="home-col">
           <div class="panel">
-            <h2>Progress</h2>
+            <h2 data-i18n="profile.progress">Progress</h2>
             <div class="level-block">
               <span class="level-badge" id="profile-level">Lv 1</span>
               <div class="level-meter">
@@ -243,97 +243,97 @@
                 <p class="hint" id="level-detail">&nbsp;</p>
               </div>
             </div>
-            <p class="hint">XP comes from time and distance ridden, plus each
+            <p class="hint" data-i18n="profile.xpHint">XP comes from time and distance ridden, plus each
               completed Push — quantities that never change, so raising your FTP
               can never cost you a level.</p>
           </div>
 
           <div class="panel">
-            <h2>Rider</h2>
+            <h2 data-i18n="profile.rider">Rider</h2>
             <label class="field">
-              Name
-              <input id="profile-name" type="text" placeholder="Your name" />
+              <span data-i18n="profile.name">Name</span>
+              <input id="profile-name" type="text" placeholder="Your name" data-i18n-attr="placeholder:profile.namePlaceholder" />
             </label>
             <div class="form-row">
               <label class="field">
-                FTP (watts)
+                <span data-i18n="profile.ftp">FTP (watts)</span>
                 <input id="profile-ftp" type="number" min="0" step="1" />
               </label>
               <label class="field">
-                Weight (kg)
+                <span data-i18n="profile.weight">Weight (kg)</span>
                 <input id="profile-weight-kg" type="number" min="0" step="0.1" />
               </label>
             </div>
             <label class="field">
-              Max heart rate (bpm)
+              <span data-i18n="profile.maxHr">Max heart rate (bpm)</span>
               <input id="profile-max-hr" type="number" min="0" step="1" />
             </label>
-            <p class="hint">FTP is used to show workout targets as a percentage
+            <p class="hint" data-i18n="profile.hint">FTP is used to show workout targets as a percentage
               of threshold. Weight and max HR are stored for later use (power-to-weight,
               heart-rate zones) and change nothing today.</p>
             <p id="profile-status" class="status"></p>
             <div class="live-controls" style="margin-top:1.25rem">
-              <button id="save-profile-btn" type="button">Save Profile</button>
+              <button id="save-profile-btn" type="button" data-i18n="profile.save">Save Profile</button>
             </div>
           </div>
 
           <div class="panel">
-            <h2>FTP History</h2>
+            <h2 data-i18n="ftp.history">FTP History</h2>
             <ul id="ftp-history" class="workout-list"></ul>
-            <p class="hint">Every FTP you've had: from an FTP Test, or saved
+            <p class="hint" data-i18n="ftp.historyHint">Every FTP you've had: from an FTP Test, or saved
               above under Rider.</p>
           </div>
         </div>
 
         <div class="home-col">
           <div class="panel ftp-test-panel" id="ftp-test-panel" hidden>
-            <h2>FTP Test</h2>
-            <p class="ftp-test-intro">Your <strong>FTP</strong> (functional
+            <h2 data-i18n="ftp.test">FTP Test</h2>
+            <p class="ftp-test-intro" data-i18n-html="ftp.intro">Your <strong>FTP</strong> (functional
               threshold power) is roughly the highest power you could hold
               for an hour. Sisyphus uses it for your power zones and to turn
               the library's % targets into watts, so an accurate FTP makes
               every workout the right difficulty.</p>
 
             <div class="ftp-test-start">
-              <button id="ftp-test-start-btn" type="button">Start the FTP Test</button>
-              <p class="hint">63 minutes. Connect the trainer first, with the
+              <button id="ftp-test-start-btn" type="button" data-i18n="ftp.start">Start the FTP Test</button>
+              <p class="hint" data-i18n="ftp.startHint">63 minutes. Connect the trainer first, with the
                 button at the top of the page.</p>
             </div>
 
             <figure class="ftp-test-figure">
               <div class="ftp-test-chart" id="ftp-test-chart" role="img"></div>
               <div class="ftp-test-time" id="ftp-test-time" aria-hidden="true"></div>
-              <figcaption class="hint" id="ftp-test-readout">Hover a bar for details.</figcaption>
+              <figcaption class="hint" id="ftp-test-readout" data-i18n="ftp.hover">Hover a bar for details.</figcaption>
             </figure>
 
             <table class="ftp-test-phases">
-              <caption class="sr-only">The FTP test, part by part</caption>
-              <thead><tr><th>When</th><th>Part</th><th>What to do</th></tr></thead>
+              <caption class="sr-only" data-i18n="ftp.tableCaption">The FTP test, part by part</caption>
+              <thead><tr><th data-i18n="ftp.when">When</th><th data-i18n="ftp.part">Part</th><th data-i18n="ftp.whatToDo">What to do</th></tr></thead>
               <tbody id="ftp-test-phases"></tbody>
             </table>
 
-            <h3>Pacing the 20 minutes</h3>
+            <h3 data-i18n="ftp.pacing">Pacing the 20 minutes</h3>
             <ul class="ftp-test-tips">
-              <li>Start at about your current FTP for the first 5 minutes,
+              <li data-i18n="ftp.tip1">Start at about your current FTP for the first 5 minutes,
                 then raise it if you feel good. Starting too hard is the most
                 common way to ruin the test.</li>
-              <li>Aim for an even effort and keep the last 3 minutes for
+              <li data-i18n="ftp.tip2">Aim for an even effort and keep the last 3 minutes for
                 whatever you have left.</li>
-              <li>The test runs in <strong>virtual gears</strong>: the trainer
+              <li data-i18n-html="ftp.tip3">The test runs in <strong>virtual gears</strong>: the trainer
                 doesn't hold a wattage for you, so shift with <kbd>+</kbd> and
                 <kbd>−</kbd> to set the pace.</li>
             </ul>
 
-            <h3>Your result</h3>
-            <p class="hint">Your new FTP is <strong>95% of your average power
+            <h3 data-i18n="ftp.result">Your result</h3>
+            <p class="hint" data-i18n-html="ftp.resultText">Your new FTP is <strong>95% of your average power
               over the best 20 minutes</strong>: a 20-minute effort is a little
               above what you could hold for an hour. After the ride you see the
               estimate next to your current FTP and choose whether to update
               it; nothing changes on its own. If the ride ends before a full
               20 minutes, there's no result.</p>
 
-            <h3>Before you start</h3>
-            <p class="hint">Ride it rested (no hard ride the day before), with
+            <h3 data-i18n="ftp.before">Before you start</h3>
+            <p class="hint" data-i18n="ftp.beforeText">Ride it rested (no hard ride the day before), with
               a fan and water nearby.</p>
 
           </div>
@@ -342,77 +342,77 @@
     </section>
 
     <section data-view="settings" class="view">
-      <h1 class="title">SETTINGS</h1>
-      <p class="tagline">The knobs behind the ride.</p>
+      <h1 class="title" data-i18n="settings.title">SETTINGS</h1>
+      <p class="tagline" data-i18n="settings.tagline">The knobs behind the ride.</p>
 
       <div class="builder-grid">
         <div class="home-col">
           <div class="panel">
-            <h2>Virtual Gears</h2>
+            <h2 data-i18n="mode.gears">Virtual Gears</h2>
             <div class="form-row">
               <label class="field">
-                Gear count
+                <span data-i18n="settings.gearCount">Gear count</span>
                 <input id="setting-gear-count" type="number" min="1" max="40" step="1" />
               </label>
               <label class="field">
-                Starting gear
+                <span data-i18n="settings.startGear">Starting gear</span>
                 <input id="setting-start-gear" type="number" min="1" step="1" />
               </label>
             </div>
             <div class="form-row">
               <label class="field">
-                Min resistance
+                <span data-i18n="settings.minRes">Min resistance</span>
                 <input id="setting-min-resistance" type="number" min="0" max="20" step="0.5" />
               </label>
               <label class="field">
-                Max resistance
+                <span data-i18n="settings.maxRes">Max resistance</span>
                 <input id="setting-max-resistance" type="number" min="0" max="20" step="0.5" />
               </label>
             </div>
             <label class="field">
-              Resistance per 1% grade
+              <span data-i18n="settings.perGrade">Resistance per 1% grade</span>
               <input id="setting-resistance-per-grade" type="number" min="0" max="2" step="0.1" />
             </label>
-            <p class="hint">Gears are spread evenly between min and max. The
+            <p class="hint" data-i18n="settings.gearsHint">Gears are spread evenly between min and max. The
               trainer accepts 0–20; lower the max if the top gears feel too hard.
               Grade adds resistance on top of your gear — raise the per-grade
               figure to make climbs bite harder.</p>
           </div>
 
           <div class="panel">
-            <h2>Account</h2>
+            <h2 data-i18n="account.title">Account</h2>
             <p class="hint" id="account-who">&nbsp;</p>
             <label class="field">
-              Current password
+              <span data-i18n="account.current">Current password</span>
               <input id="account-current-password" type="password" autocomplete="current-password" />
             </label>
             <div class="form-row">
               <label class="field">
-                New password
+                <span data-i18n="account.new">New password</span>
                 <input id="account-new-password" type="password" autocomplete="new-password" />
               </label>
               <label class="field">
-                Repeat new password
+                <span data-i18n="account.repeat">Repeat new password</span>
                 <input id="account-confirm-password" type="password" autocomplete="new-password" />
               </label>
             </div>
             <p id="account-status" class="status"></p>
             <div class="live-controls" style="margin-top:1.25rem">
-              <button id="change-password-btn" type="button">Change Password</button>
-              <button id="logout-btn" type="button" class="secondary">Log Out</button>
+              <button id="change-password-btn" type="button" data-i18n="account.change">Change Password</button>
+              <button id="logout-btn" type="button" class="secondary" data-i18n="account.logout">Log Out</button>
             </div>
           </div>
 
           <div class="panel">
             <div class="calendar-header">
-              <h2>Log</h2>
+              <h2 data-i18n="log.title">Log</h2>
               <div class="row-actions">
-                <button id="log-copy-btn" type="button" class="secondary">Copy</button>
-                <button id="log-clear-btn" type="button" class="secondary">Clear</button>
+                <button id="log-copy-btn" type="button" class="secondary" data-i18n="log.copy">Copy</button>
+                <button id="log-clear-btn" type="button" class="secondary" data-i18n="log.clear">Clear</button>
               </div>
             </div>
             <ol id="log-list" class="log-list"></ol>
-            <p class="hint">Errors, warnings and trainer events from this
+            <p class="hint" data-i18n="log.hint">Errors, warnings and trainer events from this
               browser, newest first: the last 200, kept on this device only.
               When something goes wrong, press Copy and paste it into your
               message.</p>
@@ -422,41 +422,49 @@
 
         <div class="home-col">
           <div class="panel">
-            <h2>Ride</h2>
+            <label class="field">
+              <span data-i18n="settings.language">Language</span>
+              <select id="setting-language">
+                <option value="auto" data-i18n="lang.auto">Default (same as Chrome)</option>
+                <option value="fr" lang="fr">Français</option>
+                <option value="en" lang="en">English</option>
+              </select>
+            </label>
+            <h2 data-i18n="settings.ride" style="margin-top:1.5rem">Ride</h2>
             <div class="form-row">
               <label class="field">
-                Power smoothing (sec)
+                <span data-i18n="settings.smoothing">Power smoothing (sec)</span>
                 <input id="setting-power-smoothing-sec" type="number" min="1" max="60" step="1" />
               </label>
               <label class="field">
-                Sample interval (sec)
+                <span data-i18n="settings.interval">Sample interval (sec)</span>
                 <input id="setting-sample-interval-sec" type="number" min="1" max="10" step="1" />
               </label>
             </div>
             <label class="field">
-              Default ride mode
+              <span data-i18n="settings.defaultMode">Default ride mode</span>
               <select id="setting-default-mode">
                 <option value="erg">ERG</option>
-                <option value="gears">Virtual Gears</option>
+                <option value="gears" data-i18n="mode.gears">Virtual Gears</option>
               </select>
             </label>
-            <p class="hint">Smoothing affects the live watts display only —
+            <p class="hint" data-i18n="settings.smoothingHint">Smoothing affects the live watts display only —
               recorded samples are always raw. Sample interval sets how often a
               data point is written to the ride log.</p>
-            <h2 style="margin-top:1.5rem">Scenery</h2>
+            <h2 style="margin-top:1.5rem" data-i18n="settings.sceneryTitle">Scenery</h2>
             <label class="field">
-              YouTube virtual rides, separated by commas
+              <span data-i18n="settings.scenery">YouTube virtual rides, separated by commas</span>
               <textarea id="setting-scenery-videos" rows="3" spellcheck="false"
-                placeholder="Swiss Alps | https://youtu.be/..., Dolomites | https://youtu.be/..."></textarea>
+                placeholder="Swiss Alps | https://youtu.be/..., Dolomites | https://youtu.be/..." data-i18n-attr="placeholder:settings.sceneryPlaceholder"></textarea>
             </label>
-            <p class="hint">Each ride starts on one picked at random (not the
+            <p class="hint" data-i18n="settings.sceneryHint">Each ride starts on one picked at random (not the
               one you watched last time), muted to start; unmute in the player.
               Name a video by putting text before its link. To switch, use the
               picker on the ride screen.</p>
-            <p class="tools-link"><a href="probe.html">Hardware diagnostics (probe)</a></p>
+            <p class="tools-link"><a href="probe.html" data-i18n="settings.probe">Hardware diagnostics (probe)</a></p>
             <p id="settings-status" class="status"></p>
             <div class="live-controls" style="margin-top:1.25rem">
-              <button id="save-settings-btn" type="button">Save Settings</button>
+              <button id="save-settings-btn" type="button" data-i18n="settings.save">Save Settings</button>
             </div>
           </div>
         </div>
@@ -464,71 +472,71 @@
     </section>
 
     <section data-view="builder" class="view">
-      <h1 class="title" id="builder-title">BUILD A WORKOUT</h1>
-      <p class="tagline">Stack segments. Watch the shape of the session.</p>
+      <h1 class="title" id="builder-title" data-i18n="builder.title">BUILD A WORKOUT</h1>
+      <p class="tagline" data-i18n="builder.tagline">Stack segments. Watch the shape of the session.</p>
 
       <div class="panel builder-preview-panel">
         <div class="builder-stats">
-          <span><em>Duration</em><strong id="builder-duration">00:00</strong></span>
-          <span><em>Segments</em><strong id="builder-count">0</strong></span>
-          <span><em>Load</em><strong id="builder-load">—</strong></span>
+          <span><em data-i18n="builder.duration">Duration</em><strong id="builder-duration">00:00</strong></span>
+          <span><em data-i18n="builder.segments">Segments</em><strong id="builder-count">0</strong></span>
+          <span><em data-i18n="builder.load">Load</em><strong id="builder-load">—</strong></span>
         </div>
 
         <div class="preview-wrap">
           <div class="preview-axis" id="preview-axis"></div>
           <div class="preview-chart" id="preview-chart">
-            <p class="preview-empty">Add a segment to see the shape of the workout.</p>
+            <p class="preview-empty" data-i18n="builder.empty">Add a segment to see the shape of the workout.</p>
           </div>
         </div>
         <div class="preview-time" id="preview-time"></div>
 
         <div class="zone-picker" id="zone-picker"></div>
-        <p class="hint">Click a zone to append a segment at that intensity, or
+        <p class="hint" data-i18n="builder.zoneHint">Click a zone to append a segment at that intensity, or
           set exact values below. Click any bar to remove it.</p>
       </div>
 
       <div class="builder-grid">
         <div class="home-col">
           <div class="panel">
-            <h2>Workout</h2>
+            <h2 data-i18n="builder.workout">Workout</h2>
             <label class="field">
-              Name
+              <span data-i18n="builder.name">Name</span>
               <input id="workout-name" type="text" placeholder="Sweet Spot 3x10" />
             </label>
           </div>
 
           <div class="panel segment-form">
-            <h2>Add Segment</h2>
+            <h2 data-i18n="builder.addSegment">Add Segment</h2>
             <label class="field">
-              Label
-              <input id="segment-label" type="text" placeholder="Warmup" />
+              <span data-i18n="builder.label">Label</span>
+              <input id="segment-label" type="text" placeholder="Warmup" data-i18n-attr="placeholder:label.Warmup" />
             </label>
             <div class="form-row">
               <label class="field">
-                Duration (sec)
+                <span data-i18n="builder.durationSec">Duration (sec)</span>
                 <input id="segment-duration" type="number" min="1" value="300" />
               </label>
               <label class="field">
-                Target % of FTP
+                <span data-i18n="builder.target">Target % of FTP</span>
                 <input id="segment-pct" type="number" min="0" max="300" step="0.5" value="75" />
                 <span class="field-hint" id="segment-pct-watts">&nbsp;</span>
               </label>
             </div>
             <label class="field">
-              Grade % (negative = downhill)
+              <span data-i18n="builder.grade">Grade % (negative = downhill)</span>
               <input id="segment-grade" type="number" min="-20" max="20" step="0.5" value="0" />
             </label>
-            <button id="add-segment-btn" type="button">Add Segment</button>
+            <button id="add-segment-btn" type="button" data-i18n="builder.addSegment">Add Segment</button>
           </div>
         </div>
 
         <div class="home-col">
           <div class="panel">
-            <h2>Segments</h2>
+            <h2 data-i18n="builder.segmentsTitle">Segments</h2>
             <ol id="segment-list" class="segment-list"></ol>
             <div class="live-controls">
-              <button id="save-workout-btn" type="button">Save Workout</button>
-              <button id="cancel-builder-btn" type="button" class="secondary">Cancel</button>
+              <button id="save-workout-btn" type="button" data-i18n="builder.save">Save Workout</button>
+              <button id="cancel-builder-btn" type="button" class="secondary" data-i18n="common.cancel">Cancel</button>
             </div>
           </div>
         </div>
@@ -540,17 +548,17 @@
         <!-- 1. Steps: the workout, current segment highlighted -->
         <aside class="ride-steps" id="ride-steps">
           <div class="ride-steps-head">
-            <span id="steps-title">Free Ride</span>
+            <span id="steps-title" data-i18n="home.freeRide">Free Ride</span>
             <span id="steps-progress">--</span>
           </div>
           <ol class="steps-list" id="steps-list"></ol>
           <!-- The current step's target, at the foot of the list -->
           <div class="ride-target" id="ride-target" hidden>
             <strong id="segment-label-value">--</strong>
-            <span><b id="segment-target-value">--</b> <em id="segment-target-label">target watts</em></span>
-            <span><b id="segment-remaining-value">--</b> <em>remaining</em></span>
+            <span><b id="segment-target-value">--</b> <em id="segment-target-label" data-i18n="live.targetWatts">target watts</em></span>
+            <span><b id="segment-remaining-value">--</b> <em data-i18n="live.remaining">remaining</em></span>
             <span class="ride-grade" id="segment-grade-figure" hidden>
-              <b id="segment-grade-value">--</b> <em id="segment-grade-label">grade</em>
+              <b id="segment-grade-value">--</b> <em id="segment-grade-label" data-i18n="live.grade">grade</em>
             </span>
           </div>
         </aside>
@@ -559,11 +567,11 @@
         <div class="ride-metrics">
           <div class="ride-metric">
             <span class="ride-metric-value" id="power-value">--</span>
-            <span class="ride-metric-label">watts (10s)</span>
+            <span class="ride-metric-label" data-i18n="live.watts10">watts (10s)</span>
           </div>
           <div class="ride-metric">
             <span class="ride-metric-value" id="cadence-value">--</span>
-            <span class="ride-metric-label">rpm</span>
+            <span class="ride-metric-label" data-i18n="unit.rpm">rpm</span>
           </div>
           <div class="ride-metric">
             <span class="ride-metric-value" id="speed-value">--</span>
@@ -577,24 +585,24 @@
           <canvas id="ride-hero-canvas" aria-hidden="true"></canvas>
           <div class="zone-badge" id="zone-badge">
             <strong id="zone-name">Z1</strong>
-            <span id="zone-label">Recovery</span>
+            <span id="zone-label" data-i18n="zone.1">Recovery</span>
           </div>
           <div class="zone-scale" id="zone-scale"></div>
           <dl class="ride-totals">
-            <div><dt>Elapsed</dt><dd id="ride-elapsed">0:00</dd></div>
-            <div><dt>Avg Power</dt><dd id="total-avg-power">--</dd></div>
-            <div><dt>Avg Speed</dt><dd id="total-avg-speed">--</dd></div>
-            <div><dt>Distance</dt><dd id="total-distance">--</dd></div>
+            <div><dt data-i18n="live.elapsed">Elapsed</dt><dd id="ride-elapsed">0:00</dd></div>
+            <div><dt data-i18n="stat.avgPower">Avg Power</dt><dd id="total-avg-power">--</dd></div>
+            <div><dt data-i18n="stat.avgSpeed">Avg Speed</dt><dd id="total-avg-speed">--</dd></div>
+            <div><dt data-i18n="stat.distance">Distance</dt><dd id="total-distance">--</dd></div>
           </dl>
         </aside>
 
         <!-- 4. Scenery (a YouTube virtual ride), with ride notes on top -->
         <div class="ride-hero">
           <div id="scenery-frame" class="scenery-frame"></div>
-          <p id="scenery-empty" class="scenery-empty" hidden>
+          <p id="scenery-empty" class="scenery-empty" hidden data-i18n="live.sceneryEmpty">
             Add YouTube virtual rides under Settings → Scenery to ride with a view.
           </p>
-          <select id="scenery-picker" class="scenery-picker" aria-label="Scenery" hidden></select>
+          <select id="scenery-picker" class="scenery-picker" aria-label="Scenery" data-i18n-attr="aria-label:settings.sceneryTitle" hidden></select>
           <p id="ride-note" class="ride-note" hidden></p>
         </div>
 
@@ -609,11 +617,11 @@
           <div class="ride-footer">
             <div class="gear-display" id="gear-metric">
               <strong id="gear-value">--</strong>
-              <span class="metric-label">gear</span>
+              <span class="metric-label" data-i18n="live.gear">gear</span>
             </div>
             <div class="ride-actions">
-              <button id="pause-btn" type="button" class="secondary">Pause</button>
-              <button id="end-ride-btn" type="button" class="secondary">End Ride</button>
+              <button id="pause-btn" type="button" class="secondary" data-i18n="live.pause">Pause</button>
+              <button id="end-ride-btn" type="button" class="secondary" data-i18n="live.endRide">End Ride</button>
             </div>
           </div>
         </div>
@@ -625,34 +633,34 @@
          can never end or lose a ride. -->
     <dialog id="pause-dialog" class="panel pause-dialog" aria-labelledby="pause-title">
       <div id="pause-step-paused">
-        <h1 id="pause-title" class="pause-title">PAUSED</h1>
+        <h1 id="pause-title" class="pause-title" data-i18n="pause.title">PAUSED</h1>
         <dl class="pause-stats">
-          <div><dt>Distance</dt><dd id="pause-distance">--</dd></div>
-          <div><dt>Avg Power</dt><dd id="pause-avg-power">--</dd></div>
-          <div><dt id="pause-time-label">Time Left</dt><dd id="pause-time">--</dd></div>
+          <div><dt data-i18n="stat.distance">Distance</dt><dd id="pause-distance">--</dd></div>
+          <div><dt data-i18n="stat.avgPower">Avg Power</dt><dd id="pause-avg-power">--</dd></div>
+          <div><dt id="pause-time-label" data-i18n="pause.timeLeft">Time Left</dt><dd id="pause-time">--</dd></div>
         </dl>
-        <p class="hint">The clock is stopped and the trainer is released.</p>
+        <p class="hint" data-i18n="pause.hint">The clock is stopped and the trainer is released.</p>
         <div class="pause-actions">
-          <button id="pause-continue-btn" type="button" autofocus>Continue</button>
-          <button id="pause-end-btn" type="button" class="secondary">End Ride</button>
-          <button id="pause-cancel-btn" type="button" class="secondary">Cancel Ride</button>
+          <button id="pause-continue-btn" type="button" autofocus data-i18n="pause.continue">Continue</button>
+          <button id="pause-end-btn" type="button" class="secondary" data-i18n="live.endRide">End Ride</button>
+          <button id="pause-cancel-btn" type="button" class="secondary" data-i18n="pause.cancelRide">Cancel Ride</button>
         </div>
       </div>
       <div id="pause-step-end" hidden>
-        <h1 class="pause-title">END RIDE?</h1>
-        <p class="hint">Save it to the Chronicle? Either way it can't be continued.</p>
+        <h1 class="pause-title" data-i18n="pause.endTitle">END RIDE?</h1>
+        <p class="hint" data-i18n="pause.endHint">Save it to the Chronicle? Either way it can't be continued.</p>
         <div class="pause-actions">
-          <button id="pause-save-btn" type="button">Save Ride</button>
-          <button id="pause-nosave-btn" type="button" class="secondary">Don't Save</button>
-          <button id="pause-end-back-btn" type="button" class="secondary pause-back">Back</button>
+          <button id="pause-save-btn" type="button" data-i18n="pause.save">Save Ride</button>
+          <button id="pause-nosave-btn" type="button" class="secondary" data-i18n="pause.noSave">Don't Save</button>
+          <button id="pause-end-back-btn" type="button" class="secondary pause-back" data-i18n="common.back">Back</button>
         </div>
       </div>
       <div id="pause-step-cancel" hidden>
-        <h1 class="pause-title">CANCEL RIDE?</h1>
-        <p class="hint">The ride will be thrown away, not saved. This can't be undone.</p>
+        <h1 class="pause-title" data-i18n="pause.cancelTitle">CANCEL RIDE?</h1>
+        <p class="hint" data-i18n="pause.cancelHint">The ride will be thrown away, not saved. This can't be undone.</p>
         <div class="pause-actions">
-          <button id="pause-discard-btn" type="button">Discard Ride</button>
-          <button id="pause-cancel-back-btn" type="button" class="secondary pause-back">Back</button>
+          <button id="pause-discard-btn" type="button" data-i18n="pause.discard">Discard Ride</button>
+          <button id="pause-cancel-back-btn" type="button" class="secondary pause-back" data-i18n="common.back">Back</button>
         </div>
       </div>
     </dialog>
@@ -662,28 +670,28 @@
     <dialog id="login-dialog" class="panel login-dialog" aria-labelledby="login-title">
       <form id="login-form">
         <h1 id="login-title" class="title">SISYPHUS</h1>
-        <p class="tagline">Push the boulder. Every day.</p>
+        <p class="tagline" data-i18n="app.tagline">Push the boulder. Every day.</p>
         <label class="field">
-          Username
+          <span data-i18n="login.username">Username</span>
           <input id="login-username" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" required />
         </label>
         <label class="field">
-          Password
+          <span data-i18n="login.password">Password</span>
           <input id="login-password" type="password" autocomplete="current-password" required />
         </label>
         <p id="login-status" class="status" role="alert"></p>
-        <button id="login-submit" type="submit">Log In</button>
-        <p class="hint">No account? Ask whoever runs this server.</p>
+        <button id="login-submit" type="submit" data-i18n="login.submit">Log In</button>
+        <p class="hint" data-i18n="login.noAccount">No account? Ask whoever runs this server.</p>
       </form>
     </dialog>
 
     <section data-view="summary" class="view">
-      <h1 class="title">PUSH COMPLETE</h1>
-      <p class="tagline">The boulder rests. Until tomorrow.</p>
+      <h1 class="title" data-i18n="summary.title">PUSH COMPLETE</h1>
+      <p class="tagline" data-i18n="summary.tagline">The boulder rests. Until tomorrow.</p>
       <dl class="summary-stats" id="summary-stats"></dl>
       <div class="panel ftp-result" id="summary-ftp-result" hidden></div>
       <div class="panel ride-badges" id="summary-badges" hidden></div>
-      <button id="summary-home-btn" type="button">Back to Home</button>
+      <button id="summary-home-btn" type="button" data-i18n="summary.home">Back to Home</button>
     </section>
   </main>
   <script type="module" src="js/app.js"></script>

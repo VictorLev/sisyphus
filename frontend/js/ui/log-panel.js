@@ -1,4 +1,7 @@
 import { getLog, clearLog, onLog, formatLog } from '../log.js';
+import { t, locale } from '../i18n.js';
+
+// The entries themselves stay in English: they are for bug reports.
 
 // Settings → Log: the in-app event log, newest first, with Copy and Clear.
 export function initLogPanel() {
@@ -12,7 +15,7 @@ export function initLogPanel() {
     if (entries.length === 0) {
       const li = document.createElement('li');
       li.className = 'log-empty';
-      li.textContent = 'Nothing logged. Errors and trainer events will appear here.';
+      li.textContent = t('log.empty');
       listEl.append(li);
       return;
     }
@@ -21,7 +24,7 @@ export function initLogPanel() {
       li.className = `log-entry log-${entry.level}`;
       const time = document.createElement('time');
       time.dateTime = entry.at;
-      time.textContent = new Date(entry.at).toLocaleString(undefined, {
+      time.textContent = new Date(entry.at).toLocaleString(locale(), {
         month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit',
       });
       const level = document.createElement('span');
@@ -38,14 +41,14 @@ export function initLogPanel() {
   document.getElementById('log-copy-btn').addEventListener('click', async () => {
     try {
       await navigator.clipboard.writeText(formatLog() || '(log is empty)');
-      statusEl.textContent = 'Copied.';
+      statusEl.textContent = t('log.copied');
     } catch (err) {
-      statusEl.textContent = `Could not copy: ${err.message}`;
+      statusEl.textContent = t('log.copyFailed', { error: err.message });
     }
   });
   document.getElementById('log-clear-btn').addEventListener('click', () => {
     clearLog();
-    statusEl.textContent = 'Cleared.';
+    statusEl.textContent = t('log.cleared');
   });
 
   // Live while Settings is open; otherwise rendered when it opens.

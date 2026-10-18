@@ -1,4 +1,5 @@
 import { getBadges } from '../api/client.js';
+import { t, tp, num, date } from '../i18n.js';
 
 // Badges: the Feats page lists them all by group; the ride summary and a
 // ride's Chronicle page show the ones that ride earned. Computed by the
@@ -12,10 +13,10 @@ const GLYPHS = {
 };
 
 const dateText = (iso) =>
-  new Date(iso).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+  date(iso, { year: 'numeric', month: 'short', day: 'numeric' });
 
 function progressText({ value, target, unit }) {
-  return `${value.toLocaleString()} / ${target.toLocaleString()}${unit ? ` ${unit}` : ''}`;
+  return `${num(value)} / ${num(target)}${unit ? ` ${t(`badgeUnit.${unit}`)}` : ''}`;
 }
 
 export function badgeTile(badge, { onOpenRide } = {}) {
@@ -31,21 +32,24 @@ export function badgeTile(badge, { onOpenRide } = {}) {
   body.className = 'badge-body';
   const name = document.createElement('strong');
   name.className = 'badge-name';
-  name.textContent = badge.name;
+  // Names and descriptions come from the dictionaries by badge id; the
+  // server's English is the fallback. A secret not yet earned shows its hint.
+  const secret = badge.hidden && !badge.earned;
+  name.textContent = secret ? '???' : t(`badge.${badge.id}.name`);
   const desc = document.createElement('span');
   desc.className = 'badge-desc';
-  desc.textContent = badge.description;
+  desc.textContent = t(`badge.${badge.id}.${secret ? 'hint' : 'desc'}`);
   body.append(name, desc);
 
   if (badge.earned) {
     const when = document.createElement('span');
     when.className = 'badge-when';
-    when.textContent = `Earned ${dateText(badge.earned_at)}`;
+    when.textContent = t('badges.earnedOn', { date: dateText(badge.earned_at) });
     body.append(when);
     if (badge.session_id && onOpenRide) {
       tile.classList.add('is-clickable');
       tile.tabIndex = 0;
-      tile.title = 'Open the ride that earned it';
+      tile.title = t('badges.openRide');
       const open = () => onOpenRide(badge.session_id);
       tile.addEventListener('click', open);
       tile.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } });
@@ -63,7 +67,7 @@ export function badgeTile(badge, { onOpenRide } = {}) {
   } else if (badge.hidden) {
     const text = document.createElement('span');
     text.className = 'badge-when';
-    text.textContent = 'Secret';
+    text.textContent = t('badges.secret');
     body.append(text);
   }
 
@@ -75,7 +79,7 @@ export function badgeTile(badge, { onOpenRide } = {}) {
 function setNavCount(earned) {
   const button = document.getElementById('nav-badges');
   document.getElementById('nav-badges-count').textContent = String(earned);
-  button.title = `${earned} badge${earned === 1 ? '' : 's'} earned`;
+  button.title = tp('badges.earnedCount', earned);
   button.setAttribute('aria-label', button.title);
   button.hidden = false;
 }
@@ -98,10 +102,10 @@ export function initBadges({ onOpenRide, onOpenBadges }) {
     try {
       data = await getBadges();
     } catch (err) {
-      summaryEl.textContent = `Could not load badges: ${err.message}`;
+      summaryEl.textContent = t('badges.loadFailed', { error: err.message });
       return;
     }
-    summaryEl.textContent = `${data.earned} of ${data.total} earned. Find the secrets.`;
+    summaryEl.textContent = t('badges.summary', { earned: data.earned, total: data.total });
     setNavCount(data.earned);
     groupsEl.innerHTML = '';
     const groups = new Map();
@@ -114,7 +118,7 @@ export function initBadges({ onOpenRide, onOpenBadges }) {
       section.className = 'badge-group';
       const heading = document.createElement('h3');
       const earned = badges.filter((b) => b.earned).length;
-      heading.textContent = `${group} · ${earned}/${badges.length}`;
+      heading.textContent = `${t(`badgeGroup.${group}`)} · ${earned}/${badges.length}`;
       const list = document.createElement('ul');
       list.className = 'badge-grid';
       for (const badge of badges) list.append(badgeTile(badge, { onOpenRide }));
@@ -142,7 +146,7 @@ export async function showRideBadges(container, sessionId, { title, onOpenRide }
   if (earned.length === 0) return;
   container.innerHTML = '';
   const heading = document.createElement('h2');
-  heading.textContent = title ?? (earned.length === 1 ? 'New badge' : `${earned.length} new badges`);
+  heading.textContent = title ?? tp('badges.new', earned.length);
   const list = document.createElement('ul');
   list.className = 'badge-grid';
   for (const badge of earned) list.append(badgeTile(badge, { onOpenRide }));

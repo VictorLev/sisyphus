@@ -3,6 +3,11 @@
 // actual trainer, and to exercise the Control Point write path directly.
 
 import { TrainerControl } from './ble/trainer-control.js';
+import { initLanguage } from './i18n.js';
+
+// The page's own text follows the rider's language (this browser's copy of
+// the setting); the probe output stays in English, in the spec's terms.
+initLanguage();
 
 const logEl = document.getElementById('log');
 

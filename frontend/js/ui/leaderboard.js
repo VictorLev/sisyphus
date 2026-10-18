@@ -1,4 +1,5 @@
 import { getLeaderboard } from '../api/client.js';
+import { t, tp, num, locale } from '../i18n.js';
 
 // Home → Leaderboard: every rider's totals for this week or this month,
 // ranked by time (the default: fair whatever anyone's FTP), distance or
@@ -9,8 +10,8 @@ const METRICS = {
   minutes: {
     format: (r) => (r.minutes < 60 ? `${r.minutes} min` : `${Math.floor(r.minutes / 60)} h ${String(r.minutes % 60).padStart(2, '0')}`),
   },
-  distance_km: { format: (r) => `${r.distance_km.toFixed(1)} km` },
-  rides: { format: (r) => `${r.rides} ride${r.rides === 1 ? '' : 's'}` },
+  distance_km: { format: (r) => `${num(r.distance_km, 1)} km` },
+  rides: { format: (r) => tp('unit.rides', r.rides) },
 };
 
 const STORAGE = 'sisyphus.leaderboard';
@@ -30,9 +31,9 @@ function readChoice() {
 function rangeText(board) {
   const from = new Date(board.from);
   const last = new Date(Date.parse(board.to) - 1);
-  if (board.period === 'month') return from.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+  if (board.period === 'month') return from.toLocaleDateString(locale(), { month: 'long', year: 'numeric' });
   const day = { weekday: 'short', day: 'numeric', month: 'short' };
-  return `${from.toLocaleDateString(undefined, day)} – ${last.toLocaleDateString(undefined, day)}`;
+  return `${from.toLocaleDateString(locale(), day)} – ${last.toLocaleDateString(locale(), day)}`;
 }
 
 export function initLeaderboard() {
@@ -65,7 +66,7 @@ export function initLeaderboard() {
       li.className = `leaderboard-row${rider.you ? ' is-you' : ''}${rider[key] > 0 ? '' : ' is-idle'}`;
       const summary = `${rider.name}: ${METRICS.rides.format(rider)}, ${METRICS.minutes.format(rider)}, ${METRICS.distance_km.format(rider)}`;
       li.title = summary;
-      li.setAttribute('aria-label', `${rider[key] > 0 ? `Rank ${rank}, ` : ''}${summary}${rider.you ? ' (you)' : ''}`);
+      li.setAttribute('aria-label', `${rider[key] > 0 ? `${t('lb.rank', { n: rank })}, ` : ''}${summary}${rider.you ? ` (${t('lb.you')})` : ''}`);
 
       const rankEl = document.createElement('span');
       rankEl.className = 'leaderboard-rank';
@@ -80,12 +81,12 @@ export function initLeaderboard() {
       if (rider.you) {
         const you = document.createElement('span');
         you.className = 'leaderboard-you';
-        you.textContent = 'you';
+        you.textContent = t('lb.you');
         who.append(you);
       }
       const level = document.createElement('span');
       level.className = 'leaderboard-level';
-      level.textContent = `Lv ${rider.level}`;
+      level.textContent = t('app.level', { n: rider.level });
       who.append(level);
 
       const bar = document.createElement('span');
@@ -96,7 +97,7 @@ export function initLeaderboard() {
 
       const value = document.createElement('span');
       value.className = 'leaderboard-value';
-      value.textContent = rider[key] > 0 ? METRICS[key].format(rider) : 'no rides yet';
+      value.textContent = rider[key] > 0 ? METRICS[key].format(rider) : t('lb.noRides');
 
       li.append(rankEl, who, value, bar);
       listEl.append(li);
@@ -109,7 +110,7 @@ export function initLeaderboard() {
     } catch (err) {
       board = null;
       listEl.innerHTML = '';
-      rangeEl.textContent = `Could not load the leaderboard: ${err.message}`;
+      rangeEl.textContent = t('lb.loadFailed', { error: err.message });
       return;
     }
     render();

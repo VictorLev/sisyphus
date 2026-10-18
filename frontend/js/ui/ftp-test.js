@@ -1,32 +1,32 @@
 import { getFtpEstimate, setFtp, getFtpHistory, listWorkouts, getProfile } from '../api/client.js';
 import { zoneForWatts } from '../zones.js';
+import { t, tOr, num, date, label as translateLabel } from '../i18n.js';
 
 // The result of an FTP test ride: the estimate, how it compares with the
 // rider's current FTP, and the choice to adopt it. Nothing changes until the
 // rider presses Update; the test only measures.
 export async function showFtpResult(container, sessionId) {
   container.hidden = false;
-  container.innerHTML = '<p class="hint">Working out your FTP…</p>';
+  container.innerHTML = '';
+  container.append(paragraph('hint', t('ftp.working')));
 
   let result;
   try {
     result = await getFtpEstimate(sessionId);
   } catch (err) {
     container.innerHTML = '';
-    container.append(paragraph('hint', `Could not read the test: ${err.message}`));
+    container.append(paragraph('hint', t('ftp.readFailed', { error: err.message })));
     return;
   }
 
   container.innerHTML = '';
   const heading = document.createElement('h2');
-  heading.textContent = 'FTP Test';
+  heading.textContent = t('ftp.test');
   container.append(heading);
 
   const minutes = Math.round(result.test.window_sec / 60);
   if (result.estimate_w == null) {
-    container.append(paragraph('hint',
-      `Not enough data: the test reads your best ${minutes} minutes, and this ride ` +
-      `ended before a full ${minutes}-minute effort. Your FTP stays ${result.current_ftp} W.`));
+    container.append(paragraph('hint', t('ftp.notEnough', { minutes, ftp: result.current_ftp })));
     return;
   }
 
@@ -38,13 +38,13 @@ export async function showFtpResult(container, sessionId) {
   const pct = Math.round(result.test.factor * 100);
   const change = result.estimate_w - result.current_ftp;
   const changePct = result.current_ftp > 0 ? Math.round((change / result.current_ftp) * 100) : 0;
-  const delta = change === 0 ? 'the same as now' : `${change > 0 ? '+' : ''}${change} W (${changePct > 0 ? '+' : ''}${changePct}%)`;
-  container.append(paragraph('hint',
-    `${pct}% of your best ${minutes} minutes (${result.best_average_w} W). ` +
-    `Your FTP is ${result.current_ftp} W: ${delta}.`));
+  const delta = change === 0
+    ? t('ftp.same')
+    : `${change > 0 ? '+' : ''}${change} W (${t('unit.pct', { n: `${changePct > 0 ? '+' : ''}${changePct}` })})`;
+  container.append(paragraph('hint', t('ftp.estimateText', { pct, minutes, best: result.best_average_w, ftp: result.current_ftp, delta })));
 
   if (result.already_applied) {
-    container.append(paragraph('status', 'This result is already your FTP.'));
+    container.append(paragraph('status', t('ftp.alreadyApplied')));
     return;
   }
   if (change === 0) return;
@@ -54,11 +54,11 @@ export async function showFtpResult(container, sessionId) {
   actions.className = 'live-controls';
   const update = document.createElement('button');
   update.type = 'button';
-  update.textContent = `Update my FTP to ${result.estimate_w} W`;
+  update.textContent = t('ftp.update', { watts: result.estimate_w });
   const keep = document.createElement('button');
   keep.type = 'button';
   keep.className = 'secondary';
-  keep.textContent = `Keep ${result.current_ftp} W`;
+  keep.textContent = t('ftp.keep', { watts: result.current_ftp });
   actions.append(update, keep);
   container.append(actions, status);
 
@@ -69,15 +69,15 @@ export async function showFtpResult(container, sessionId) {
       // The rest of the app (zones, %FTP labels, the builder) listens for this.
       document.dispatchEvent(new CustomEvent('profilechange', { detail: profile }));
       actions.remove();
-      status.textContent = `FTP updated to ${profile.ftp} W. Zones and % FTP targets now use it.`;
+      status.textContent = t('ftp.updated', { watts: profile.ftp });
     } catch (err) {
-      status.textContent = `Could not update: ${err.message}`;
+      status.textContent = t('ftp.updateFailed', { error: err.message });
       update.disabled = keep.disabled = false;
     }
   });
   keep.addEventListener('click', () => {
     actions.remove();
-    status.textContent = `Kept ${result.current_ftp} W. You can apply this result later from the ride in the Chronicle.`;
+    status.textContent = t('ftp.kept', { watts: result.current_ftp });
   });
 }
 
@@ -98,12 +98,12 @@ export function initFtpHistory() {
       entries = await getFtpHistory();
     } catch (err) {
       listEl.innerHTML = '';
-      listEl.append(item('empty', `Could not load: ${err.message}`));
+      listEl.append(item('empty', t('common.loadFailed', { error: err.message })));
       return;
     }
     listEl.innerHTML = '';
     if (entries.length === 0) {
-      listEl.append(item('empty', 'No FTP changes yet. Take the FTP Test to measure yours.'));
+      listEl.append(item('empty', t('ftp.noHistory')));
       return;
     }
     for (const entry of entries) {
@@ -113,9 +113,9 @@ export function initFtpHistory() {
       name.textContent = `${Math.round(entry.ftp)} W`;
       const meta = document.createElement('span');
       meta.className = 'workout-meta';
-      const date = new Date(`${entry.created_at.replace(' ', 'T')}Z`).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+      const when = date(`${entry.created_at.replace(' ', 'T')}Z`, { year: 'numeric', month: 'short', day: 'numeric' });
       const change = entry.previous_ftp != null ? Math.round(entry.ftp - entry.previous_ftp) : null;
-      meta.textContent = `${date} · ${entry.source === 'test' ? 'FTP test' : 'set by hand'}` +
+      meta.textContent = `${when} · ${t(entry.source === 'test' ? 'ftp.sourceTest' : 'ftp.sourceManual')}` +
         (change ? ` · ${change > 0 ? '+' : ''}${change} W` : '');
       const info = document.createElement('div');
       info.append(name, meta);
@@ -146,15 +146,11 @@ export function initFtpHistory() {
 // The chart and the part-by-part table are both built from the workout's
 // segments (their `phase` names), so they can't drift from what is ridden.
 
-// What to do in each part, keyed by the segments' `phase`.
-const PHASE_NOTES = {
-  'Warm-up': 'Easy spinning to get the legs going.',
-  Openers: 'Three 1-minute pushes at your current FTP with easy riding between. They wake the legs up.',
-  '5 min hard': 'Hard but controlled. It uses up your short burst of extra energy, so the test measures what you can sustain.',
-  Recover: 'Easy. Get your breath back and drink.',
-  'The test': 'As hard as you can hold evenly for 20 minutes. The only part that is measured.',
-  'Cool-down': 'Easy spinning.',
-};
+// Each part's name and what to do are in the dictionaries, keyed by the
+// segments' `phase` ("phase.<name>" and "phaseNote.<name>").
+const phaseName = (name) => tOr(`phase.${name}`, name);
+const phaseNote = (name) => tOr(`phaseNote.${name}`, '');
+const segLabel = (label) => translateLabel(label);
 const MEASURED = 'The test';
 
 const clock = (sec) => `${Math.floor(sec / 60)}:${String(Math.round(sec % 60)).padStart(2, '0')}`;
@@ -163,7 +159,7 @@ const watts = (pct, ftp) => Math.round((pct / 100) * ftp);
 // Consecutive segments sharing a phase, with their time span and effort range.
 function phasesOf(structure) {
   const phases = [];
-  let t = 0;
+  let elapsed = 0;
   for (const seg of structure) {
     const name = seg.phase ?? seg.label;
     const last = phases.at(-1);
@@ -172,17 +168,17 @@ function phasesOf(structure) {
       last.minPct = Math.min(last.minPct, seg.target_ftp_pct);
       last.maxPct = Math.max(last.maxPct, seg.target_ftp_pct);
     } else {
-      phases.push({ name, startSec: t, endSec: t + seg.duration_sec, minPct: seg.target_ftp_pct, maxPct: seg.target_ftp_pct });
+      phases.push({ name, startSec: elapsed, endSec: elapsed + seg.duration_sec, minPct: seg.target_ftp_pct, maxPct: seg.target_ftp_pct });
     }
-    t += seg.duration_sec;
+    elapsed += seg.duration_sec;
   }
   return phases;
 }
 
 function effortText(phase, ftp) {
-  if (phase.name === MEASURED) return `Your best, around ${watts(phase.minPct, ftp)} W or more`;
-  if (phase.minPct === phase.maxPct) return `${phase.minPct}% FTP (≈${watts(phase.minPct, ftp)} W)`;
-  return `${phase.minPct}–${phase.maxPct}% FTP (≈${watts(phase.minPct, ftp)}–${watts(phase.maxPct, ftp)} W)`;
+  if (phase.name === MEASURED) return t('ftp.yourBest', { watts: watts(phase.minPct, ftp) });
+  if (phase.minPct === phase.maxPct) return `${t('unit.pctFtp', { n: phase.minPct })} (≈${watts(phase.minPct, ftp)} W)`;
+  return `${t('unit.pctFtp', { n: `${phase.minPct}–${phase.maxPct}` })} (≈${watts(phase.minPct, ftp)}–${watts(phase.maxPct, ftp)} W)`;
 }
 
 function renderChart(workout, ftp) {
@@ -195,20 +191,20 @@ function renderChart(workout, ftp) {
 
   chart.innerHTML = '';
   chart.setAttribute('aria-label',
-    `Shape of the test: ${Math.round(total / 60)} minutes, power by segment. ` +
-    (measured ? `The measured 20 minutes run from minute ${Math.round(measured.startSec / 60)} to ${Math.round(measured.endSec / 60)}. ` : '') +
-    'The table below lists every part.');
+    t('ftp.chartLabel', { minutes: Math.round(total / 60) }) +
+    (measured ? ` ${t('ftp.chartMeasured', { from: Math.round(measured.startSec / 60), to: Math.round(measured.endSec / 60) })}` : '') +
+    ` ${t('ftp.chartTable')}`);
 
   // Your FTP as a reference line: everything above it is harder than an hour's effort.
   const ftpLine = document.createElement('span');
   ftpLine.className = 'ftp-test-ftpline';
   ftpLine.style.bottom = `${(100 / ceiling) * 100}%`;
   const ftpLabel = document.createElement('span');
-  ftpLabel.textContent = 'Your FTP';
+  ftpLabel.textContent = t('ftp.yourFtp');
   ftpLine.append(ftpLabel);
   chart.append(ftpLine);
 
-  const defaultText = 'Hover a bar for details.';
+  const defaultText = t('ftp.hover');
   for (const seg of workout.structure) {
     const bar = document.createElement('span');
     bar.className = 'ftp-test-bar';
@@ -218,14 +214,14 @@ function renderChart(workout, ftp) {
     bar.style.background = zoneForWatts(seg.target_ftp_pct, 100).color;
     const isTest = seg.phase === MEASURED;
     const detail = isTest
-      ? `${seg.label} · ${clock(seg.duration_sec)} · as hard as you can hold, around ${watts(seg.target_ftp_pct, ftp)} W or more`
-      : `${seg.label} · ${clock(seg.duration_sec)} · ${seg.target_ftp_pct}% FTP ≈ ${watts(seg.target_ftp_pct, ftp)} W`;
+      ? `${segLabel(seg.label)} · ${clock(seg.duration_sec)} · ${t('ftp.asHardAs', { watts: watts(seg.target_ftp_pct, ftp) })}`
+      : `${segLabel(seg.label)} · ${clock(seg.duration_sec)} · ${t('unit.pctFtp', { n: seg.target_ftp_pct })} ≈ ${watts(seg.target_ftp_pct, ftp)} W`;
     bar.setAttribute('aria-label', detail);
     if (isTest) {
       bar.classList.add('is-measured');
       const tag = document.createElement('span');
       tag.className = 'ftp-test-measured';
-      tag.textContent = 'Measured';
+      tag.textContent = t('ftp.measured');
       bar.append(tag);
     }
     const show = () => { readout.textContent = detail; };
@@ -259,8 +255,8 @@ function renderPhases(workout, ftp) {
     if (phase.name === MEASURED) row.className = 'is-measured';
     const cells = [
       `${Math.round(phase.startSec / 60)}–${Math.round(phase.endSec / 60)} min`,
-      phase.name,
-      `${effortText(phase, ftp)}. ${PHASE_NOTES[phase.name] ?? ''}`.trim(),
+      phaseName(phase.name),
+      `${effortText(phase, ftp)}. ${phaseNote(phase.name)}`.trim(),
     ];
     cells.forEach((text, i) => {
       const cell = document.createElement(i === 1 ? 'th' : 'td');

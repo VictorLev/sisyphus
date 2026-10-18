@@ -1,5 +1,6 @@
 // First, so everything after it, including a failed login, is logged.
 import { installLogCapture, logEvent } from './log.js';
+import { initLanguage, rememberSetting, resolveLanguage, language, t, tp, num } from './i18n.js';
 import { TrainerConnection } from './ble/connection.js';
 import { TrainerControl } from './ble/trainer-control.js';
 import { GearModel } from './gears.js';
@@ -27,7 +28,11 @@ import { initTrainerButton } from './ui/trainer-button.js';
 import { initLogPanel } from './ui/log-panel.js';
 
 installLogCapture();
+// Before anything renders: the language this browser last used, so even the
+// login screen is in it. The account's setting confirms it after login.
+initLanguage();
 import { resolveTargets } from './workout/targets.js';
+import { workoutName } from './workout/names.js';
 import { showFtpResult, initFtpHistory, initFtpTestPanel } from './ui/ftp-test.js';
 
 // Nothing below loads data until someone is logged in: requireLogin opens
@@ -124,6 +129,15 @@ updateModeUi();
 // Settings are stored server-side, so the objects are built with defaults and
 // reconfigured once the saved values arrive.
 function applySettings(settings) {
+  // The account's language: keep this browser's copy in step, and if it means
+  // a different language than the page is in, reload once to redraw in it.
+  if (settings.language) {
+    rememberSetting(settings.language);
+    if (resolveLanguage(settings.language) !== language()) {
+      window.location.reload();
+      return;
+    }
+  }
   scenery.setList(settings.scenery_videos);
   gears.configure({
     gearCount: settings.gear_count,
@@ -177,7 +191,7 @@ document.addEventListener('profilechange', (event) => {
 // is the fallback when the server could not be reached to say who you are.
 function renderRiderName(profile) {
   document.getElementById('nav-name').textContent =
-    currentUser?.display_name || profile.name?.trim() || 'Anonymous';
+    currentUser?.display_name || profile.name?.trim() || t('app.anonymous');
 }
 
 // Level is derived from the ride log, so it is refreshed after every Push
@@ -185,12 +199,12 @@ function renderRiderName(profile) {
 async function refreshLevel() {
   try {
     const data = await getLevel();
-    document.getElementById('nav-level').textContent = `Lv ${data.level}`;
-    document.getElementById('profile-level').textContent = `Lv ${data.level}`;
+    document.getElementById('nav-level').textContent = t('app.level', { n: data.level });
+    document.getElementById('profile-level').textContent = t('app.level', { n: data.level });
     document.getElementById('level-fill').style.width = `${Math.round(data.progress * 100)}%`;
     document.getElementById('level-detail').textContent =
-      `${data.into_level} / ${data.needed_for_next} XP to level ${data.level + 1} · ` +
-      `${data.totals.pushes} Pushes · ${data.totals.minutes} min · ${data.totals.distance_km} km`;
+      `${t('profile.xpToLevel', { into: num(data.into_level), needed: num(data.needed_for_next), next: data.level + 1 })} · ` +
+      `${tp('unit.pushes', data.totals.pushes)} · ${num(data.totals.minutes)} min · ${num(data.totals.distance_km, 1)} km`;
   } catch (err) {
     console.warn('[app] level unavailable:', err.message);
   }
@@ -233,7 +247,7 @@ async function ensureTrainerControl() {
     return true;
   } catch (err) {
     console.warn('[app] trainer control setup failed:', err.message);
-    flashRideNote(`Trainer control failed: ${err.message}`);
+    flashRideNote(t('note.controlFailed', { error: err.message }));
     trainerControl = null;
     return false;
   }
@@ -244,15 +258,15 @@ async function ensureTrainerControl() {
 function handleShift(direction) {
   if (rideMode === 'erg') {
     // Writing resistance now would fight the trainer's ERG target.
-    flashRideNote('ERG holds the target — gears do nothing', 1500);
+    flashRideNote(t('note.ergNoGears'), 1500);
     return;
   }
   const up = direction === 'up';
   const moved = up ? gears.shiftUp() : gears.shiftDown();
   updateGearDisplay(gears.gearNumber);
   const arrow = up ? '▲' : '▼';
-  if (moved) flashRideNote(`${arrow} Gear ${gears.gearNumber}`, 1500);
-  else flashRideNote(`${arrow} ${up ? 'top' : 'lowest'} gear`, 1500);
+  if (moved) flashRideNote(`${arrow} ${t('note.gear', { n: gears.gearNumber })}`, 1500);
+  else flashRideNote(`${arrow} ${t(up ? 'note.topGear' : 'note.lowestGear')}`, 1500);
 }
 
 // Keyboard shifting. Any Bluetooth/USB keyboard mounted on the bars works:
@@ -295,11 +309,11 @@ async function applyRideMode() {
         await trainerControl.requestControl();
         await trainerControl.setPower(target);
       } catch (err) {
-        flashRideNote(`ERG failed: ${err.message}`);
+        flashRideNote(t('note.ergFailed', { error: err.message }));
         return;
       }
     }
-    flashRideNote(`ERG holding ${target} W`, 2000);
+    flashRideNote(t('note.ergHolding', { watts: target }), 2000);
   } else {
     applyResistance(terrainResistance());
   }
@@ -317,9 +331,7 @@ function updateModeUi() {
   const erg = rideMode === 'erg';
   document.getElementById('mode-gears-btn').classList.toggle('is-active', !erg);
   document.getElementById('mode-erg-btn').classList.toggle('is-active', erg);
-  document.getElementById('mode-description').textContent = erg
-    ? 'ERG: the trainer forces each segment\'s target watts on you. Gearing does nothing — just pedal. Workouts only; free rides use gears.'
-    : 'Virtual gears: resistance is fixed per gear and you chase the target yourself. + / − to shift during a ride.';
+  document.getElementById('mode-description').textContent = t(erg ? 'mode.ergDescription' : 'mode.gearsDescription');
   updateGearDisplay(gears.gearNumber);
 }
 
@@ -362,7 +374,7 @@ async function applyResistance(resistance) {
       await trainerControl.setResistance(resistance);
     } catch (err2) {
       console.warn('[app] resistance write failed:', err2.message);
-      flashRideNote(`Resistance write failed: ${err2.message}`);
+      flashRideNote(t('note.resistanceFailed', { error: err2.message }));
     }
   }
 }
@@ -436,7 +448,7 @@ function startRide(workout) {
   rideMode = workout && !isTest ? preferredMode : 'gears';
   updateModeUi();
 
-  liveScreen.buildTimeline(workout ? workout.structure : null, workout?.name);
+  liveScreen.buildTimeline(workout ? workout.structure : null, workout ? workoutName(workout) : null);
   liveScreen.updateWorkoutInfo(runner ? runner.state : null);
   liveScreen.setElapsed(0);
   updateTotals();
@@ -444,7 +456,7 @@ function startRide(workout) {
 
   showView('live');
   if (isTest) {
-    flashRideNote('FTP test: virtual gears, so you set the pace. Ride the 20-minute block as hard as you can hold it evenly.', 12000);
+    flashRideNote(t('note.ftpTest'), 12000);
   }
   scenery.start();
   startLoop();
@@ -596,17 +608,9 @@ async function endRide() {
     logEvent('error', `Could not save the ride: ${err.message}`);
     const kept = stashRide(payload, currentUser?.id);
     if (kept) {
-      alert(
-        `Could not save the Push: ${err.message}\n\n` +
-        'The ride has been kept on this device and will be saved automatically ' +
-        'once the server is reachable. Do not clear your browser data before then.'
-      );
+      alert(`${t('save.failed', { error: err.message })}\n\n${t('save.kept')}`);
     } else {
-      alert(
-        `Could not save the Push: ${err.message}\n\n` +
-        'It could not be kept on this device either. Leave this page open and ' +
-        'restart the server if you can — closing it will lose the ride.'
-      );
+      alert(`${t('save.failed', { error: err.message })}\n\n${t('save.notKept')}`);
     }
     showView('home');
   }
@@ -620,7 +624,7 @@ async function retryPendingRides() {
     refreshLevel();
     refreshBadgeCount();
     home.refreshWorkoutList();
-    flashRideNote(`Saved ${saved} ride${saved > 1 ? 's' : ''} that failed earlier.`, 8000);
+    flashRideNote(tp('save.recovered', saved), 8000);
     console.info(`[app] recovered ${saved} pending ride(s)`);
   }
   if (remaining > 0) {
@@ -636,10 +640,10 @@ function updateGearDisplay(gear) {
   if (rideMode === 'erg') {
     // The gear number is meaningless while the trainer holds a wattage.
     value.textContent = 'ERG';
-    label.textContent = 'mode';
+    label.textContent = t('live.mode');
   } else {
     value.textContent = gear;
-    label.textContent = 'gear';
+    label.textContent = t('live.gear');
   }
 }
 
@@ -649,11 +653,11 @@ function showSummary(session) {
   const statsEl = document.getElementById('summary-stats');
   statsEl.innerHTML = '';
   const entries = [
-    ['Distance', session.distance_m != null ? `${(session.distance_m / 1000).toFixed(2)} km` : '--'],
-    ['Avg Power', session.avg_power != null ? `${Math.round(session.avg_power)} W` : '--'],
-    ['Max Power', session.max_power != null ? `${Math.round(session.max_power)} W` : '--'],
-    ['Avg Cadence', session.avg_cadence != null ? `${Math.round(session.avg_cadence)} rpm` : '--'],
-    ['Avg Speed', session.avg_speed != null ? `${session.avg_speed.toFixed(1)} km/h` : '--'],
+    [t('stat.distance'), session.distance_m != null ? `${num(session.distance_m / 1000, 2)} km` : '--'],
+    [t('stat.avgPower'), session.avg_power != null ? `${Math.round(session.avg_power)} W` : '--'],
+    [t('stat.maxPower'), session.max_power != null ? `${Math.round(session.max_power)} W` : '--'],
+    [t('stat.avgCadence'), session.avg_cadence != null ? `${Math.round(session.avg_cadence)} ${t('unit.rpm')}` : '--'],
+    [t('stat.avgSpeed'), session.avg_speed != null ? `${num(session.avg_speed, 1)} km/h` : '--'],
   ];
   for (const [label, value] of entries) {
     const card = document.createElement('div');

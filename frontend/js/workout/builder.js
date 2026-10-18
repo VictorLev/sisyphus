@@ -1,6 +1,10 @@
 import { createWorkout, updateWorkout } from '../api/client.js';
 import { ZONES, zoneForWatts, zoneRangeLabel, estimatedLoad } from '../zones.js';
 import { showView } from '../ui/views.js';
+import { t, num, label as translateLabel } from '../i18n.js';
+
+const segmentLabel = (label, index) => (label ? translateLabel(label) : t('live.segmentN', { n: index + 1 }));
+const pctText = (pct) => t('unit.pctFtp', { n: num(pct, Number.isInteger(pct) ? 0 : 1) });
 
 export function initBuilder({ onSaved }) {
   const nameInput = document.getElementById('workout-name');
@@ -34,7 +38,7 @@ export function initBuilder({ onSaved }) {
   const pctHintEl = document.getElementById('segment-pct-watts');
   function updatePctHint() {
     const w = wattsAt(Number(pctInput.value));
-    pctHintEl.textContent = w != null && Number.isFinite(w) ? `≈ ${w} W at your FTP of ${ftp} W` : '\u00a0';
+    pctHintEl.textContent = w != null && Number.isFinite(w) ? t('builder.wattsAtFtp', { watts: w, ftp }) : '\u00a0';
   }
   pctInput.addEventListener('input', updatePctHint);
 
@@ -63,16 +67,17 @@ export function initBuilder({ onSaved }) {
       btn.type = 'button';
       btn.className = 'zone-btn';
       btn.style.setProperty('--zone-color', zone.color);
-      btn.innerHTML =
-        `<strong>${zone.name}</strong><em>${zoneRangeLabel(zone)}</em><span>${zone.label}</span>`;
+      const zoneLabel = t(`zone.${zone.id}`);
+      btn.innerHTML = `<strong>${zone.name}</strong><em>${zoneRangeLabel(zone)}</em><span></span>`;
+      btn.querySelector('span').textContent = zoneLabel;
       btn.title = ftp
-        ? `${zone.label}: ${pctForZone(zone)}% FTP, about ${wattsAt(pctForZone(zone))} W at your FTP of ${ftp}`
-        : `${zone.label}: ${pctForZone(zone)}% FTP`;
+        ? t('builder.zoneTitleWatts', { zone: zoneLabel, pct: pctForZone(zone), watts: wattsAt(pctForZone(zone)), ftp })
+        : t('builder.zoneTitle', { zone: zoneLabel, pct: pctForZone(zone) });
       btn.addEventListener('click', () => {
         segments.push({
           duration_sec: Number(durationInput.value) || 300,
           target_ftp_pct: pctForZone(zone),
-          label: zone.label,
+          label: zoneLabel,
           grade_percent: 0,
         });
         render();
@@ -105,7 +110,11 @@ export function initBuilder({ onSaved }) {
 
     chartEl.innerHTML = '';
     if (segments.length === 0) {
-      chartEl.innerHTML = '<p class="preview-empty">Add a segment to see the shape of the workout.</p>';
+      chartEl.innerHTML = '';
+      const empty = document.createElement('p');
+      empty.className = 'preview-empty';
+      empty.textContent = t('builder.empty');
+      chartEl.appendChild(empty);
       timeEl.innerHTML = '';
       return;
     }
@@ -120,8 +129,8 @@ export function initBuilder({ onSaved }) {
       bar.style.background = zone.color;
       const grade = seg.grade_percent ?? 0;
       const w = wattsAt(seg.target_ftp_pct);
-      bar.title = `${seg.label || 'Segment ' + (index + 1)}: ${seg.target_ftp_pct}% FTP${w != null ? ` (≈${w} W)` : ''} (${zone.name})` +
-        `, ${seg.duration_sec}s${grade ? `, ${grade > 0 ? '+' : ''}${grade}% grade` : ''}\nClick to remove`;
+      bar.title = `${segmentLabel(seg.label, index)}: ${pctText(seg.target_ftp_pct)}${w != null ? ` (≈${w} W)` : ''} (${zone.name})` +
+        `, ${seg.duration_sec} s${grade ? `, ${t('builder.gradeShort', { grade: `${grade > 0 ? '+' : ''}${grade}` })}` : ''}\n${t('builder.clickToRemove')}`;
       if (grade) {
         const marker = document.createElement('i');
         marker.className = grade > 0 ? 'bar-grade up' : 'bar-grade down';
@@ -159,8 +168,8 @@ export function initBuilder({ onSaved }) {
       ))
       : [];
     nameInput.value = workout?.name ?? '';
-    titleEl.textContent = workout ? 'EDIT WORKOUT' : 'BUILD A WORKOUT';
-    saveBtn.textContent = workout ? 'Save Changes' : 'Save Workout';
+    titleEl.textContent = t(workout ? 'builder.editTitle' : 'builder.title');
+    saveBtn.textContent = t(workout ? 'builder.saveChanges' : 'builder.save');
     render();
   }
 
@@ -172,19 +181,19 @@ export function initBuilder({ onSaved }) {
       li.className = 'segment-row';
       const label = document.createElement('span');
       label.className = 'segment-row-label';
-      label.textContent = segment.label || '(untitled)';
+      label.textContent = segment.label ? segmentLabel(segment.label, index) : t('builder.untitled');
       const detail = document.createElement('span');
       detail.className = 'segment-row-detail';
       const grade = segment.grade_percent ?? 0;
       const terrain = grade > 0 ? ` ▲${grade}%` : grade < 0 ? ` ▼${Math.abs(grade)}%` : '';
       const w = wattsAt(segment.target_ftp_pct);
-      detail.textContent = `${segment.duration_sec}s @ ${segment.target_ftp_pct}% FTP${w != null ? ` (≈${w} W)` : ''}${terrain}`;
+      detail.textContent = `${segment.duration_sec} s @ ${pctText(segment.target_ftp_pct)}${w != null ? ` (≈${w} W)` : ''}${terrain}`;
       li.appendChild(label);
       li.appendChild(detail);
       const removeBtn = document.createElement('button');
       removeBtn.type = 'button';
       removeBtn.className = 'secondary';
-      removeBtn.textContent = 'Remove';
+      removeBtn.textContent = t('builder.remove');
       removeBtn.addEventListener('click', () => {
         segments.splice(index, 1);
         render();
@@ -197,8 +206,8 @@ export function initBuilder({ onSaved }) {
   function reset() {
     segments = [];
     editingId = null;
-    titleEl.textContent = 'BUILD A WORKOUT';
-    saveBtn.textContent = 'Save Workout';
+    titleEl.textContent = t('builder.title');
+    saveBtn.textContent = t('builder.save');
     nameInput.value = '';
     labelInput.value = '';
     durationInput.value = '300';
@@ -214,17 +223,17 @@ export function initBuilder({ onSaved }) {
     const label = labelInput.value.trim();
 
     if (!Number.isInteger(duration_sec) || duration_sec <= 0) {
-      alert('Duration must be a positive number of seconds.');
+      alert(t('builder.badDuration'));
       return;
     }
     if (!Number.isFinite(target_ftp_pct) || target_ftp_pct < 0 || target_ftp_pct > 300) {
-      alert('The target must be between 0 and 300 % of FTP.');
+      alert(t('builder.badTarget'));
       return;
     }
 
     const grade_percent = Number(gradeInput.value) || 0;
     if (grade_percent < -20 || grade_percent > 20) {
-      alert('Grade must be between -20% and 20%.');
+      alert(t('builder.badGrade'));
       return;
     }
     segments.push({ duration_sec, target_ftp_pct, label, grade_percent });
@@ -235,11 +244,11 @@ export function initBuilder({ onSaved }) {
   saveBtn.addEventListener('click', async () => {
     const name = nameInput.value.trim();
     if (!name) {
-      alert('Give the workout a name.');
+      alert(t('builder.needName'));
       return;
     }
     if (segments.length === 0) {
-      alert('Add at least one segment.');
+      alert(t('builder.needSegment'));
       return;
     }
 
@@ -250,7 +259,7 @@ export function initBuilder({ onSaved }) {
       onSaved?.();
       showView('home');
     } catch (err) {
-      alert(`Could not save workout: ${err.message}`);
+      alert(t('builder.saveFailed', { error: err.message }));
     }
   });
 

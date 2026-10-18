@@ -7,6 +7,8 @@ import { setSessionCookie, clearSessionCookie, requireUser } from '../auth/middl
 // One wording for unknown user and wrong password, so the reply does not
 // confirm which usernames exist.
 const BAD_LOGIN = 'Wrong username or password';
+// Each error also carries a stable `code`, so the client can show it in the
+// rider's language; `error` stays as readable English for logs and curl.
 
 // Express 4 does not catch a rejected promise from an async handler; without
 // this a thrown error would hang the request instead of returning a 500.
@@ -18,21 +20,21 @@ export function createAuthRouter(limiter) {
   router.post('/login', wrap(async (req, res) => {
     const { username, password } = req.body ?? {};
     if (typeof username !== 'string' || typeof password !== 'string' || !username || !password) {
-      return res.status(400).json({ error: 'username and password are required' });
+      return res.status(400).json({ error: 'username and password are required', code: 'missing_credentials' });
     }
-    if (username.length > 64 || password.length > 200) return res.status(401).json({ error: BAD_LOGIN });
+    if (username.length > 64 || password.length > 200) return res.status(401).json({ error: BAD_LOGIN, code: 'bad_credentials' });
 
     const wait = limiter.retryAfter(req.ip, username);
     if (wait > 0) {
       res.set('Retry-After', String(wait));
-      return res.status(429).json({ error: `Too many failed attempts. Try again in ${Math.ceil(wait / 60)} min.` });
+      return res.status(429).json({ error: `Too many failed attempts. Try again in ${Math.ceil(wait / 60)} min.`, code: 'too_many_attempts', minutes: Math.ceil(wait / 60) });
     }
 
     const user = findUserByUsername(username);
     const ok = user ? await verifyPassword(password, user.password_hash) : (await burnPasswordCheck(password), false);
     if (!ok) {
       limiter.recordFailure(req.ip, username);
-      return res.status(401).json({ error: BAD_LOGIN });
+      return res.status(401).json({ error: BAD_LOGIN, code: 'bad_credentials' });
     }
 
     limiter.recordSuccess(username);
@@ -57,21 +59,21 @@ export function createAuthRouter(limiter) {
   router.post('/password', requireUser, wrap(async (req, res) => {
     const { current_password, new_password } = req.body ?? {};
     if (typeof current_password !== 'string' || !current_password) {
-      return res.status(400).json({ error: 'current_password is required' });
+      return res.status(400).json({ error: 'current_password is required', code: 'current_password_required' });
     }
     const invalid = validatePassword(new_password);
-    if (invalid) return res.status(400).json({ error: invalid.replace(/^password/, 'new password') });
+    if (invalid) return res.status(400).json({ error: invalid.replace(/^password/, 'new password'), code: 'invalid_new_password' });
 
     // The same budget as logins: this is a password check too.
     const wait = limiter.retryAfter(req.ip, req.user.username);
     if (wait > 0) {
       res.set('Retry-After', String(wait));
-      return res.status(429).json({ error: 'Too many failed attempts. Try again later.' });
+      return res.status(429).json({ error: 'Too many failed attempts. Try again later.', code: 'too_many_attempts', minutes: Math.ceil(wait / 60) });
     }
     const user = findUserById(req.user.id);
     if (!(await verifyPassword(current_password, user.password_hash))) {
       limiter.recordFailure(req.ip, req.user.username);
-      return res.status(403).json({ error: 'Current password is wrong' });
+      return res.status(403).json({ error: 'Current password is wrong', code: 'wrong_current_password' });
     }
 
     await setPassword(user.id, new_password);

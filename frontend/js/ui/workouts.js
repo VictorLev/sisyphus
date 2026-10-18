@@ -1,5 +1,7 @@
 import { listWorkouts, deleteWorkout, setWorkoutStarred, copyWorkout, createWorkout, getProfile } from '../api/client.js';
 import { toCsv, toZwo, parseWorkoutFile, fileSlug } from '../workout/files.js';
+import { t, tp } from '../i18n.js';
+import { workoutName } from '../workout/names.js';
 import { showView } from './views.js';
 
 const STAR_ON = '★';
@@ -19,17 +21,17 @@ export function renderWorkoutRow(workout, { onStart, onEdit, onDelete, onCopy, o
   const info = document.createElement('div');
   const name = document.createElement('span');
   name.className = 'workout-name';
-  name.textContent = workout.name;
+  name.textContent = workoutName(workout);
   const meta = document.createElement('span');
   meta.className = 'workout-meta';
   const grades = workout.structure.filter((s) => s.grade_percent);
-  meta.textContent = `${workout.structure.length} segments · ${totalMinutes(workout)} min` +
+  meta.textContent = `${tp('workouts.segments', workout.structure.length)} · ${totalMinutes(workout)} min` +
     (grades.length ? ` · ${grades.length} with terrain` : '');
   info.appendChild(name);
   if (workout.library && compact) {
     const tag = document.createElement('span');
     tag.className = 'workout-tag';
-    tag.textContent = 'Library';
+    tag.textContent = t('workouts.library');
     info.appendChild(tag);
   }
   info.appendChild(meta);
@@ -43,7 +45,7 @@ export function renderWorkoutRow(workout, { onStart, onEdit, onDelete, onCopy, o
     star.type = 'button';
     star.className = `secondary star-btn${workout.starred ? ' is-starred' : ''}`;
     star.textContent = workout.starred ? STAR_ON : STAR_OFF;
-    star.title = workout.starred ? 'Remove from home screen' : 'Show on home screen';
+    star.title = t(workout.starred ? 'workouts.unstar' : 'workouts.star');
     star.setAttribute('aria-label', star.title);
     star.addEventListener('click', () => onToggleStar(workout));
     actions.appendChild(star);
@@ -51,7 +53,7 @@ export function renderWorkoutRow(workout, { onStart, onEdit, onDelete, onCopy, o
 
   const startBtn = document.createElement('button');
   startBtn.type = 'button';
-  startBtn.textContent = 'Start';
+  startBtn.textContent = t('workouts.start');
   startBtn.addEventListener('click', () => onStart(workout));
   actions.appendChild(startBtn);
 
@@ -59,21 +61,21 @@ export function renderWorkoutRow(workout, { onStart, onEdit, onDelete, onCopy, o
     const copyBtn = document.createElement('button');
     copyBtn.type = 'button';
     copyBtn.className = 'secondary';
-    copyBtn.textContent = 'Copy to My Workouts';
+    copyBtn.textContent = t('workouts.copy');
     copyBtn.addEventListener('click', () => onCopy(workout));
     actions.appendChild(copyBtn);
   } else if (!compact) {
     const editBtn = document.createElement('button');
     editBtn.type = 'button';
     editBtn.className = 'secondary';
-    editBtn.textContent = 'Edit';
+    editBtn.textContent = t('workouts.edit');
     editBtn.addEventListener('click', () => onEdit(workout));
     actions.appendChild(editBtn);
 
     const delBtn = document.createElement('button');
     delBtn.type = 'button';
     delBtn.className = 'secondary';
-    delBtn.textContent = 'Delete';
+    delBtn.textContent = t('workouts.delete');
     delBtn.addEventListener('click', () => onDelete(workout));
     actions.appendChild(delBtn);
   }
@@ -82,8 +84,8 @@ export function renderWorkoutRow(workout, { onStart, onEdit, onDelete, onCopy, o
     const exportBtn = document.createElement('button');
     exportBtn.type = 'button';
     exportBtn.className = 'secondary';
-    exportBtn.textContent = 'Export';
-    exportBtn.title = 'Download this workout in the format chosen above';
+    exportBtn.textContent = t('workouts.export');
+    exportBtn.title = t('workouts.exportTitle');
     exportBtn.addEventListener('click', () => onExport(workout));
     actions.appendChild(exportBtn);
   }
@@ -131,17 +133,17 @@ export function initWorkouts({ onStartRide, onEditWorkout, onLibraryChanged }) {
 
   document.getElementById('export-all-btn').addEventListener('click', () => {
     if (ownWorkouts.length === 0) {
-      setStatus('You have no workouts of your own to export yet.', true);
+      setStatus(t('workouts.nothingToExport'), true);
       return;
     }
     if (formatEl.value === 'zwo') {
       // A .zwo holds one workout, so this is one file each (Chrome may ask
       // once to allow several downloads).
       ownWorkouts.forEach((w, i) => setTimeout(() => exportWorkout(w, 'zwo'), i * 250));
-      setStatus(`Exporting ${ownWorkouts.length} .zwo file${ownWorkouts.length > 1 ? 's' : ''}.`);
+      setStatus(tp('workouts.exportingZwo', ownWorkouts.length));
     } else {
       download('sisyphus-workouts.csv', toCsv(ownWorkouts), 'text/csv');
-      setStatus(`Exported ${ownWorkouts.length} workout${ownWorkouts.length > 1 ? 's' : ''} to one CSV file.`);
+      setStatus(tp('workouts.exportedCsv', ownWorkouts.length));
     }
   });
 
@@ -171,7 +173,7 @@ export function initWorkouts({ onStartRide, onEditWorkout, onLibraryChanged }) {
       onLibraryChanged?.();
     }
     const done = imported.length
-      ? `Imported ${imported.length} workout${imported.length > 1 ? 's' : ''}: ${imported.join(', ')}.`
+      ? tp('workouts.imported', imported.length, { names: imported.join(', ') })
       : '';
     setStatus([done, ...problems].filter(Boolean).join(' '), problems.length > 0);
   });
@@ -182,7 +184,7 @@ export function initWorkouts({ onStartRide, onEditWorkout, onLibraryChanged }) {
     try {
       workouts = await listWorkouts();
     } catch (err) {
-      summaryEl.textContent = `Could not load workouts: ${err.message}`;
+      summaryEl.textContent = t('workouts.loadFailed', { error: err.message });
       return;
     }
 
@@ -192,13 +194,15 @@ export function initWorkouts({ onStartRide, onEditWorkout, onLibraryChanged }) {
     ownWorkouts = own;
     const library = workouts.filter((w) => w.library);
     const starred = workouts.filter((w) => w.starred).length;
-    summaryEl.textContent =
-      `${own.length} of your own · ${library.length} in the library · ${starred} on the home screen`;
+    summaryEl.textContent = t('workouts.summary', { own: own.length, library: library.length, starred });
 
     listEl.innerHTML = '';
     libraryEl.innerHTML = '';
     if (own.length === 0) {
-      listEl.innerHTML = '<li class="empty">Nothing here yet. Build one, or copy one from the library.</li>';
+      const empty = document.createElement('li');
+      empty.className = 'empty';
+      empty.textContent = t('workouts.empty');
+      listEl.append(empty);
     }
     for (const workout of workouts) {
       const target = workout.library ? libraryEl : listEl;
@@ -213,7 +217,7 @@ export function initWorkouts({ onStartRide, onEditWorkout, onLibraryChanged }) {
             onLibraryChanged?.();
             onEditWorkout(copy);
           } catch (err) {
-            alert(`Could not copy: ${err.message}`);
+            alert(t('workouts.copyFailed', { error: err.message }));
           }
         },
         onToggleStar: async (w) => {
@@ -222,13 +226,13 @@ export function initWorkouts({ onStartRide, onEditWorkout, onLibraryChanged }) {
           onLibraryChanged?.();
         },
         onDelete: async (w) => {
-          if (!confirm(`Delete "${w.name}"? Rides that used it keep their history.`)) return;
+          if (!confirm(t('workouts.confirmDelete', { name: w.name }))) return;
           try {
             await deleteWorkout(w.id);
             await refresh();
             onLibraryChanged?.();
           } catch (err) {
-            alert(`Could not delete: ${err.message}`);
+            alert(t('workouts.deleteFailed', { error: err.message }));
           }
         },
       }));

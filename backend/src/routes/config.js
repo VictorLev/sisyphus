@@ -29,6 +29,8 @@ const DEFAULTS = {
     // YouTube virtual rides for the ride screen, one link per line,
     // optionally named: "Swiss Alps | https://youtu.be/...".
     scenery_videos: '',
+    // 'auto' follows the browser (French if it prefers French, else English).
+    language: 'auto',
   },
 };
 
@@ -76,6 +78,9 @@ function validateSettings(s) {
   if (s.max_resistance != null && s.max_resistance > 20) return 'max_resistance cannot exceed 20';
   if (s.min_resistance != null && s.max_resistance != null && s.min_resistance >= s.max_resistance) {
     return 'min_resistance must be below max_resistance';
+  }
+  if (s.language != null && !['auto', 'en', 'fr'].includes(s.language)) {
+    return "language must be 'auto', 'en' or 'fr'";
   }
   if (s.default_mode != null && !['gears', 'erg'].includes(s.default_mode)) {
     return "default_mode must be 'gears' or 'erg'";
