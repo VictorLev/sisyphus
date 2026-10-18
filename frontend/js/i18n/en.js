@@ -382,4 +382,11 @@ export const EN = {
   "badge.camus.name": "One Must Imagine Sisyphus Happy",
   "badge.camus.desc": "Ride on 30 different days within 60 days.",
   "badge.camus.hint": "The struggle itself toward the heights is enough to fill a heart.",
+  "badgeGroup.Champions": "Champions",
+  "badge.champion-2026.name": "2026 Champion",
+  "badge.champion-2026.desc": "Ride the most time of everyone in 2026. Awarded when the year ends.",
+  "badge.champion-2027.name": "2027 Champion",
+  "badge.champion-2027.desc": "Ride the most time of everyone in 2027. Awarded when the year ends.",
+  "badge.champion-2028.name": "2028 Champion",
+  "badge.champion-2028.desc": "Ride the most time of everyone in 2028. Awarded when the year ends.",
 };

@@ -29,7 +29,7 @@ const selectAllTime = db.prepare(
 );
 
 router.get('/', (req, res) => {
-  const period = req.query.period === 'month' ? 'month' : 'week';
+  const period = ['month', 'year'].includes(req.query.period) ? req.query.period : 'week';
   const tz = Number(req.query.tz);
   const tzOffsetMin = Number.isInteger(tz) && tz >= -720 && tz <= 840 ? tz : 0;
   const { from, to } = periodRange(period, tzOffsetMin);

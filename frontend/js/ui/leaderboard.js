@@ -1,7 +1,7 @@
 import { getLeaderboard } from '../api/client.js';
 import { t, tp, num, locale } from '../i18n.js';
 
-// Home → Leaderboard: every rider's totals for this week or this month,
+// Home → Leaderboard: every rider's totals for this week, month or year,
 // ranked by time (the default: fair whatever anyone's FTP), distance or
 // rides. Everyone is listed, a quiet week included, and your own row says
 // "you" in words, not only in colour.
@@ -20,7 +20,7 @@ function readChoice() {
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE) ?? '{}');
     return {
-      period: saved.period === 'month' ? 'month' : 'week',
+      period: ['month', 'year'].includes(saved.period) ? saved.period : 'week',
       metric: saved.metric in METRICS ? saved.metric : 'minutes',
     };
   } catch {
@@ -31,7 +31,11 @@ function readChoice() {
 function rangeText(board) {
   const from = new Date(board.from);
   const last = new Date(Date.parse(board.to) - 1);
-  if (board.period === 'month') return from.toLocaleDateString(locale(), { month: 'long', year: 'numeric' });
+  // Named from the middle of the range: its edges use today's UTC offset, so
+  // across a daylight-saving change the start reads as the day before.
+  const middle = new Date((from.getTime() + last.getTime()) / 2);
+  if (board.period === 'year') return String(middle.getFullYear());
+  if (board.period === 'month') return middle.toLocaleDateString(locale(), { month: 'long', year: 'numeric' });
   const day = { weekday: 'short', day: 'numeric', month: 'short' };
   return `${from.toLocaleDateString(locale(), day)} – ${last.toLocaleDateString(locale(), day)}`;
 }

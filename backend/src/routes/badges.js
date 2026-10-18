@@ -23,9 +23,29 @@ const selectPowerSamples = db.prepare(
 const selectWorkouts = db.prepare(
   `SELECT id, structure, library_key, test FROM workouts WHERE user_id = ? OR library_key IS NOT NULL`
 );
+// Minutes per rider per calendar year, for the Champion badges. A ride counts
+// for the year of its own local date (its saved UTC offset), so 23:30 on
+// 31 December in Montréal belongs to that year.
+const selectYearTotals = db.prepare(
+  `SELECT user_id,
+          CAST(strftime('%Y', started_at, printf('%+d minutes', COALESCE(tz_offset_min, 0))) AS INTEGER) AS year,
+          SUM((julianday(ended_at) - julianday(started_at)) * 24 * 60) AS minutes
+   FROM sessions WHERE ended_at IS NOT NULL
+   GROUP BY user_id, year`
+);
 const selectFtpHistory = db.prepare(
   'SELECT ftp, previous_ftp, source, session_id, created_at FROM ftp_history WHERE user_id = ? ORDER BY id'
 );
+
+function yearTotalsFor(userId) {
+  const totals = {};
+  for (const row of selectYearTotals.all()) {
+    const entry = (totals[row.year] ??= { mine: 0, best: 0 });
+    entry.best = Math.max(entry.best, row.minutes);
+    if (row.user_id === userId) entry.mine = row.minutes;
+  }
+  return totals;
+}
 
 router.get('/', (req, res) => {
   const userId = req.user.id;
@@ -56,6 +76,7 @@ router.get('/', (req, res) => {
     workouts,
     ftpHistory: selectFtpHistory.all(userId),
     currentFtp: readConfig(userId, 'profile').ftp,
+    yearTotals: yearTotalsFor(userId),
   });
   res.json({
     earned: badges.filter((b) => b.earned).length,
