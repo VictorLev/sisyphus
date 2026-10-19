@@ -36,6 +36,8 @@ const DEFAULTS = {
     language: 'auto',
     // 'dark' (the original look) or 'light' (lighter beige).
     theme: 'dark',
+    // Show the "Download for Strava" box on each ride. Off by default.
+    strava_export: false,
   },
 };
 
@@ -69,6 +71,9 @@ function sanitise(key, body) {
       const n = Number(value);
       if (!Number.isFinite(n) || n < 0) return { error: `${field} must be a non-negative number` };
       out[field] = n;
+    } else if (typeof fallback === 'boolean') {
+      if (typeof value !== 'boolean') return { error: `${field} must be true or false` };
+      out[field] = value;
     } else {
       out[field] = String(value);
     }

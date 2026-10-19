@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import db from '../db/index.js';
+import { buildTcx } from '../tcx.js';
 
 const router = Router();
 
@@ -136,6 +137,20 @@ router.get('/:id', (req, res) => {
   const session = selectSessionById.get(req.params.id, req.user.id);
   if (!session) return res.status(404).json({ error: 'session not found' });
   res.json({ ...session, samples: selectSamples.all(req.params.id) });
+});
+
+// The ride as a .tcx download, to upload to Strava by hand. The file name
+// carries the date and the workout, so a folder of them stays readable.
+router.get('/:id/tcx', (req, res) => {
+  const session = selectSessionById.get(req.params.id, req.user.id);
+  if (!session) return res.status(404).json({ error: 'session not found' });
+  const local = new Date(Date.parse(session.started_at) + (session.tz_offset_min ?? 0) * 60_000).toISOString().slice(0, 10);
+  const slug = String(session.workout_name ?? 'free-ride').toLowerCase().normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'ride';
+  // attachment() sets a type from the extension; ours goes after it.
+  res.attachment(`sisyphus-${local}-${slug}.tcx`);
+  res.type('application/vnd.garmin.tcx+xml');
+  res.send(buildTcx(session, selectSamples.all(session.id)));
 });
 
 // Deleting a Push removes its samples too — the log is the source of truth,

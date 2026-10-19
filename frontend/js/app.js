@@ -2,6 +2,7 @@
 import { installLogCapture, logEvent } from './log.js';
 import { initLanguage, rememberSetting, resolveLanguage, language, t, tp, num } from './i18n.js';
 import { applyTheme } from './theme.js';
+import { setStravaExport } from './ui/strava-export.js';
 import { TrainerConnection } from './ble/connection.js';
 import { TrainerControl } from './ble/trainer-control.js';
 import { GearModel } from './gears.js';
@@ -143,6 +144,7 @@ function applySettings(settings) {
     }
   }
   applyTheme(settings.theme);
+  setStravaExport(settings.strava_export);
   scenery.setList(settings.scenery_videos, settings.scenery_mode);
   gears.configure({
     gearCount: settings.gear_count,

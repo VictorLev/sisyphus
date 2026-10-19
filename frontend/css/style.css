@@ -1056,6 +1056,66 @@ button.secondary:hover:not(:disabled) {
   }
 }
 
+/* --------------------------------------------------------- strava export */
+
+.check-field {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.5rem;
+  cursor: pointer;
+}
+
+.check-field input {
+  width: 1.1rem;
+  height: 1.1rem;
+  accent-color: var(--color-bronze);
+}
+
+.strava-export {
+  margin-bottom: 1.5rem;
+}
+
+.strava-steps {
+  margin: 0 0 0.75rem;
+  padding-left: 1.4rem;
+}
+
+.strava-steps li {
+  margin-bottom: 0.75rem;
+}
+
+.strava-steps li::marker {
+  color: var(--color-bronze);
+  font-weight: 700;
+}
+
+.strava-download {
+  display: inline-block;
+  padding: 0.55rem 1.1rem;
+  border-radius: 2px;
+  background: var(--color-bronze);
+  color: var(--color-on-accent);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+}
+
+.strava-download:hover {
+  background: var(--color-bronze-bright);
+}
+
+/* Strava's orange (their brand guidelines), the same in both themes. */
+.strava-link {
+  color: #fc4c02;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.strava-link:hover {
+  text-decoration: underline;
+}
+
 /* ----------------------------------------------------------- tools link */
 
 .tools-link {

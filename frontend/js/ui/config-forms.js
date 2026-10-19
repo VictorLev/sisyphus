@@ -20,7 +20,9 @@ function bindForm({ fields, load, save, statusEl, onSaved, beforeSubmit, afterLo
       const data = await load();
       for (const [id, input] of inputs) {
         const key = id.replace(/^(profile|setting)-/, '').replace(/-/g, '_');
-        if (data[key] !== undefined) input.value = data[key];
+        if (data[key] === undefined) continue;
+        if (input.type === 'checkbox') input.checked = Boolean(data[key]);
+        else input.value = data[key];
       }
       afterLoad?.(data);
       setStatus('');
@@ -40,7 +42,7 @@ function bindForm({ fields, load, save, statusEl, onSaved, beforeSubmit, afterLo
     const body = {};
     for (const [id, input] of inputs) {
       const key = id.replace(/^(profile|setting)-/, '').replace(/-/g, '_');
-      body[key] = input.type === 'number' ? Number(input.value) : input.value;
+      body[key] = input.type === 'checkbox' ? input.checked : input.type === 'number' ? Number(input.value) : input.value;
     }
     try {
       const saved = await save(body);
@@ -88,6 +90,7 @@ export function initSettings({ onSaved }) {
       'setting-scenery-mode',
       'setting-language',
       'setting-theme',
+      'setting-strava-export',
     ],
     load: getSettings,
     save: saveSettings,

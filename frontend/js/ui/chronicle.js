@@ -4,6 +4,7 @@ import { drawPowerChart, drawWeeklyChart } from './chart.js';
 import { resolveTargets } from '../workout/targets.js';
 import { showFtpResult } from './ftp-test.js';
 import { showRideBadges } from './badges.js';
+import { showRideExport } from './strava-export.js';
 import { t, tp, num, locale } from '../i18n.js';
 import { rideName } from '../workout/names.js';
 
@@ -326,6 +327,7 @@ export function initChronicle() {
     const ftpResultEl = document.getElementById('detail-ftp-result');
     ftpResultEl.hidden = true;
     showRideBadges(document.getElementById('detail-badges'), session.id, { title: t('badges.thisRide') });
+    showRideExport(document.getElementById('detail-strava'), session.id);
     if (session.workout_id) {
       try {
         const workout = await getWorkout(session.workout_id);

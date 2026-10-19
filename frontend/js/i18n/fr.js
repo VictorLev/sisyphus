@@ -550,4 +550,10 @@ export const FR = {
   "scenery.name": "Nom",
   "scenery.link": "Lien YouTube",
   "scenery.add": "+ Ajouter une vidéo",
+  "settings.stravaExport": "Afficher « Télécharger pour Strava » sur mes sorties",
+  "settings.stravaExportHint": "Ajoute un encadré à la page de chaque sortie dans la Chronique : téléchargez la sortie en fichier .tcx, puis téléversez-le sur le site de Strava. Sisyphus n'envoie rien à Strava.",
+  "strava.download": "Télécharger la sortie (.tcx)",
+  "strava.uploadPage": "Ouvrir la page de téléversement de Strava",
+  "strava.uploadStep": "et choisir le fichier que vous venez de télécharger.",
+  "strava.exportHint": "Strava y lit la puissance, la cadence, la vitesse et la distance. Cochez « Intérieur » ou choisissez « Sortie virtuelle » si ce n'est pas déjà fait.",
 };

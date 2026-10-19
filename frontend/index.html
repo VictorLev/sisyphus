@@ -228,6 +228,17 @@
       <dl class="summary-stats" id="ride-detail-stats"></dl>
       <div class="panel ftp-result" id="detail-ftp-result" hidden></div>
       <div class="panel ride-badges" id="detail-badges" hidden></div>
+      <!-- Settings → Strava turns it on (ui/strava-export.js). -->
+      <div class="panel strava-export" id="detail-strava" hidden>
+        <h2>Strava</h2>
+        <ol class="strava-steps">
+          <li><a id="detail-tcx" class="strava-download" href="#" download data-i18n="strava.download">Download the ride (.tcx)</a></li>
+          <li><a href="https://www.strava.com/upload/select" target="_blank" rel="noopener" class="strava-link" data-i18n="strava.uploadPage">Open Strava's upload page</a>
+            <span data-i18n="strava.uploadStep">and choose the file you just downloaded.</span></li>
+        </ol>
+        <p class="hint" data-i18n="strava.exportHint">Strava reads power, cadence, speed and distance from
+          it. Tick "Indoor" or pick "Virtual Ride" there if it isn't already.</p>
+      </div>
       <button id="detail-back-btn" type="button" class="secondary" data-i18n="detail.back">Back to the Chronicle</button>
     </section>
 
@@ -492,6 +503,14 @@
               plays the next one each ride. Videos start muted; unmute in the
               player. To switch mid-ride, use the picker on the ride screen.
               With no videos, the default ride plays.</p>
+            <h2 style="margin-top:1.5rem">Strava</h2>
+            <label class="check-field">
+              <input id="setting-strava-export" type="checkbox" />
+              <span data-i18n="settings.stravaExport">Show "Download for Strava" on my rides</span>
+            </label>
+            <p class="hint" data-i18n="settings.stravaExportHint">Adds a box to each ride's page in the
+              Chronicle: download the ride as a .tcx file, then upload it on
+              Strava's site. Nothing is sent to Strava by Sisyphus.</p>
             <p class="tools-link"><a href="probe.html" data-i18n="settings.probe">Hardware diagnostics (probe)</a></p>
           </div>
         </div>
