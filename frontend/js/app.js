@@ -2,7 +2,7 @@
 import { installLogCapture, logEvent } from './log.js';
 import { initLanguage, rememberSetting, resolveLanguage, language, t, tp, num } from './i18n.js';
 import { applyTheme } from './theme.js';
-import { setStravaExport } from './ui/strava-export.js';
+import { setStravaExport, askToPostRide } from './ui/strava-export.js';
 import { TrainerConnection } from './ble/connection.js';
 import { TrainerControl } from './ble/trainer-control.js';
 import { GearModel } from './gears.js';
@@ -609,6 +609,8 @@ async function endRide() {
     showSummary(session);
     if (activeWorkout?.test) showFtpResult(document.getElementById('summary-ftp-result'), session.id);
     showRideBadges(document.getElementById('summary-badges'), session.id, { onOpenRide: (id) => chronicle.openDetail(id) });
+    // Settings → Strava on: ask for a description, then download + upload page.
+    askToPostRide(session.id);
   } catch (err) {
     // Never drop the ride. Park it and retry on the next load — the rider
     // cannot pedal the hour again.

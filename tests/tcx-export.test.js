@@ -66,6 +66,23 @@ describe('download API and setting', () => {
     assert.equal((await bob.get(`/api/sessions/${saved.id}/tcx`)).status, 404, 'not someone else\'s');
   });
 
+  test('a ride keeps its description, and the file carries it as notes', async () => {
+    const saved = await (await alice.post('/api/sessions', {
+      started_at: '2026-10-18T22:00:00.000Z', ended_at: '2026-10-18T22:01:00.000Z', samples,
+    })).json();
+    const res = await alice.patch(`/api/sessions/${saved.id}`, { description: '  Legs <3 & lungs: "done"  ' });
+    assert.equal(res.status, 200);
+    assert.equal((await res.json()).description, 'Legs <3 & lungs: "done"', 'trimmed');
+    const tcx = await (await alice.get(`/api/sessions/${saved.id}/tcx`)).text();
+    assert.match(tcx, /<Notes>Legs &#60;3 &#38; lungs: &#34;done&#34;<\/Notes>/, 'escaped for XML');
+
+    assert.equal((await bob.patch(`/api/sessions/${saved.id}`, { description: 'mine now' })).status, 404);
+    assert.equal((await alice.patch(`/api/sessions/${saved.id}`, { description: 'x'.repeat(2001) })).status, 400);
+    assert.equal((await alice.patch(`/api/sessions/${saved.id}`, { description: 5 })).status, 400);
+    await alice.patch(`/api/sessions/${saved.id}`, { description: '   ' });
+    assert.ok(!(await (await alice.get(`/api/sessions/${saved.id}/tcx`)).text()).includes('<Notes>'), 'blank clears it');
+  });
+
   test('the Strava box is off until the rider turns it on', async () => {
     assert.equal((await (await alice.get('/api/settings')).json()).strava_export, false);
     assert.equal((await (await alice.put('/api/settings', { strava_export: true })).json()).strava_export, true);

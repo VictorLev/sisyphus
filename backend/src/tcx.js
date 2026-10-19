@@ -59,7 +59,7 @@ export function buildTcx(session, samples) {
 ${points.join('\n')}
 </Track>
 </Lap>
-<Creator xsi:type="Device_t" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><Name>${escapeXml('Sisyphus')}</Name></Creator>
+${session.description ? `<Notes>${escapeXml(session.description)}</Notes>\n` : ''}<Creator xsi:type="Device_t" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><Name>${escapeXml('Sisyphus')}</Name></Creator>
 </Activity>
 </Activities>
 </TrainingCenterDatabase>

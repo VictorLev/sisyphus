@@ -191,3 +191,12 @@ export function getLeaderboard(period) {
   const tz = -new Date().getTimezoneOffset();
   return request(`/api/leaderboard?period=${encodeURIComponent(period)}&tz=${tz}`);
 }
+
+// The rider's description of a ride (for Strava).
+export function setSessionDescription(id, description) {
+  return request(`/api/sessions/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ description }),
+  });
+}

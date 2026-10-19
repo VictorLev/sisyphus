@@ -153,6 +153,19 @@ router.get('/:id/tcx', (req, res) => {
   res.send(buildTcx(session, selectSamples.all(session.id)));
 });
 
+// The rider's description of the ride (asked for when it ends, for Strava).
+const DESCRIPTION_MAX = 2000;
+const updateDescription = db.prepare('UPDATE sessions SET description = ? WHERE id = ? AND user_id = ?');
+router.patch('/:id', (req, res) => {
+  const { description } = req.body ?? {};
+  if (typeof description !== 'string' || description.length > DESCRIPTION_MAX) {
+    return res.status(400).json({ error: `description must be text of at most ${DESCRIPTION_MAX} characters` });
+  }
+  const changed = updateDescription.run(description.trim() || null, req.params.id, req.user.id).changes;
+  if (!changed) return res.status(404).json({ error: 'session not found' });
+  res.json(selectSessionById.get(req.params.id, req.user.id));
+});
+
 // Deleting a Push removes its samples too — the log is the source of truth,
 // so a mis-recorded ride has to be removable.
 const deleteSamples = db.prepare('DELETE FROM session_samples WHERE session_id = ?');

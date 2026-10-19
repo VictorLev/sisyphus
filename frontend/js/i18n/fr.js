@@ -556,4 +556,10 @@ export const FR = {
   "strava.uploadPage": "Ouvrir la page de téléversement de Strava",
   "strava.uploadStep": "et choisir le fichier que vous venez de télécharger.",
   "strava.exportHint": "Strava y lit la puissance, la cadence, la vitesse et la distance. Cochez « Intérieur » ou choisissez « Sortie virtuelle » si ce n'est pas déjà fait.",
+  "strava.dialogTitle": "Publier cette sortie sur Strava",
+  "strava.description": "Description",
+  "strava.descriptionPlaceholder": "Comment ça s'est passé?",
+  "strava.dialogHint": "Enregistrer télécharge la sortie et ouvre la page de téléversement de Strava : choisissez-y le fichier. La description est copiée, pour la coller dans la case de description de Strava.",
+  "strava.save": "Enregistrer",
+  "strava.skip": "Pas cette fois",
 };
