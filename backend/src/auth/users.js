@@ -1,6 +1,7 @@
 import db from '../db/index.js';
 import { hashPassword, minPasswordLength, passwordLengthError } from './password.js';
 import { USERNAME_PATTERN, claimOrphans } from '../db/migrate.js';
+import { FIRST_RIDE } from '../db/first-ride.js';
 
 const selectByUsername = db.prepare('SELECT * FROM users WHERE username = ?'); // column is NOCASE
 const selectById = db.prepare('SELECT * FROM users WHERE id = ?');
@@ -8,6 +9,16 @@ const insertUser = db.prepare(
   'INSERT INTO users (username, password_hash, display_name, is_admin) VALUES (?, ?, ?, ?)'
 );
 const updateHash = db.prepare('UPDATE users SET password_hash = ? WHERE id = ?');
+const insertWorkout = db.prepare('INSERT INTO workouts (name, structure, user_id) VALUES (?, ?, ?)');
+const insertStar = db.prepare('INSERT INTO workout_stars (user_id, workout_id) VALUES (?, ?)');
+
+// The account and its starred "My First Ride", together or not at all.
+const insertNewUser = db.transaction((name, hash, displayName, isAdmin) => {
+  const userId = insertUser.run(name, hash, displayName, isAdmin).lastInsertRowid;
+  const workoutId = insertWorkout.run(FIRST_RIDE.name, JSON.stringify(FIRST_RIDE.structure), userId).lastInsertRowid;
+  insertStar.run(userId, workoutId);
+  return userId;
+});
 
 // What the API and the frontend see of an account. Never the hash.
 export function publicUser(user) {
@@ -44,10 +55,10 @@ export async function createUser({ username, password, displayName, isAdmin = fa
   if (invalid) throw new Error(invalid);
   if (findUserByUsername(name)) throw new Error(`user "${name}" already exists`);
 
-  const info = insertUser.run(name, await hashPassword(password), displayName?.trim() || name, isAdmin ? 1 : 0);
+  const userId = insertNewUser(name, await hashPassword(password), displayName?.trim() || name, isAdmin ? 1 : 0);
   // The first admin inherits any history from before accounts existed.
   if (isAdmin) claimOrphans(db);
-  return findUserById(info.lastInsertRowid);
+  return findUserById(userId);
 }
 
 export async function setPassword(userId, password) {

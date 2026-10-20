@@ -54,8 +54,9 @@ describe('workouts', () => {
   test("Bob's list has the library but none of Alice's workouts", async () => {
     const list = await (await bob.get('/api/workouts')).json();
     assert.ok(!list.some((w) => w.id === aliceWorkout.id));
-    assert.ok(list.every((w) => w.library), 'only library workouts');
-    assert.ok(list.every((w) => !w.starred), "Alice's stars are hers");
+    const own = list.filter((w) => !w.library);
+    assert.deepEqual(own.map((w) => w.name), ['My First Ride'], 'only the library and his own first ride');
+    assert.ok(list.filter((w) => w.library).every((w) => !w.starred), "Alice's stars are hers");
   });
 
   test("Bob cannot read, edit, star, copy or delete Alice's workout", async () => {

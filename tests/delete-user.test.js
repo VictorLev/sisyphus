@@ -52,8 +52,8 @@ describe('deleting a user', () => {
     const counts = users.countUserData(bobId);
     assert.equal(counts.rides, 1);
     assert.equal(counts['ride samples'], 2);
-    assert.equal(counts.workouts, 1);
-    assert.equal(counts.stars, 2, 'his own workout and a library one');
+    assert.equal(counts.workouts, 2, 'his own and his My First Ride');
+    assert.equal(counts.stars, 3, 'his own workout, My First Ride and a library one');
     assert.equal(counts['FTP history entries'], 1);
     assert.ok(counts.logins >= 1);
     assert.ok(users.findUserByUsername('bob'), 'still there');
