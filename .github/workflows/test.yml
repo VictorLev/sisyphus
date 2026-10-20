@@ -106,6 +106,8 @@ jobs:
   # A release does not rebuild: it re-tags the image main already published
   # (and CI already smoke-tested) for that commit. Tag only commits that have
   # been on main; otherwise there is no image to promote and this fails.
+  # A tag pushed right after merging races main's publish job, so the image
+  # is waited for (up to 15 minutes) rather than expected to be there.
   release:
     needs: [test, image]
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
@@ -121,6 +123,19 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Wait for main's image of this commit
+        run: |
+          for i in $(seq 1 90); do
+            if docker buildx imagetools inspect "$REGISTRY_IMAGE:${{ github.sha }}" > /dev/null 2>&1; then
+              echo "Found $REGISTRY_IMAGE:${{ github.sha }}"
+              exit 0
+            fi
+            echo "Not published yet ($i/90); main's publish job may still be running. Waiting 10 s."
+            sleep 10
+          done
+          echo "::error::No image for ${{ github.sha }} after 15 minutes. Was this commit merged to main, and did main's publish job succeed?"
+          exit 1
 
       - name: Promote ${{ github.ref_name }} to stable
         run: |
