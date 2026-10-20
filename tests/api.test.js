@@ -197,6 +197,14 @@ describe('config API', () => {
     assert.equal((await postJson('/api/settings', { scenery_mode: 'shuffle' }, 'PUT')).status, 400);
   });
 
+  test('bike weight defaults to 9 kg and stays within a real bike\'s range', async () => {
+    assert.equal((await (await api('/api/settings')).json()).bike_weight_kg, 9);
+    assert.equal((await (await postJson('/api/settings', { bike_weight_kg: 7.4 }, 'PUT')).json()).bike_weight_kg, 7.4);
+    assert.equal((await postJson('/api/settings', { bike_weight_kg: 1 }, 'PUT')).status, 400);
+    assert.equal((await postJson('/api/settings', { bike_weight_kg: 60 }, 'PUT')).status, 400);
+    await postJson('/api/settings', { bike_weight_kg: 9 }, 'PUT');
+  });
+
   test('the theme is dark unless the rider picks light', async () => {
     assert.equal((await (await api('/api/settings')).json()).theme, 'dark');
     assert.equal((await (await postJson('/api/settings', { theme: 'light' }, 'PUT')).json()).theme, 'light');
