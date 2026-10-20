@@ -393,4 +393,5 @@ export const EN = {
   "scenery.linkPlaceholder": "https://www.youtube.com/watch?v=…",
   "scenery.remove": "Remove this video",
   "scenery.badLink": "Not a YouTube video link: {link}",
+  "lb.empty": "No rides yet in this period. Be the first to push the boulder.",
 };

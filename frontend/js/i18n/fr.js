@@ -564,4 +564,5 @@ export const FR = {
   "strava.skip": "Pas cette fois",
   "settings.bikeWeight": "Poids du vélo (kg)",
   "settings.bikeWeightHint": "La vitesse en sortie vient de vos watts, de la pente, et de votre poids (Profil) plus celui du vélo, comme sur la route : plus lourd, c'est plus lent en montée et plus lent à lancer.",
+  "lb.empty": "Aucune sortie pour cette période. Soyez le premier à pousser le rocher.",
 };

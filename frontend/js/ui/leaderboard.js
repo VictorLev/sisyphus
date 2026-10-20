@@ -61,6 +61,13 @@ export function initLeaderboard() {
     const key = choice.metric;
     const riders = [...board.riders].sort((a, b) => b[key] - a[key] || b.minutes - a.minutes || a.name.localeCompare(b.name));
     const top = Math.max(1e-9, ...riders.map((r) => r[key]));
+    if (riders.length === 0) {
+      const empty = document.createElement('li');
+      empty.className = 'empty';
+      empty.textContent = t('lb.empty');
+      listEl.appendChild(empty);
+      return;
+    }
 
     let rank = 0;
     riders.forEach((rider, i) => {
