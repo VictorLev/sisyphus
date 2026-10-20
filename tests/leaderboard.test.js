@@ -67,16 +67,15 @@ describe('leaderboard API', () => {
     tmp.cleanup();
   });
 
-  test('lists every rider with this week\'s totals, zeros included', async () => {
+  test('lists the riders who rode this week, with their totals; nobody else', async () => {
     const res = await alice.get('/api/leaderboard?period=week&tz=0');
     assert.equal(res.status, 200);
     const board = await res.json();
     assert.equal(board.period, 'week');
     const by = Object.fromEntries(board.riders.map((r) => [r.name, r]));
-    assert.deepEqual(Object.keys(by).sort(), ['Alice', 'Bob', 'Carol']);
+    assert.deepEqual(Object.keys(by).sort(), ['Alice', 'Bob'], 'Carol has no rides: not listed');
     assert.deepEqual([by.Alice.rides, by.Alice.minutes, by.Alice.distance_km], [2, 90, 42]);
     assert.deepEqual([by.Bob.rides, by.Bob.minutes, by.Bob.distance_km], [1, 45, 20], 'the 2020 ride is not this week');
-    assert.deepEqual([by.Carol.rides, by.Carol.minutes], [0, 0]);
   });
 
   test('this year counts this year\'s rides only', async () => {
@@ -93,7 +92,17 @@ describe('leaderboard API', () => {
     assert.equal(by.Bob.you, true);
     assert.equal(by.Alice.you, false);
     assert.ok(by.Bob.level > by.Alice.level, 'Bob\'s old 10-hour ride still counts for his level');
-    assert.equal(by.Carol.level, 1);
+    assert.equal(by.Carol, undefined, 'no rides this month: not listed');
+  });
+
+  test('a rider whose rides are all from before the period is not listed in it', async () => {
+    const dave = await (async () => {
+      await addUser('dave', 'd', { displayName: 'Dave' });
+      return login(server.address ? `http://127.0.0.1:${server.address().port}` : '', 'dave', 'd');
+    })();
+    await dave.post('/api/sessions', ride('2021-03-01T18:00:00.000Z', 60, 30));
+    const names = (await (await dave.get('/api/leaderboard?period=year')).json()).riders.map((r) => r.name);
+    assert.ok(!names.includes('Dave'), 'not even to himself');
   });
 
   test('shows display names and totals only', async () => {

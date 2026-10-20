@@ -5,10 +5,10 @@ import { xpFor, levelFromXp } from '../level.js';
 
 const router = Router();
 
-// Every rider, with their totals for the period (zeros included, so nobody
-// is hidden for having a quiet week) and their all-time level. Only the
-// display name and these numbers leave the server; never usernames or
-// anything from another rider's log.
+// Every rider who rode in the period, with their totals and their all-time
+// level. Riders with no rides in it aren't listed at all. Only the display
+// name and these numbers leave the server; never usernames or anything
+// from another rider's log.
 const selectPeriod = db.prepare(
   `SELECT u.id, u.display_name,
           COUNT(s.id) AS rides,
@@ -19,7 +19,8 @@ const selectPeriod = db.prepare(
      AND s.ended_at IS NOT NULL
      AND julianday(s.started_at) >= julianday(@from)
      AND julianday(s.started_at) < julianday(@to)
-   GROUP BY u.id`
+   GROUP BY u.id
+   HAVING COUNT(s.id) > 0`
 );
 const selectAllTime = db.prepare(
   `SELECT user_id, COUNT(*) AS pushes,
