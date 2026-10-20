@@ -562,4 +562,5 @@ export const FR = {
   "strava.dialogHint": "Enregistrer télécharge la sortie et ouvre la page de téléversement de Strava : choisissez-y le fichier. La description est copiée, pour la coller dans la case de description de Strava.",
   "strava.save": "Enregistrer",
   "strava.skip": "Pas cette fois",
+  "lb.empty": "Aucune sortie pour cette période. Soyez le premier à pousser le rocher.",
 };
