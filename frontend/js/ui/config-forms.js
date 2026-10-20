@@ -85,6 +85,7 @@ export function initSettings({ onSaved }) {
       'setting-resistance-per-grade',
       'setting-power-smoothing-sec',
       'setting-sample-interval-sec',
+      'setting-bike-weight-kg',
       'setting-default-mode',
       'setting-scenery-videos',
       'setting-scenery-mode',

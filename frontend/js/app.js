@@ -8,6 +8,7 @@ import { TrainerControl } from './ble/trainer-control.js';
 import { GearModel } from './gears.js';
 import { RollingAverage } from './metrics/rolling-average.js';
 import { DistanceTracker } from './metrics/distance.js';
+import { VirtualSpeed } from './metrics/virtual-speed.js';
 import { WorkoutRunner } from './workout/runner.js';
 import { SessionRecorder } from './session/recorder.js';
 import { stashRide, flushPending, pendingCount } from './session/pending.js';
@@ -48,6 +49,9 @@ const gears = new GearModel();
 let trainerControl = null; // created once the trainer's GATT service is up
 const rollingAverage = new RollingAverage(10000);
 const distanceTracker = new DistanceTracker();
+// Speed from power, weight and grade (rider weight from Profile, bike
+// weight from Settings), in place of the trainer's flywheel estimate.
+const virtualSpeed = new VirtualSpeed();
 const recorder = new SessionRecorder();
 const rideHero = createRideHero(document.getElementById('ride-hero-canvas'));
 const scenery = initScenery({
@@ -153,6 +157,7 @@ function applySettings(settings) {
     startGear: settings.start_gear,
   });
   rollingAverage.windowMs = Math.max(1, settings.power_smoothing_sec) * 1000;
+  virtualSpeed.configure({ bikeKg: settings.bike_weight_kg });
   if (Number.isFinite(settings.resistance_per_grade)) {
     resistancePerGrade = settings.resistance_per_grade;
   }
@@ -173,6 +178,7 @@ async function loadConfig() {
   try {
     const profile = await getProfile();
     riderFtp = profile.ftp > 0 ? profile.ftp : null;
+    virtualSpeed.configure({ riderKg: profile.weight_kg });
     liveScreen.setFtp(riderFtp);
     setChronicleFtp(riderFtp);
     builder.setFtp(riderFtp);
@@ -186,6 +192,7 @@ retryPendingRides();
 
 document.addEventListener('profilechange', (event) => {
   riderFtp = event.detail.ftp > 0 ? event.detail.ftp : null;
+  virtualSpeed.configure({ riderKg: event.detail.weight_kg });
   liveScreen.setFtp(riderFtp);
   setChronicleFtp(riderFtp);
   builder.setFtp(riderFtp);
@@ -404,19 +411,25 @@ trainerConnection.addEventListener('reading', (event) => {
   if (reading.instantaneousPowerW != null) {
     rollingAverage.push(reading.instantaneousPowerW, receivedAt);
   }
-  distanceTracker.update(reading, receivedAt);
+  // Road speed from the watts on the current grade; a trainer that sends
+  // no power keeps its own speed. Distance follows whichever speed is
+  // shown (not the trainer's odometer), so the two always agree.
+  const speed = reading.instantaneousPowerW != null
+    ? virtualSpeed.update(reading.instantaneousPowerW, currentGrade(), receivedAt)
+    : reading.instantaneousSpeedKmh;
+  distanceTracker.update({ instantaneousSpeedKmh: speed }, receivedAt);
   // Accumulate every notification; the recording tick commits their mean.
   recorder.addReading({
     power: reading.instantaneousPowerW,
     cadence: reading.instantaneousCadenceRpm,
-    speed: reading.instantaneousSpeedKmh,
+    speed,
     heartRate: reading.heartRateBpm,
   });
 
   const zone = liveScreen.updateRawNumbers({
     powerSmoothed: rollingAverage.average(),
     cadence: reading.instantaneousCadenceRpm,
-    speed: reading.instantaneousSpeedKmh,
+    speed,
   });
   // Only fires when the zone actually changes: Sisyphus leans in harder and
   // works faster the deeper the rider is into their zones.
@@ -430,6 +443,7 @@ function startRide(workout) {
   activeWorkout = workout;
   rollingAverage.reset();
   distanceTracker.reset();
+  virtualSpeed.reset();
   recorder.reset();
   recorder.start(performance.now());
   latestReading = null;
@@ -538,6 +552,7 @@ function resumeRide() {
   pausedAtMs = null;
   recorder.resume(now);
   distanceTracker.resume();
+  virtualSpeed.resume();
   rollingAverage.reset(); // pre-pause watts would drag the 10s average
   runner?.resume(now);
   scenery.play();

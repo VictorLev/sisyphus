@@ -21,6 +21,8 @@ const DEFAULTS = {
     start_gear: 5, // 1-based
     power_smoothing_sec: 10, // live display smoothing window
     sample_interval_sec: 1, // how often a session sample is recorded
+    // With the rider's weight (Profile), sets the speed shown while riding.
+    bike_weight_kg: 9,
     default_mode: 'erg', // 'gears' | 'erg'
     // Resistance units added per +1% of grade. The trainer's usable range is
     // small (0..20), so a climb has to cost only a couple of units to leave
@@ -97,6 +99,9 @@ function validateSettings(s) {
   }
   if (s.theme != null && !['dark', 'light'].includes(s.theme)) {
     return "theme must be 'dark' or 'light'";
+  }
+  if (s.bike_weight_kg != null && !(s.bike_weight_kg >= 3 && s.bike_weight_kg <= 40)) {
+    return 'bike_weight_kg must be between 3 and 40';
   }
   if (s.default_mode != null && !['gears', 'erg'].includes(s.default_mode)) {
     return "default_mode must be 'gears' or 'erg'";
