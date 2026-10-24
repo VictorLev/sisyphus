@@ -879,4 +879,5 @@ export const FR = {
   "picker.erg": "Utiliser le mode ERG",
   "settings.display": "Affichage",
   "settings.more": "Plus",
+  "settings.tabRide": "Sortie",
 };

@@ -1,7 +1,8 @@
-// Settings, one tab per kind: Trainer, Ride, Display, Scenery, Strava,
-// Account, and for admins Log and Admin Panel. Only the chosen tab's panel
-// shows; the form and Save Settings span them all, so changes on several
-// tabs are saved together. The last tab is remembered in this browser.
+// Settings in two tabs: Ride (trainer, ride, scenery, Strava) and Account
+// (password, language and theme, and for admins the log and the Admin
+// Panel). Only the chosen tab's panels show; the form and Save Settings
+// span both, so changes on either tab are saved together. The last tab is
+// remembered in this browser.
 
 const KEY = 'sisyphus.settingsTab';
 
@@ -45,12 +46,5 @@ export function initSettingsTabs() {
   } catch { /* first tab */ }
   select(saved);
 
-  return {
-    select,
-    // Admin-only tabs (Log, Admin Panel).
-    showTab(name) {
-      bar.querySelector(`[data-settings-tab="${name}"]`).hidden = false;
-      select(saved ?? 'trainer');
-    },
-  };
+  return { select };
 }

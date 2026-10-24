@@ -541,18 +541,12 @@
 
       <!-- One tab per kind of setting; Save Settings (above) saves them all. -->
       <div class="settings-tabs" role="tablist" id="settings-tabs">
-        <button type="button" role="tab" data-settings-tab="trainer" data-i18n="trainer.title">Trainer</button>
-        <button type="button" role="tab" data-settings-tab="ride" data-i18n="settings.ride">Ride</button>
-        <button type="button" role="tab" data-settings-tab="display" data-i18n="settings.display">Display</button>
-        <button type="button" role="tab" data-settings-tab="scenery" data-i18n="settings.sceneryTitle">Scenery</button>
-        <button type="button" role="tab" data-settings-tab="strava">Strava</button>
+        <button type="button" role="tab" data-settings-tab="ride" data-i18n="settings.tabRide">Ride</button>
         <button type="button" role="tab" data-settings-tab="account" data-i18n="account.title">Account</button>
-        <button type="button" role="tab" data-settings-tab="log" data-i18n="log.title" hidden>Log</button>
-        <button type="button" role="tab" data-settings-tab="admin" data-i18n="admin.title" hidden>Admin Panel</button>
       </div>
 
       <div class="settings-panes">
-          <div class="panel settings-pane trainer-panel" data-settings-pane="trainer">
+          <div class="panel settings-pane trainer-panel" data-settings-pane="ride">
             <h2 data-i18n="trainer.title">Trainer</h2>
             <input id="setting-trainer-mode" type="hidden" />
             <div class="mode-select mode-select-3" role="radiogroup" aria-label="Trainer mode" data-i18n-attr="aria-label:trainer.title" id="trainer-mode-group">
@@ -646,27 +640,8 @@
             <p class="hint" data-i18n="settings.smoothingHint">Smoothing affects the live watts display only —
               recorded samples are always raw. Sample interval sets how often a
               data point is written to the ride log.</p>
-          </div>
-          <div class="panel settings-pane" data-settings-pane="display">
-            <h2 data-i18n="settings.display">Display</h2>
-            <label class="field">
-              <span data-i18n="settings.language">Language</span>
-              <select id="setting-language">
-                <option value="auto" data-i18n="lang.auto">Default (same as Chrome)</option>
-                <option value="fr" lang="fr">Français</option>
-                <option value="en" lang="en">English</option>
-              </select>
-            </label>
-            <label class="field">
-              <span data-i18n="settings.theme">Theme</span>
-              <select id="setting-theme">
-                <option value="dark" data-i18n="theme.dark">Dark</option>
-                <option value="light" data-i18n="theme.light">Light</option>
-              </select>
-            </label>
-          </div>
-          <div class="panel settings-pane" data-settings-pane="scenery">
-            <h2 data-i18n="settings.sceneryTitle">Scenery</h2>
+          
+            <h2 class="settings-more" data-i18n="settings.sceneryTitle">Scenery</h2>
             <label class="field">
               <span data-i18n="settings.sceneryMode">Order</span>
               <select id="setting-scenery-mode">
@@ -678,9 +653,8 @@
               the admin. Random never repeats last ride's video; In order plays
               the next one each ride. Videos start muted; unmute in the player.
               To switch mid-ride, use the picker on the ride screen.</p>
-          </div>
-          <div class="panel settings-pane" data-settings-pane="strava">
-            <h2>Strava</h2>
+          
+            <h2 class="settings-more">Strava</h2>
             <label class="check-field">
               <input id="setting-strava-export" type="checkbox" role="switch" />
               <span data-i18n="settings.stravaExport">Show "Download for Strava" on my rides</span>
@@ -688,6 +662,7 @@
             <p class="hint" data-i18n="settings.stravaExportHint">Adds a box to each ride's page in the
               Chronicle: download the ride as a .tcx file, then upload it on
               Strava's site. Nothing is sent to Strava by Sisyphus.</p>
+          
           </div>
           <div class="panel settings-pane" data-settings-pane="account">
             <h2 data-i18n="account.title">Account</h2>
@@ -712,12 +687,31 @@
               <button id="logout-btn" type="button" class="secondary" data-i18n="account.logout">Log Out</button>
             </div>
           
+          </div>
+          <div class="panel settings-pane" data-settings-pane="account">
+            <h2 data-i18n="settings.display">Display</h2>
+            <label class="field">
+              <span data-i18n="settings.language">Language</span>
+              <select id="setting-language">
+                <option value="auto" data-i18n="lang.auto">Default (same as Chrome)</option>
+                <option value="fr" lang="fr">Français</option>
+                <option value="en" lang="en">English</option>
+              </select>
+            </label>
+            <label class="field">
+              <span data-i18n="settings.theme">Theme</span>
+              <select id="setting-theme">
+                <option value="dark" data-i18n="theme.dark">Dark</option>
+                <option value="light" data-i18n="theme.light">Light</option>
+              </select>
+            </label>
+          
             <h2 class="settings-more" data-i18n="settings.more">More</h2>
             <p class="tools-link"><button id="replay-tutorial-btn" type="button" class="link-btn" data-i18n="tutorial.replay">Replay the tutorial</button></p>
             <p class="tools-link"><a href="probe.html" data-i18n="settings.probe">Hardware diagnostics (probe)</a></p>
+          
           </div>
-          <!-- Admins only (app.js shows the tab). -->
-          <div id="log-panel" class="panel settings-pane" data-settings-pane="log">
+          <div id="log-panel" class="panel settings-pane" data-settings-pane="account" hidden>
             <div class="calendar-header">
               <h2 data-i18n="log.title">Log</h2>
               <div class="row-actions">
@@ -733,7 +727,7 @@
             <p id="log-status" class="status"></p>
           
           </div>
-          <div class="panel settings-pane admin-link" id="admin-link" data-settings-pane="admin">
+          <div class="panel settings-pane admin-link" id="admin-link" data-settings-pane="account" hidden>
             <h2 data-i18n="admin.title">Admin Panel</h2>
             <p class="hint" data-i18n="admin.linkHint">Riders and their passwords, the shared scenery, and
               the release notes.</p>

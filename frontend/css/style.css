@@ -3626,15 +3626,29 @@ kbd {
   color: var(--color-text);
 }
 
-/* One tab's panel at a time, at a comfortable reading width. */
-.settings-pane {
-  max-width: 48rem;
+/* A tab's panels in two columns (one on narrow screens). */
+.settings-panes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.5rem;
+  align-items: start;
 }
 
-.settings-pane:not(.is-active) {
+.settings-pane {
+  margin: 0;
+}
+
+.settings-pane:not(.is-active),
+.settings-pane[hidden] {
   display: none;
 }
 
 .settings-more {
   margin-top: 2rem;
+}
+
+@media (max-width: 900px) {
+  .settings-panes {
+    grid-template-columns: 1fr;
+  }
 }

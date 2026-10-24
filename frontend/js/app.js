@@ -237,8 +237,8 @@ initAccount(currentUser);
 // browser), like the Admin Panel.
 const settingsTabs = initSettingsTabs();
 if (currentUser?.is_admin) {
-  settingsTabs.showTab('log');
-  settingsTabs.showTab('admin');
+  document.getElementById('log-panel').hidden = false;
+  document.getElementById('admin-link').hidden = false;
 }
 initLogPanel();
 initFtpHistory();
@@ -488,7 +488,7 @@ function updateModeUi() {
 
 document.getElementById('home-trainer-change').addEventListener('click', () => {
   showView('settings');
-  settingsTabs.select('trainer');
+  settingsTabs.select('ride');
 });
 document.getElementById('shift-up-btn').addEventListener('click', () => handleShift('up'));
 document.getElementById('shift-down-btn').addEventListener('click', () => handleShift('down'));
