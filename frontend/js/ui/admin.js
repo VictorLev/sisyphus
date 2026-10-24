@@ -217,6 +217,7 @@ export function initAdmin({ onSceneryChange, onWalletChange }) {
       const list = document.getElementById('admin-releases');
       list.innerHTML = '';
       for (const r of releases) {
+        if (r.notes.length === 0) continue; // nothing new since the last release
         const li = document.createElement('li');
         const head = document.createElement('div');
         head.className = 'admin-release-head';

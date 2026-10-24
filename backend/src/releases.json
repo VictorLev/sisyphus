@@ -3,6 +3,12 @@
     "version": "next",
     "date": null,
     "commit": null,
+    "notes": []
+  },
+  {
+    "version": "v2.0.0",
+    "date": "2026-10-24",
+    "commit": "471f5a9",
     "notes": [
       "Route inbox: copy many routes onto the server's share, then Scan for new routes in the Admin Panel (or npm run import-routes)",
       "Admin Panel: riders (create, delete, reset passwords), the shared scenery list, release notes",
