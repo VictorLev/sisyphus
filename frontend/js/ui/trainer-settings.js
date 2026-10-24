@@ -37,5 +37,17 @@ export function initTrainerSettings() {
     input.dispatchEvent(new Event('input', { bubbles: true }));
   });
 
+  // The phone remote's address, in full, ready to type or copy.
+  const address = `${location.origin}/remote`;
+  const link = document.getElementById('remote-address');
+  link.href = address;
+  link.textContent = address.replace(/^https?:\/\//, '');
+  document.getElementById('remote-copy-btn').addEventListener('click', async (event) => {
+    try {
+      await navigator.clipboard.writeText(address);
+      event.target.textContent = t('remote.copied');
+    } catch { /* select it by hand */ }
+  });
+
   return { render };
 }

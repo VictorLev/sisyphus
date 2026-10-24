@@ -4,6 +4,7 @@ import { initLanguage, rememberSetting, resolveLanguage, language, t, tp, num } 
 import { applyTheme } from './theme.js';
 import { setStravaExport, askToPostRide } from './ui/strava-export.js';
 import { TRAINER_MODES } from './ui/trainer-settings.js';
+import { initRemoteLink } from './ui/remote-link.js';
 import { TrainerConnection } from './ble/connection.js';
 import { TrainerControl } from './ble/trainer-control.js';
 import { GearModel } from './gears.js';
@@ -317,6 +318,31 @@ document.addEventListener('keydown', (event) => {
   handleShift(direction);
 });
 
+// The phone remote (/remote): shifts from the rider's phone land here like
+// the on-screen buttons, and the phone is kept up to date with the ride.
+let liveSpeedKmh = null;
+const remote = currentUser ? initRemoteLink({
+  onShift: (direction) => {
+    if (!liveViewEl.hidden && pausedAtMs == null) handleShift(direction);
+  },
+  getState: () => {
+    const riding = !liveViewEl.hidden;
+    if (!riding) return { riding: false };
+    return {
+      riding,
+      paused: pausedAtMs != null,
+      mode: rideMode,
+      gear: gears.gearNumber,
+      gears: gears.gearCount,
+      power: rollingAverage.average() != null ? Math.round(rollingAverage.average()) : null,
+      cadence: latestReading?.instantaneousCadenceRpm ?? null,
+      speed: liveSpeedKmh != null ? Math.round(liveSpeedKmh * 10) / 10 : null,
+      workout: activeWorkout ? workoutName(activeWorkout) : null,
+    };
+  },
+  onPhones: (count) => { document.getElementById('remote-indicator').hidden = count === 0; },
+}) : { update() {} };
+
 // Applies whichever control the current mode owns. In ERG that's the active
 // segment's target watts; in gears it's the current gear's resistance.
 async function applyRideMode() {
@@ -375,6 +401,7 @@ function terrainResistance() {
 gears.addEventListener('change', (event) => {
   updateGearDisplay(event.detail.gear);
   if (rideMode === 'gears') applyResistance(terrainResistance());
+  remote.update();
 });
 
 // Writes resistance, re-acquiring control if the trainer dropped it (FTMS
@@ -423,6 +450,7 @@ trainerConnection.addEventListener('reading', (event) => {
     ? virtualSpeed.update(reading.instantaneousPowerW, currentGrade(), receivedAt)
     : reading.instantaneousSpeedKmh;
   distanceTracker.update({ instantaneousSpeedKmh: speed }, receivedAt);
+  liveSpeedKmh = speed;
   // Accumulate every notification; the recording tick commits their mean.
   recorder.addReading({
     power: reading.instantaneousPowerW,

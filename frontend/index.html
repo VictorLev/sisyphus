@@ -424,6 +424,12 @@
             </div>
             <p class="hint" data-i18n="settings.gearsHint">Gears are spread evenly between min and max. The
               trainer accepts 0–20; lower the max if the top gears feel too hard.</p>
+            <h3 data-i18n="remote.settingsTitle">Phone remote</h3>
+            <p class="hint" data-i18n="remote.settingsHint">Shift from your phone on the handlebars: open this
+              address on it and log in. It shows big buttons, your gear and
+              your numbers during a ride.</p>
+            <p class="remote-address"><a id="remote-address" href="/remote" target="_blank" rel="noopener">/remote</a>
+              <button id="remote-copy-btn" type="button" class="secondary" data-i18n="remote.copy">Copy address</button></p>
             </div>
 
             <!-- Both kinds of gears: how much a climb adds -->
@@ -701,6 +707,7 @@
               <strong id="gear-value">--</strong>
               <span class="metric-label" data-i18n="live.gear">gear</span>
             </div>
+            <span id="remote-indicator" class="remote-indicator" hidden data-i18n="live.phoneConnected">Phone remote on</span>
             <!-- Virtual gears only; + and − on a keyboard work too. -->
             <div class="shift-buttons" id="shift-buttons" hidden>
               <button id="shift-down-btn" type="button" class="secondary" aria-label="Easier gear" data-i18n-attr="aria-label:live.shiftDown">▼</button>

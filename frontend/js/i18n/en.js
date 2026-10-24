@@ -415,4 +415,11 @@ export const EN = {
   "trainer.description.erg": "ERG: the trainer holds each segment's target watts, whatever your gear or cadence. Workouts only: free rides and FTP tests use virtual gears.",
   "note.rearNoGears": "Rear gears: shift on your bike",
   "live.grade": "grade",
+  "remote.waiting": "Waiting for a ride: start one on your computer.",
+  "remote.paused": "Paused",
+  "remote.erg": "ERG: the trainer holds the watts, no gears to shift.",
+  "remote.rear": "Rear gears: shift on your bike.",
+  "remote.noRide": "No ride open on your computer.",
+  "remote.offline": "Reconnecting…",
+  "remote.copied": "Copied",
 };

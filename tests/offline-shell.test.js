@@ -16,7 +16,7 @@ function modules(dir) {
 }
 
 test('every app module is in the offline shell', () => {
-  // probe.js belongs to the hardware probe page, not the app.
-  const missing = modules('js').filter((f) => f !== 'js/probe.js' && !sw.includes(`'/${f}'`));
+  // probe.js and remote.js belong to their own pages, not the app.
+  const missing = modules('js').filter((f) => !['js/probe.js', 'js/remote.js'].includes(f) && !sw.includes(`'/${f}'`));
   assert.deepEqual(missing, [], 'add these to SHELL in frontend/sw.js and bump CACHE');
 });

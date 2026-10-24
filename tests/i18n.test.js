@@ -12,8 +12,8 @@ import { ZONES } from '../frontend/js/zones.js';
 
 const root = new URL('..', import.meta.url).pathname;
 const read = (p) => readFileSync(path.join(root, p), 'utf8');
-// Both pages carry static text: the app and the hardware probe.
-const html = read('frontend/index.html') + read('frontend/probe.html');
+// Pages with static text: the app, the hardware probe and the phone remote.
+const html = read('frontend/index.html') + read('frontend/probe.html') + read('frontend/remote.html');
 const library = JSON.parse(read('backend/src/db/library.json'));
 
 function htmlKeys() {

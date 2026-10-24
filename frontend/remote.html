@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#1c1915" />
+  <title>Sisyphus — Remote</title>
+  <!-- The theme this browser last used, before anything paints (see js/theme.js). -->
+  <script>try { if (localStorage.getItem('sisyphus.theme') === 'light') document.documentElement.dataset.theme = 'light'; } catch {}</script>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body class="remote-page">
+  <main class="remote">
+    <h1 class="title remote-title">SISYPHUS</h1>
+
+    <!-- Shown until logged in. -->
+    <form id="remote-login" class="panel remote-login" hidden>
+      <h2 data-i18n="remote.loginTitle">Log in to shift your gears</h2>
+      <label class="field">
+        <span data-i18n="login.username">Username</span>
+        <input id="remote-username" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" required />
+      </label>
+      <label class="field">
+        <span data-i18n="login.password">Password</span>
+        <input id="remote-password" type="password" autocomplete="current-password" required />
+      </label>
+      <p id="remote-login-status" class="status" role="alert"></p>
+      <button type="submit" data-i18n="login.submit">Log In</button>
+    </form>
+
+    <!-- The remote itself. -->
+    <section id="remote-panel" class="remote-panel" hidden>
+      <p id="remote-status" class="remote-status" role="status"></p>
+      <div class="remote-gear">
+        <strong id="remote-gear">--</strong>
+        <span id="remote-gear-label" class="metric-label" data-i18n="live.gear">gear</span>
+      </div>
+      <div class="remote-buttons">
+        <button id="remote-up" type="button" class="remote-btn" aria-label="Harder gear" data-i18n-attr="aria-label:live.shiftUp">▲</button>
+        <button id="remote-down" type="button" class="remote-btn" aria-label="Easier gear" data-i18n-attr="aria-label:live.shiftDown">▼</button>
+      </div>
+      <dl class="remote-numbers">
+        <div><dt data-i18n="remote.power">Power</dt><dd id="remote-power">--</dd></div>
+        <div><dt data-i18n="remote.cadence">Cadence</dt><dd id="remote-cadence">--</dd></div>
+        <div><dt data-i18n="remote.speed">Speed</dt><dd id="remote-speed">--</dd></div>
+      </dl>
+    </section>
+  </main>
+  <script type="module" src="js/remote.js"></script>
+</body>
+</html>
