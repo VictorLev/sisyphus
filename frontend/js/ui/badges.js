@@ -9,7 +9,7 @@ import { t, tp, num, date } from '../i18n.js';
 // (plain ASCII: the font has no symbols such as ★ or ✓).
 const GLYPHS = {
   Pushes: 'P', Distance: 'KM', Time: 'H', 'Big Rides': 'XL', Consistency: '7',
-  Power: 'W', FTP: '%', Workouts: 'WO', Champions: '#1', Oddities: '?!', Secrets: '?',
+  Power: 'W', FTP: '%', Workouts: 'WO', Routes: 'RT', Workplace: '$', Champions: '#1', Oddities: '?!', Secrets: '?',
 };
 
 const dateText = (iso) =>

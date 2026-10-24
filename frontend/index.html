@@ -40,33 +40,31 @@
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16M4 12h16M4 19h10"/><circle cx="19" cy="19" r="2"/></svg>
           <span data-i18n="nav.workouts">Workouts</span>
         </button>
-        <button type="button" data-nav="chronicle">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="1"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
-          <span data-i18n="nav.chronicle">Chronicle</span>
-        </button>
-        <button type="button" data-nav="feats">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M7 6H4v2a3 3 0 0 0 3 3M17 6h3v2a3 3 0 0 1-3 3M9 20h6M12 14v6"/></svg>
-          <span data-i18n="nav.feats">Feats</span>
-        </button>
-        <button type="button" data-nav="badges">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="15" r="6"/><path d="M8 3l2.5 6.5M16 3l-2.5 6.5M10.2 15l1.3 1.3 2.5-2.6"/></svg>
-          <span data-i18n="nav.badges">Badges</span>
-        </button>
-        <button type="button" data-nav="builder">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V9M9 19V5M14 19v-7M19 19v-4"/></svg>
-          <span data-i18n="nav.builder">Build</span>
+        <button type="button" data-nav="routes">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 20l6-9 4 5 3-4 7 8z"/><circle cx="17" cy="5" r="2"/></svg>
+          <span data-i18n="nav.routes">Routes</span>
         </button>
         <button type="button" data-nav="profile">
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
           <span data-i18n="nav.profile">Profile</span>
         </button>
         <div class="nav-rider" id="nav-rider">
-          <span class="nav-level" id="nav-level" title="Level" data-i18n-attr="title:nav.level">Lv 1</span>
+          <!-- The level and the avatar/name open Profile (no Profile tab). -->
+          <button type="button" class="nav-level" id="nav-level" title="Level: open your profile" data-i18n-attr="title:nav.levelProfile">Lv 1</button>
           <button type="button" class="nav-badges" id="nav-badges" title="Badges earned" aria-label="Badges earned" hidden>
             <span class="nav-badges-medal" aria-hidden="true"></span>
             <span id="nav-badges-count">0</span>
           </button>
-          <span class="nav-name" id="nav-name">—</span>
+          <!-- Drachmas: opens the shop (ui/shop.js). -->
+          <button type="button" class="nav-coins" id="nav-coins" title="Drachmas: open the shop" data-i18n-attr="title:shop.open" hidden>
+            <span class="nav-coin" aria-hidden="true"></span>
+            <span id="nav-coins-count">0</span>
+            <svg class="nav-shop-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1.2 12H6.2z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/></svg>
+          </button>
+          <button type="button" class="nav-profile" id="nav-profile-btn" title="Your profile" data-i18n-attr="title:nav.profileTitle">
+            <span class="nav-avatar" id="nav-avatar"></span>
+            <span class="nav-name" id="nav-name">—</span>
+          </button>
         </div>
 
         <button type="button" data-nav="settings" class="nav-settings">
@@ -76,34 +74,37 @@
       </nav>
     </header>
 
+    <!-- Profile's sub-pages; ui/profile-tabs.js moves it onto whichever shows. -->
+    <nav class="sub-nav" id="profile-subnav" aria-label="Profile" hidden>
+      <button type="button" data-subnav="profile" data-i18n="nav.profile">Profile</button>
+      <button type="button" data-subnav="chronicle" data-i18n="nav.chronicle">Chronicle</button>
+      <button type="button" data-subnav="feats" data-i18n="nav.feats">Feats</button>
+      <button type="button" data-subnav="badges" data-i18n="nav.badges">Badges</button>
+    </nav>
+
     <section data-view="home" class="view">
-      <div class="home-grid">
-        <div class="home-col">
-          <div class="panel">
-            <h2 data-i18n="home.rideMode">Ride Mode</h2>
-            <div class="mode-select">
-              <button id="mode-gears-btn" type="button" class="mode-btn" data-i18n="mode.gears">Virtual Gears</button>
-              <button id="mode-erg-btn" type="button" class="mode-btn is-active">ERG</button>
-            </div>
-            <p id="mode-description" class="hint"></p>
-          </div>
+      <!-- Three ways to start; every start checks the trainer first. -->
+      <div class="start-tiles">
+        <button type="button" class="start-tile" id="start-free">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="16" r="4"/><circle cx="18" cy="16" r="4"/><path d="M6 16l4-8h5l3 8M10 8l2 8h-6M14 5h3"/></svg>
+          <span class="start-tile-title" data-i18n="home.freeRide">Free Ride</span>
+          <span class="start-tile-text" data-i18n="home.freeRideText">No targets, no segments: just ride.</span>
+        </button>
+        <button type="button" class="start-tile" id="start-routes">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 20l6-9 4 5 3-4 7 8z"/><circle cx="17" cy="5" r="2"/></svg>
+          <span class="start-tile-title" data-i18n="nav.routes">Routes</span>
+          <span class="start-tile-text" data-i18n="home.routesText">Ride a filmed road at your own speed.</span>
+        </button>
+        <button type="button" class="start-tile" id="start-workouts">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20V12h4v8M10 20V6h4v14M17 20v-9h4v9"/></svg>
+          <span class="start-tile-title" data-i18n="nav.workouts">Workouts</span>
+          <span class="start-tile-text" data-i18n="home.workoutsText">Follow a session, segment by segment.</span>
+        </button>
+      </div>
+      <p class="trainer-mode-line"><span id="home-trainer-mode"></span>
+        <button id="home-trainer-change" type="button" class="link-btn" data-i18n="trainer.change">Change</button></p>
 
-          <div class="panel">
-            <h2 data-i18n="home.freeRide">Free Ride</h2>
-            <button id="free-ride-btn" type="button" disabled data-i18n="home.startFreeRide">Start Free Ride</button>
-            <p class="hint" data-i18n="home.freeRideHint">No targets, no segments — just ride. Always uses
-              virtual gears. Connect the trainer (top of the page) first.</p>
-          </div>
-        </div>
-
-        <div class="home-col">
-          <div class="panel">
-            <h2 data-i18n="home.starred">Starred Workouts</h2>
-            <ul id="workout-list" class="workout-list"></ul>
-            <button id="open-workouts-btn" type="button" class="secondary" data-i18n="home.allWorkouts">All Workouts</button>
-          </div>
-
-          <div class="panel leaderboard-panel">
+      <div class="panel leaderboard-panel">
             <div class="calendar-header">
               <h2 data-i18n="lb.title">Leaderboard</h2>
               <div class="segmented" role="group" aria-label="Period" data-i18n-attr="aria-label:lb.period" id="leaderboard-period">
@@ -122,9 +123,189 @@
             </div>
             <ol id="leaderboard-list" class="leaderboard-list"></ol>
           </div>
+    </section>
+
+    <section data-view="routes" class="view">
+      <h1 class="title" data-i18n="routes.title">ROUTES</h1>
+      <p class="tagline" id="routes-summary">&nbsp;</p>
+
+      <div class="panel">
+        <h2 data-i18n="routes.listTitle">Roads to ride</h2>
+        <p class="hint" data-i18n="routes.hint">The video plays at your speed, and the road's climbs
+          set the resistance, the way your trainer mode handles a workout's
+          climbs. Routes always ride on your gears, never in ERG.</p>
+        <ul id="route-list" class="card-grid route-list"></ul>
+      </div>
+
+      <!-- Admins only (ui/routes.js shows it). -->
+      <div class="panel" id="route-import" hidden>
+        <h2 data-i18n="routes.importTitle">Import a route</h2>
+        <form id="route-import-form">
+          <label class="field">
+            <span data-i18n="routes.name">Name</span>
+            <input id="route-import-name" type="text" maxlength="120" required />
+          </label>
+          <div class="form-row">
+            <label class="field">
+              <span data-i18n="routes.file">Route file (.json)</span>
+              <input id="route-import-file" type="file" accept=".json,application/json" required />
+            </label>
+            <label class="field">
+              <span data-i18n="routes.videoFile">Video (.mp4)</span>
+              <input id="route-import-video" type="file" accept="video/mp4,video/*" required />
+            </label>
+          </div>
+          <label class="field">
+            <span data-i18n="routes.pictureFile">Picture for the card (optional)</span>
+            <input id="route-import-picture" type="file" accept="image/*" />
+          </label>
+          <button type="submit" data-i18n="routes.import">Import</button>
+          <progress id="route-import-progress" class="route-progress" hidden></progress>
+          <p id="route-import-status" class="status" role="status"></p>
+        </form>
+        <p class="hint" data-i18n="routes.importHint">The route file holds the road (geometry: distance and
+          altitude) and how the video lines up with it (video_points). Big
+          videos go up in pieces; if it stops, press Resume upload on the
+          route and pick the same video. Smaller videos stream better: see
+          the deploy guide for shrinking them to 720p.</p>
+      </div>
+    </section>
+
+    <section data-view="shop" class="view">
+      <h1 class="title" data-i18n="shop.title">THE AGORA</h1>
+      <p class="tagline" id="shop-summary">&nbsp;</p>
+
+      <div class="shop-top">
+        <div class="panel shop-showcase">
+          <canvas id="shop-hero" class="shop-hero"></canvas>
+          <div id="shop-avatar" class="shop-avatar"></div>
+        </div>
+        <div class="panel">
+          <h2 data-i18n="shop.earnTitle">Earning drachmas</h2>
+          <p data-i18n-html="shop.earnText">Every minute you ride earns <strong>1 drachma</strong>. Every
+            badge adds more: <strong>25</strong> for bronze and fun ones, <strong>50</strong>
+            for silver, <strong>75</strong> for secrets and <strong>100</strong> for gold.
+            Everything you've already ridden counts.</p>
+          <p class="hint" id="shop-earn"></p>
+          <p id="shop-status" class="status" role="status"></p>
         </div>
       </div>
 
+      <div class="panel"><h2 data-i18n="shop.slot.hat">Hats for Sisyphus</h2><ul class="card-grid shop-grid" data-slot="hat"></ul></div>
+      <div class="panel"><h2 data-i18n="shop.slot.boulder">Boulders</h2><ul class="card-grid shop-grid" data-slot="boulder"></ul></div>
+      <div class="panel"><h2 data-i18n="shop.slot.avatar_bg">Avatar backgrounds</h2><ul class="card-grid shop-grid" data-slot="avatar_bg"></ul></div>
+      <div class="panel"><h2 data-i18n="shop.slot.avatar_emblem">Avatar emblems</h2><ul class="card-grid shop-grid" data-slot="avatar_emblem"></ul></div>
+    </section>
+
+    <!-- Admins only: Settings → Admin Panel (ui/admin.js). -->
+    <section data-view="admin" class="view">
+      <h1 class="title" data-i18n="admin.heading">ADMIN PANEL</h1>
+      <p class="tagline" data-i18n="admin.tagline">For your eyes only.</p>
+
+      <div class="builder-grid">
+        <div class="home-col">
+          <div class="panel">
+            <h2 data-i18n="admin.riders">Riders</h2>
+            <table class="admin-riders">
+              <thead><tr>
+                <th data-i18n="admin.col.rider">Rider</th>
+                <th data-i18n="admin.col.rides">Rides</th>
+                <th data-i18n="admin.col.last">Last ride</th>
+                <th></th>
+              </tr></thead>
+              <tbody id="admin-riders"></tbody>
+            </table>
+            <!-- A new or reset password: shown once, to pass on. -->
+            <div id="admin-password" class="admin-password" hidden>
+              <p id="admin-password-text"></p>
+              <code id="admin-password-value"></code>
+              <button id="admin-password-copy" type="button" class="secondary" data-i18n="admin.copy">Copy</button>
+            </div>
+            <p id="admin-riders-status" class="status" role="status"></p>
+          </div>
+
+          <div class="panel">
+            <h2 data-i18n="admin.newRider">New rider</h2>
+            <form id="admin-new-rider">
+              <div class="form-row">
+                <label class="field">
+                  <span data-i18n="admin.username">Username</span>
+                  <input id="admin-new-username" type="text" autocapitalize="none" spellcheck="false" required />
+                </label>
+                <label class="field">
+                  <span data-i18n="admin.displayName">Name shown</span>
+                  <input id="admin-new-name" type="text" />
+                </label>
+              </div>
+              <label class="check-field">
+                <input id="admin-new-admin" type="checkbox" role="switch" />
+                <span data-i18n="admin.makeAdmin">Admin too</span>
+              </label>
+              <button type="submit" data-i18n="admin.create">Create</button>
+            </form>
+            <p class="hint" data-i18n="admin.newRiderHint">Usernames are 2–32 letters, digits, dots, dashes
+              or underscores. Sisyphus makes a temporary password: send it with
+              the address, and they change it in Settings → Account.</p>
+          </div>
+
+          <!-- Routes dropped on the server's share, imported in one go. -->
+          <div class="panel">
+            <h2 data-i18n="admin.inbox">Route inbox</h2>
+            <p class="hint" data-i18n="admin.inboxHint">For many routes at once: copy one folder per route
+              (video.mp4, route.json and maybe picture.jpg) into the inbox folder in the
+              server's routes folder, then scan. The folder's name becomes the route's name.</p>
+            <p class="hint" id="admin-inbox-dir"></p>
+            <ul id="admin-inbox" class="admin-inbox"></ul>
+            <div class="row-actions">
+              <button id="admin-inbox-scan" type="button" data-i18n="admin.scan">Scan for new routes</button>
+              <button id="admin-inbox-refresh" type="button" class="secondary" data-i18n="admin.refresh">Refresh</button>
+            </div>
+            <p id="admin-inbox-status" class="status" role="status"></p>
+          </div>
+        </div>
+
+        <div class="home-col">
+          <div class="panel">
+            <h2 data-i18n="admin.scenery">Scenery for everyone</h2>
+            <p class="hint" data-i18n="admin.sceneryHint">Up to 10 YouTube rides, the same for every rider.
+              Each rider still chooses Random or In order in their Settings.</p>
+        <div class="scenery-editor">
+          <div class="scenery-row scenery-row-head" aria-hidden="true">
+            <span data-i18n="scenery.name">Name</span>
+            <span data-i18n="scenery.link">YouTube link</span>
+            <span></span>
+          </div>
+          <ol id="scenery-rows" class="scenery-rows"></ol>
+          <button id="scenery-add-btn" type="button" class="secondary scenery-add" data-i18n="scenery.add">+ Add a video</button>
+        </div>
+            <button id="admin-scenery-save" type="button" data-i18n="admin.save">Save the scenery</button>
+            <p id="admin-scenery-status" class="status" role="status"></p>
+          </div>
+
+          <div class="panel">
+            <h2 data-i18n="admin.releases">Release notes</h2>
+            <p class="hint" id="admin-running"></p>
+            <ol id="admin-releases" class="admin-releases"></ol>
+          </div>
+
+          <!-- This browser's diagnostic log, for bug reports. -->
+          <div id="log-panel" class="panel">
+            <div class="calendar-header">
+              <h2 data-i18n="log.title">Log</h2>
+              <div class="row-actions">
+                <button id="log-copy-btn" type="button" class="secondary" data-i18n="log.copy">Copy</button>
+                <button id="log-clear-btn" type="button" class="secondary" data-i18n="log.clear">Clear</button>
+              </div>
+            </div>
+            <ol id="log-list" class="log-list"></ol>
+            <p class="hint" data-i18n="log.hint">Errors, warnings and trainer events from this
+              browser, newest first: the last 200, kept on this device only.
+              When something goes wrong, press Copy and paste it into your
+              message.</p>
+            <p id="log-status" class="status"></p>
+          </div>
+        </div>
+      </div>
     </section>
 
     <section data-view="workouts" class="view">
@@ -149,7 +330,7 @@
           <input id="import-workouts-input" type="file" accept=".csv,.zwo,.txt,text/csv,application/xml,text/xml" multiple hidden />
         </div>
         <p id="workout-files-status" class="status" role="status"></p>
-        <ul id="workouts-list" class="workout-list"></ul>
+        <ul id="workouts-list" class="card-grid"></ul>
         <p class="hint" data-i18n="workouts.hint">Starred workouts (★) appear on the home screen for
           quick access. Import and export workouts as CSV (one row per segment:
           label, duration in seconds, % of FTP, grade; opens in any
@@ -163,7 +344,7 @@
         <p class="hint" data-i18n="workouts.libraryHint">Built-in workouts, shared by every rider. Targets are a
           percentage of your FTP, turned into watts when you start. Copy one to
           make your own editable version.</p>
-        <ul id="library-list" class="workout-list"></ul>
+        <ul id="library-list" class="card-grid"></ul>
       </div>
     </section>
 
@@ -236,8 +417,26 @@
           <li><a href="https://www.strava.com/upload/select" target="_blank" rel="noopener" class="strava-link" data-i18n="strava.uploadPage">Open Strava's upload page</a>
             <span data-i18n="strava.uploadStep">and choose the file you just downloaded.</span></li>
         </ol>
+        <div class="strava-copy-field strava-detail-description">
+          <label class="field">
+            <span data-i18n="strava.title">Title</span>
+            <input id="detail-strava-title" type="text" maxlength="200" />
+          </label>
+          <button id="detail-strava-copy-title" type="button" class="secondary" data-i18n="strava.copyTitle">Copy title</button>
+        </div>
+        <div class="strava-copy-field">
+          <label class="field">
+            <span data-i18n="strava.description">Description</span>
+            <textarea id="detail-strava-description" rows="3" maxlength="2000"
+              placeholder="How did it go?" data-i18n-attr="placeholder:strava.descriptionPlaceholder"></textarea>
+          </label>
+          <button id="detail-strava-copy" type="button" class="secondary" data-i18n="strava.copy">Copy description</button>
+        </div>
+        <span id="detail-strava-status" class="hint" role="status"></span>
         <p class="hint" data-i18n="strava.exportHint">Strava reads power, cadence, speed and distance from
-          it. Tick "Indoor" or pick "Virtual Ride" there if it isn't already.</p>
+          the file, but not the title or description: copy each one and
+          paste it into Strava's Title and Description boxes. Tick "Indoor" or pick "Virtual Ride" there if it
+          isn't already.</p>
       </div>
       <button id="detail-back-btn" type="button" class="secondary" data-i18n="detail.back">Back to the Chronicle</button>
     </section>
@@ -333,9 +532,10 @@
                 common way to ruin the test.</li>
               <li data-i18n="ftp.tip2">Aim for an even effort and keep the last 3 minutes for
                 whatever you have left.</li>
-              <li data-i18n-html="ftp.tip3">The test runs in <strong>virtual gears</strong>: the trainer
-                doesn't hold a wattage for you, so shift with <kbd>+</kbd> and
-                <kbd>−</kbd> to set the pace.</li>
+              <li data-i18n-html="ftp.tip3">The test runs in <strong>virtual gears</strong> (or your bike's
+                gears, if that's your setting): the trainer doesn't hold a wattage
+                for you, so shift with <kbd>+</kbd> and <kbd>−</kbd> or the
+                on-screen buttons to set the pace.</li>
             </ul>
 
             <h3 data-i18n="ftp.result">Your result</h3>
@@ -367,10 +567,32 @@
         </div>
       </div>
 
-      <div class="builder-grid">
-        <div class="home-col">
-          <div class="panel">
-            <h2 data-i18n="mode.gears">Virtual Gears</h2>
+      <!-- One tab per kind of setting; Save Settings (above) saves them all. -->
+      <div class="settings-tabs" role="tablist" id="settings-tabs">
+        <button type="button" role="tab" data-settings-tab="ride" data-i18n="settings.tabRide">Ride</button>
+        <button type="button" role="tab" data-settings-tab="account" data-i18n="account.title">Account</button>
+      </div>
+
+      <div class="settings-panes">
+          <div class="panel settings-pane trainer-panel" data-settings-pane="ride">
+            <h2 data-i18n="trainer.title">Trainer</h2>
+            <input id="setting-trainer-mode" type="hidden" />
+            <div class="mode-select mode-select-3" role="radiogroup" aria-label="Trainer mode" data-i18n-attr="aria-label:trainer.title" id="trainer-mode-group">
+              <button type="button" class="mode-btn" role="radio" data-mode="rear" data-i18n="trainer.rear">Rear gears</button>
+              <button type="button" class="mode-btn" role="radio" data-mode="gears" data-i18n="trainer.gears">Virtual gears</button>
+            </div>
+            <p id="trainer-mode-description" class="hint trainer-mode-description"></p>
+
+            <!-- Rear gears -->
+            <div data-trainer-mode="rear">
+              <label class="field">
+                <span data-i18n="settings.rearResistance">Resistance on the flat</span>
+                <input id="setting-rear-resistance" type="number" min="0" max="20" step="0.5" />
+              </label>
+            </div>
+
+            <!-- Virtual gears -->
+            <div data-trainer-mode="gears">
             <div class="form-row">
               <label class="field">
                 <span data-i18n="settings.gearCount">Gear count</span>
@@ -391,17 +613,96 @@
                 <input id="setting-max-resistance" type="number" min="0" max="20" step="0.5" />
               </label>
             </div>
-            <label class="field">
-              <span data-i18n="settings.perGrade">Resistance per 1% grade</span>
-              <input id="setting-resistance-per-grade" type="number" min="0" max="2" step="0.1" />
-            </label>
             <p class="hint" data-i18n="settings.gearsHint">Gears are spread evenly between min and max. The
-              trainer accepts 0–20; lower the max if the top gears feel too hard.
-              Grade adds resistance on top of your gear — raise the per-grade
-              figure to make climbs bite harder.</p>
-          </div>
+              trainer accepts 0–20; lower the max if the top gears feel too hard.</p>
+            <h3 data-i18n="remote.settingsTitle">Phone remote</h3>
+            <p class="hint" data-i18n="remote.settingsHint">Shift from your phone on the handlebars: open this
+              address on it and log in. It shows big buttons, your gear and
+              your numbers during a ride.</p>
+            <p class="remote-address"><a id="remote-address" href="/remote" target="_blank" rel="noopener">/remote</a>
+              <button id="remote-copy-btn" type="button" class="secondary" data-i18n="remote.copy">Copy address</button></p>
+            </div>
 
-          <div class="panel">
+            <!-- Both kinds of gears: how much a climb adds -->
+            <div data-trainer-mode="rear gears">
+              <label class="field">
+                <span data-i18n="settings.perGrade">Resistance per 1% grade</span>
+                <input id="setting-resistance-per-grade" type="number" min="0" max="2" step="0.1" />
+              </label>
+              <p class="hint" data-i18n="settings.perGradeHint">A workout's climbs add this much resistance
+                for each 1% of grade; raise it to make them bite harder.</p>
+            </div>
+
+            <!-- ERG: workouts only, off unless turned on (also per workout on Home). -->
+            <div class="trainer-erg">
+              <label class="check-field">
+                <input id="setting-erg-workouts" type="checkbox" role="switch" />
+                <span data-i18n="settings.ergWorkouts">Use ERG for workouts</span>
+              </label>
+              <p class="hint" data-i18n="settings.ergHint">ERG: the trainer holds each segment's target watts,
+                whatever your gear or cadence. Workouts only; free rides, routes and FTP
+                tests always use your gears. You can also switch it for one workout
+                when you pick it on Home.</p>
+            </div>
+          
+          </div>
+          <div class="panel settings-pane" data-settings-pane="ride">
+            <h2 data-i18n="settings.ride">Ride</h2>
+            <div class="form-row">
+              <label class="field">
+                <span data-i18n="settings.smoothing">Power smoothing (sec)</span>
+                <input id="setting-power-smoothing-sec" type="number" min="1" max="60" step="1" />
+              </label>
+              <label class="field">
+                <span data-i18n="settings.interval">Sample interval (sec)</span>
+                <input id="setting-sample-interval-sec" type="number" min="1" max="10" step="1" />
+              </label>
+            </div>
+            <label class="field">
+              <span data-i18n="settings.bikeWeight">Bike weight (kg)</span>
+              <input id="setting-bike-weight-kg" type="number" min="3" max="40" step="0.1" />
+            </label>
+            <p class="hint" data-i18n="settings.bikeWeightHint">Speed while riding comes from your watts, the
+              grade, and your weight (Profile) plus the bike's, as it would on
+              the road: heavier is slower uphill and slower to get going.</p>
+            <p class="hint" data-i18n="settings.smoothingHint">Smoothing affects the live watts display only —
+              recorded samples are always raw. Sample interval sets how often a
+              data point is written to the ride log.</p>
+          
+            <h2 class="settings-more" data-i18n="settings.sceneryTitle">Scenery</h2>
+            <label class="field">
+              <span data-i18n="settings.sceneryMode">Video</span>
+              <select id="setting-scenery-mode">
+                <option value="random" data-i18n="scenery.random">Random</option>
+                <option value="pick" data-i18n="scenery.pick">Choose one</option>
+                <option value="custom" data-i18n="scenery.custom">My own link</option>
+              </select>
+            </label>
+            <label class="field" id="scenery-pick-field" hidden>
+              <span data-i18n="scenery.pickLabel">Which one</span>
+              <select id="setting-scenery-pick"></select>
+            </label>
+            <label class="field" id="scenery-custom-field" hidden>
+              <span data-i18n="scenery.customLabel">Your YouTube link</span>
+              <input id="setting-scenery-custom" type="url" spellcheck="false" placeholder="https://www.youtube.com/watch?v=…" />
+            </label>
+            <p class="hint" data-i18n="settings.sceneryHint">Random plays one of the admin's videos (never the
+              same as last ride), Choose one always plays the one you pick, and My
+              own link plays any YouTube video you like. Videos start muted;
+              unmute in the player. To switch mid-ride, use the picker on the ride
+              screen.</p>
+          
+            <h2 class="settings-more">Strava</h2>
+            <label class="check-field">
+              <input id="setting-strava-export" type="checkbox" role="switch" />
+              <span data-i18n="settings.stravaExport">Show "Download for Strava" on my rides</span>
+            </label>
+            <p class="hint" data-i18n="settings.stravaExportHint">Adds a box to each ride's page in the
+              Chronicle: download the ride as a .tcx file, then upload it on
+              Strava's site. Nothing is sent to Strava by Sisyphus.</p>
+          
+          </div>
+          <div class="panel settings-pane" data-settings-pane="account">
             <h2 data-i18n="account.title">Account</h2>
             <p class="hint" id="account-who">&nbsp;</p>
             <label class="field">
@@ -423,28 +724,10 @@
               <button id="change-password-btn" type="button" data-i18n="account.change">Change Password</button>
               <button id="logout-btn" type="button" class="secondary" data-i18n="account.logout">Log Out</button>
             </div>
+          
           </div>
-
-          <!-- Admins only (app.js shows it): the diagnostic log for bug reports. -->
-          <div id="log-panel" class="panel" hidden>
-            <div class="calendar-header">
-              <h2 data-i18n="log.title">Log</h2>
-              <div class="row-actions">
-                <button id="log-copy-btn" type="button" class="secondary" data-i18n="log.copy">Copy</button>
-                <button id="log-clear-btn" type="button" class="secondary" data-i18n="log.clear">Clear</button>
-              </div>
-            </div>
-            <ol id="log-list" class="log-list"></ol>
-            <p class="hint" data-i18n="log.hint">Errors, warnings and trainer events from this
-              browser, newest first: the last 200, kept on this device only.
-              When something goes wrong, press Copy and paste it into your
-              message.</p>
-            <p id="log-status" class="status"></p>
-          </div>
-        </div>
-
-        <div class="home-col">
-          <div class="panel">
+          <div class="panel settings-pane" data-settings-pane="account">
+            <h2 data-i18n="settings.display">Display</h2>
             <label class="field">
               <span data-i18n="settings.language">Language</span>
               <select id="setting-language">
@@ -460,67 +743,19 @@
                 <option value="light" data-i18n="theme.light">Light</option>
               </select>
             </label>
-            <h2 data-i18n="settings.ride" style="margin-top:1.5rem">Ride</h2>
-            <div class="form-row">
-              <label class="field">
-                <span data-i18n="settings.smoothing">Power smoothing (sec)</span>
-                <input id="setting-power-smoothing-sec" type="number" min="1" max="60" step="1" />
-              </label>
-              <label class="field">
-                <span data-i18n="settings.interval">Sample interval (sec)</span>
-                <input id="setting-sample-interval-sec" type="number" min="1" max="10" step="1" />
-              </label>
-            </div>
-            <label class="field">
-              <span data-i18n="settings.bikeWeight">Bike weight (kg)</span>
-              <input id="setting-bike-weight-kg" type="number" min="3" max="40" step="0.1" />
-            </label>
-            <p class="hint" data-i18n="settings.bikeWeightHint">Speed while riding comes from your watts, the
-              grade, and your weight (Profile) plus the bike's, as it would on
-              the road: heavier is slower uphill and slower to get going.</p>
-            <label class="field">
-              <span data-i18n="settings.defaultMode">Default ride mode</span>
-              <select id="setting-default-mode">
-                <option value="erg">ERG</option>
-                <option value="gears" data-i18n="mode.gears">Virtual Gears</option>
-              </select>
-            </label>
-            <p class="hint" data-i18n="settings.smoothingHint">Smoothing affects the live watts display only —
-              recorded samples are always raw. Sample interval sets how often a
-              data point is written to the ride log.</p>
-            <h2 style="margin-top:1.5rem" data-i18n="settings.sceneryTitle">Scenery</h2>
-            <label class="field">
-              <span data-i18n="settings.sceneryMode">Order</span>
-              <select id="setting-scenery-mode">
-                <option value="random" data-i18n="scenery.random">Random</option>
-                <option value="sequence" data-i18n="scenery.sequence">In order</option>
-              </select>
-            </label>
-            <div class="scenery-editor">
-              <div class="scenery-row scenery-row-head" aria-hidden="true">
-                <span data-i18n="scenery.name">Name</span>
-                <span data-i18n="scenery.link">YouTube link</span>
-                <span></span>
-              </div>
-              <ol id="scenery-rows" class="scenery-rows"></ol>
-              <button id="scenery-add-btn" type="button" class="secondary scenery-add" data-i18n="scenery.add">+ Add a video</button>
-            </div>
-            <input id="setting-scenery-videos" type="hidden" />
-            <p class="hint" data-i18n="settings.sceneryHint">Random never repeats last ride's video; In order
-              plays the next one each ride. Videos start muted; unmute in the
-              player. To switch mid-ride, use the picker on the ride screen.
-              With no videos, the default ride plays.</p>
-            <h2 style="margin-top:1.5rem">Strava</h2>
-            <label class="check-field">
-              <input id="setting-strava-export" type="checkbox" />
-              <span data-i18n="settings.stravaExport">Show "Download for Strava" on my rides</span>
-            </label>
-            <p class="hint" data-i18n="settings.stravaExportHint">Adds a box to each ride's page in the
-              Chronicle: download the ride as a .tcx file, then upload it on
-              Strava's site. Nothing is sent to Strava by Sisyphus.</p>
+          
+            <h2 class="settings-more" data-i18n="settings.more">More</h2>
+            <p class="tools-link"><button id="replay-tutorial-btn" type="button" class="link-btn" data-i18n="tutorial.replay">Replay the tutorial</button></p>
             <p class="tools-link"><a href="probe.html" data-i18n="settings.probe">Hardware diagnostics (probe)</a></p>
+          
           </div>
-        </div>
+          <div class="panel settings-pane admin-link" id="admin-link" data-settings-pane="account" hidden>
+            <h2 data-i18n="admin.title">Admin Panel</h2>
+            <p class="hint" data-i18n="admin.linkHint">Riders and their passwords, the shared scenery, and
+              the release notes.</p>
+            <button id="open-admin-btn" type="button" data-i18n="admin.open">Open the Admin Panel</button>
+          
+          </div>
       </div>
     </section>
 
@@ -597,6 +832,8 @@
     </section>
 
     <section data-view="live" class="view ride-view">
+      <!-- Flames along the bottom and a glow at the edges in Z5 and Z6. -->
+      <div class="intensity-overlay" aria-hidden="true"><div class="flames"></div><div class="flames flames-back"></div></div>
       <div class="ride-grid">
         <!-- 1. Steps: the workout, current segment highlighted -->
         <aside class="ride-steps" id="ride-steps">
@@ -664,6 +901,16 @@
           <!-- 5. Intensity timeline -->
           <div class="ride-timeline">
             <div id="segment-timeline" class="segment-timeline" hidden></div>
+            <!-- Route rides: the road's profile and how far along you are. -->
+            <div id="route-progress" class="route-progress-live" hidden>
+              <svg viewBox="0 0 1000 100" preserveAspectRatio="none" aria-hidden="true">
+                <polygon class="route-area" points="" />
+                <polygon class="route-done" points="" />
+                <polyline class="route-line" points="" />
+                <line class="route-marker" x1="0" x2="0" y1="0" y2="100" />
+              </svg>
+              <span class="route-progress-text"></span>
+            </div>
           </div>
 
           <!-- 6 & 7. Controls and gear -->
@@ -671,6 +918,12 @@
             <div class="gear-display" id="gear-metric">
               <strong id="gear-value">--</strong>
               <span class="metric-label" data-i18n="live.gear">gear</span>
+            </div>
+            <span id="remote-indicator" class="remote-indicator" hidden data-i18n="live.phoneConnected">Phone remote on</span>
+            <!-- Virtual gears only; + and − on a keyboard work too. -->
+            <div class="shift-buttons" id="shift-buttons" hidden>
+              <button id="shift-down-btn" type="button" class="secondary" aria-label="Easier gear" data-i18n-attr="aria-label:live.shiftDown">▼</button>
+              <button id="shift-up-btn" type="button" class="secondary" aria-label="Harder gear" data-i18n-attr="aria-label:live.shiftUp">▲</button>
             </div>
             <div class="ride-actions">
               <button id="pause-btn" type="button" class="secondary" data-i18n="live.pause">Pause</button>
@@ -723,21 +976,98 @@
     <!-- After a ride, with Settings → Strava on (ui/strava-export.js). -->
     <dialog id="strava-dialog" class="panel strava-dialog" aria-labelledby="strava-dialog-title">
       <form method="dialog" id="strava-form">
-        <h2 id="strava-dialog-title" data-i18n="strava.dialogTitle">Post this ride to Strava</h2>
-        <label class="field">
-          <span data-i18n="strava.description">Description</span>
-          <textarea id="strava-description" rows="4" maxlength="2000"
-            placeholder="How did it go?" data-i18n-attr="placeholder:strava.descriptionPlaceholder"></textarea>
-        </label>
-        <p class="hint" data-i18n="strava.dialogHint">Save downloads the ride and opens Strava's upload
-          page: pick the file there. The description is copied, so you can
-          paste it into Strava's description box.</p>
-        <p id="strava-dialog-status" class="status" role="status"></p>
-        <div class="row-actions">
-          <button id="strava-save-btn" type="button" data-i18n="strava.save">Save</button>
-          <button id="strava-skip-btn" type="button" class="secondary" data-i18n="strava.skip">Not this time</button>
+        <!-- Step 1: write it. -->
+        <div id="strava-step-write">
+          <h2 id="strava-dialog-title" data-i18n="strava.dialogTitle">Post this ride to Strava</h2>
+          <label class="field">
+            <span data-i18n="strava.title">Title</span>
+            <input id="strava-title" type="text" maxlength="200" />
+          </label>
+          <label class="field">
+            <span data-i18n="strava.description">Description</span>
+            <textarea id="strava-description" rows="4" maxlength="2000"
+              placeholder="How did it go?" data-i18n-attr="placeholder:strava.descriptionPlaceholder"></textarea>
+          </label>
+          <p class="hint" data-i18n="strava.dialogHint">Save downloads the ride and opens Strava's upload
+            page in a new tab.</p>
+          <div class="row-actions">
+            <button id="strava-save-btn" type="button" data-i18n="strava.save">Save</button>
+            <button id="strava-skip-btn" type="button" class="secondary" data-i18n="strava.skip">Not this time</button>
+          </div>
+        </div>
+        <!-- Step 2: what to do on Strava's page. Strava ignores a description
+             inside the file, so it has to be pasted there. -->
+        <div id="strava-step-next" hidden>
+          <h2 data-i18n="strava.nextTitle">Now, on Strava's page</h2>
+          <ol class="strava-steps">
+            <li data-i18n="strava.nextFile">Choose the .tcx file you just downloaded (in your Downloads).</li>
+            <li id="strava-next-title"><span data-i18n-html="strava.nextTitlePaste">Click in Strava's
+              <strong>Title</strong> box, select what's there and paste (Ctrl+V). It's already copied:</span>
+              <blockquote id="strava-title-preview" class="strava-preview"></blockquote>
+              <button id="strava-copy-title-btn" type="button" class="secondary" data-i18n="strava.copyTitle">Copy title</button></li>
+            <li id="strava-next-paste"><span data-i18n-html="strava.nextPaste">Press Copy description, then
+              click in Strava's <strong>Description</strong> box and paste (Ctrl+V):</span>
+              <blockquote id="strava-description-preview" class="strava-preview"></blockquote>
+              <button id="strava-copy-btn" type="button" class="secondary" data-i18n="strava.copy">Copy description</button></li>
+            <li data-i18n="strava.nextSave">Save the activity on Strava.</li>
+          </ol>
+          <p class="hint"><a href="https://www.strava.com/upload/select" target="_blank" rel="noopener" class="strava-link" data-i18n="strava.reopen">Strava's tab didn't open? Open it here.</a></p>
+          <p id="strava-dialog-status" class="status" role="status"></p>
+          <div class="row-actions">
+            <button id="strava-done-btn" type="button" data-i18n="strava.done">Done</button>
+          </div>
         </div>
       </form>
+    </dialog>
+
+    <!-- The first-login walkthrough (ui/tutorial.js). -->
+    <div id="tutorial" class="tutorial" hidden role="dialog" aria-modal="true" aria-labelledby="tutorial-title">
+      <div class="tutorial-spot"></div>
+      <div class="tutorial-bubble panel">
+        <span class="tutorial-step"></span>
+        <h2 class="tutorial-title" id="tutorial-title"></h2>
+        <p class="tutorial-text"></p>
+        <div class="row-actions">
+          <button id="tutorial-back" type="button" class="secondary" data-i18n="tutorial.back">Back</button>
+          <button id="tutorial-next" type="button" data-i18n="tutorial.next">Next</button>
+          <button id="tutorial-skip" type="button" class="link-btn" data-i18n="tutorial.skip">Skip</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Before a ride, when no trainer is connected (ui/trainer-gate.js). -->
+    <dialog id="trainer-gate" class="panel trainer-gate" aria-labelledby="trainer-gate-title">
+      <h2 id="trainer-gate-title" data-i18n="gate.title">Connect your trainer</h2>
+      <p data-i18n="gate.text">The ride needs the trainer: wake it by pedalling, then press Connect
+        and pick it in Chrome's list. The ride starts as soon as it's connected.</p>
+      <p id="trainer-gate-no-bluetooth" class="status" hidden data-i18n="gate.noBluetooth">This browser can't
+        use Bluetooth. Ride from Chrome or Edge on a computer.</p>
+      <div class="row-actions">
+        <button id="trainer-gate-connect" type="button" data-i18n="trainer.connect">Connect trainer</button>
+        <button id="trainer-gate-cancel" type="button" class="secondary" data-i18n="gate.cancel">Cancel</button>
+      </div>
+    </dialog>
+
+    <!-- Home → Routes / Workouts (ui/ride-picker.js). -->
+    <dialog id="ride-picker" class="panel ride-picker" aria-labelledby="ride-picker-title">
+      <div class="ride-picker-head">
+        <h2 id="ride-picker-title"></h2>
+        <button id="ride-picker-close" type="button" class="secondary picker-close" aria-label="Close" data-i18n-attr="aria-label:picker.close">×</button>
+      </div>
+      <!-- Workouts only: ERG for the ride about to start (preset from Settings). -->
+      <label class="check-field picker-erg" id="ride-picker-erg-field" hidden>
+        <input id="ride-picker-erg" type="checkbox" role="switch" />
+        <span data-i18n="picker.erg">Use ERG</span>
+      </label>
+      <div class="picker-tabs" role="tablist" id="ride-picker-tabs">
+        <button type="button" role="tab" data-tab="starred" data-i18n="picker.starred">Starred</button>
+        <button type="button" role="tab" data-tab="all" data-i18n="picker.all">All</button>
+      </div>
+      <div class="picker-filters" id="ride-picker-filters" hidden>
+        <input id="ride-picker-search" type="search" placeholder="Search by name" data-i18n-attr="placeholder:picker.search" />
+        <div class="picker-chips" id="ride-picker-chips"></div>
+      </div>
+      <ul id="ride-picker-list" class="card-grid picker-list"></ul>
     </dialog>
 
     <dialog id="login-dialog" class="panel login-dialog" aria-labelledby="login-title">

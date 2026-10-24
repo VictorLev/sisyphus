@@ -10,7 +10,12 @@ import levelRouter from './routes/level.js';
 import ftpRouter from './routes/ftp.js';
 import badgesRouter from './routes/badges.js';
 import leaderboardRouter from './routes/leaderboard.js';
+import routeLibraryRouter from './routes/route-library.js';
+import shopRouter from './routes/shop.js';
+import adminRouter from './routes/admin.js';
+import { getScenery } from './scenery.js';
 import { createAuthRouter } from './routes/auth.js';
+import { createRemoteRouter } from './routes/remote.js';
 import { loadUser, requireUser } from './auth/middleware.js';
 import { LoginLimiter } from './auth/rate-limit.js';
 
@@ -47,6 +52,8 @@ export function createApp({ loginLimits, trustProxy = trustProxyFromEnv(process.
   });
 
   app.use(express.static(frontendDir));
+  // The phone remote, at a short address to type on a phone.
+  app.get('/remote', (req, res) => res.sendFile(path.join(frontendDir, 'remote.html')));
 
   app.get('/api/health', (req, res) => {
     res.json({ ok: true });
@@ -72,6 +79,12 @@ export function createApp({ loginLimits, trustProxy = trustProxyFromEnv(process.
   app.use('/api/ftp', ftpRouter);
   app.use('/api/badges', badgesRouter);
   app.use('/api/leaderboard', leaderboardRouter);
+  app.use('/api/remote', createRemoteRouter());
+  app.use('/api/routes', routeLibraryRouter);
+  app.use('/api/shop', shopRouter);
+  app.use('/api/admin', adminRouter);
+  // The shared scenery, for every rider's ride screen (set in the Admin Panel).
+  app.get('/api/scenery', (req, res) => res.json({ videos: getScenery() }));
   app.use('/api', configRouter);
 
   return app;

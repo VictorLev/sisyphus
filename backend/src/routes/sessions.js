@@ -5,10 +5,11 @@ import { buildTcx } from '../tcx.js';
 const router = Router();
 
 const insertSession = db.prepare(
-  `INSERT INTO sessions (user_id, workout_id, workout_name, started_at, ended_at, distance_m, ftp, tz_offset_min)
-   VALUES (@user_id, @workout_id, @workout_name, @started_at, @ended_at, @distance_m, @ftp, @tz_offset_min)`
+  `INSERT INTO sessions (user_id, workout_id, workout_name, route_id, started_at, ended_at, distance_m, ftp, tz_offset_min)
+   VALUES (@user_id, @workout_id, @workout_name, @route_id, @started_at, @ended_at, @distance_m, @ftp, @tz_offset_min)`
 );
 // Only a workout the rider can see: their own, or the shared library.
+const selectRoute = db.prepare('SELECT id, name FROM routes WHERE id = ?');
 const selectVisibleWorkout = db.prepare(
   'SELECT id, name FROM workouts WHERE id = ? AND (user_id = ? OR library_key IS NOT NULL)'
 );
@@ -75,6 +76,8 @@ const createSession = db.transaction((userId, body) => {
   // parked offline may point at a workout deleted since, and the ride
   // itself must still save.
   const workout = body.workout_id ? selectVisibleWorkout.get(body.workout_id, userId) : null;
+  // A route ride is named after its route; a deleted route is dropped.
+  const route = !workout && body.route_id ? selectRoute.get(body.route_id) : null;
   const ftp = Number(body.ftp);
   // Real offsets run from UTC-12 to UTC+14.
   const tz = Number(body.tz_offset_min);
@@ -83,7 +86,8 @@ const createSession = db.transaction((userId, body) => {
     workout_id: workout?.id ?? null,
     // Snapshot the name so the ride keeps its identity if the workout is
     // later deleted or renamed.
-    workout_name: workout?.name ?? null,
+    workout_name: workout?.name ?? route?.name ?? null,
+    route_id: route?.id ?? null,
     started_at: body.started_at,
     ended_at: body.ended_at,
     distance_m: body.distance_m ?? null,
@@ -153,16 +157,27 @@ router.get('/:id/tcx', (req, res) => {
   res.send(buildTcx(session, selectSamples.all(session.id)));
 });
 
-// The rider's description of the ride (asked for when it ends, for Strava).
-const DESCRIPTION_MAX = 2000;
-const updateDescription = db.prepare('UPDATE sessions SET description = ? WHERE id = ? AND user_id = ?');
+// The rider's title and description of the ride (asked for when it ends,
+// to paste into Strava). Either or both; blank clears one.
+const TEXT_LIMITS = { title: 200, description: 2000 };
+const updateText = {
+  title: db.prepare('UPDATE sessions SET title = ? WHERE id = ? AND user_id = ?'),
+  description: db.prepare('UPDATE sessions SET description = ? WHERE id = ? AND user_id = ?'),
+};
+const applyText = db.transaction((id, userId, fields) => {
+  let changed = 0;
+  for (const [field, value] of fields) changed += updateText[field].run(value.trim() || null, id, userId).changes;
+  return changed;
+});
 router.patch('/:id', (req, res) => {
-  const { description } = req.body ?? {};
-  if (typeof description !== 'string' || description.length > DESCRIPTION_MAX) {
-    return res.status(400).json({ error: `description must be text of at most ${DESCRIPTION_MAX} characters` });
+  const fields = Object.keys(TEXT_LIMITS).filter((f) => req.body?.[f] !== undefined).map((f) => [f, req.body[f]]);
+  if (fields.length === 0) return res.status(400).json({ error: 'send a title or a description' });
+  for (const [field, value] of fields) {
+    if (typeof value !== 'string' || value.length > TEXT_LIMITS[field]) {
+      return res.status(400).json({ error: `${field} must be text of at most ${TEXT_LIMITS[field]} characters` });
+    }
   }
-  const changed = updateDescription.run(description.trim() || null, req.params.id, req.user.id).changes;
-  if (!changed) return res.status(404).json({ error: 'session not found' });
+  if (!applyText(req.params.id, req.user.id, fields)) return res.status(404).json({ error: 'session not found' });
   res.json(selectSessionById.get(req.params.id, req.user.id));
 });
 

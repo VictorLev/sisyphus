@@ -192,11 +192,81 @@ export function getLeaderboard(period) {
   return request(`/api/leaderboard?period=${encodeURIComponent(period)}&tz=${tz}`);
 }
 
-// The rider's description of a ride (for Strava).
-export function setSessionDescription(id, description) {
+// The rider's title and/or description of a ride (to paste into Strava).
+export function setSessionText(id, fields) {
   return request(`/api/sessions/${id}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ description }),
+    body: JSON.stringify(fields),
   });
 }
+
+// Routes: filmed roads to ride. The video is uploaded and streamed
+// separately (ui/routes.js, /api/routes/:id/video).
+export function listRoutes() {
+  return request('/api/routes');
+}
+
+export function getRoute(id) {
+  return request(`/api/routes/${id}`);
+}
+
+export function createRoute(body) {
+  return request('/api/routes', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+
+export function deleteRoute(id) {
+  return request(`/api/routes/${id}`, { method: 'DELETE' });
+}
+
+export function setRouteStarred(id, starred) {
+  return request(`/api/routes/${id}/starred`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ starred }),
+  });
+}
+
+// The shop: drachmas, cosmetics, what's worn.
+export function getShop() {
+  return request('/api/shop');
+}
+
+export function getWallet() {
+  return request('/api/shop/me');
+}
+
+export function buyItem(itemId) {
+  return request('/api/shop/buy', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ item_id: itemId }),
+  });
+}
+
+export function equipItem(slot, itemId) {
+  return request('/api/shop/equip', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ slot, item_id: itemId }),
+  });
+}
+
+// The Admin Panel (admins only) and the shared scenery.
+const json = (method, body) => ({ method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+export const getScenery = () => request('/api/scenery');
+export const adminListUsers = () => request('/api/admin/users');
+export const adminCreateUser = (body) => request('/api/admin/users', json('POST', body));
+export const adminResetPassword = (id) => request(`/api/admin/users/${id}/reset-password`, { method: 'POST' });
+export const adminUserData = (id) => request(`/api/admin/users/${id}/data`);
+export const adminDeleteUser = (id) => request(`/api/admin/users/${id}`, { method: 'DELETE' });
+export const adminGetScenery = () => request('/api/admin/scenery');
+export const adminSetScenery = (videos) => request('/api/admin/scenery', json('PUT', { videos }));
+export const adminReleases = () => request('/api/admin/releases');
+export const adminInbox = () => request('/api/admin/inbox');
+export const adminScanInbox = () => request('/api/admin/inbox/scan', { method: 'POST' });
+export const adminGiveDrachmas = (id, amount) => request(`/api/admin/users/${id}/drachmas`, json('POST', { amount }));

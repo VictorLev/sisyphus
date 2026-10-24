@@ -29,8 +29,12 @@ export function migrate(db, env = {}) {
 
   // Additive migrations. CREATE TABLE IF NOT EXISTS leaves an existing table
   // untouched, so new columns have to be added explicitly.
-  // What the rider wrote about the ride (for Strava).
+  // What the rider wrote about the ride, and its title (for Strava).
   ensureColumn(db, 'sessions', 'description', 'TEXT');
+  ensureColumn(db, 'sessions', 'title', 'TEXT');
+  ensureColumn(db, 'sessions', 'route_id', 'INTEGER');
+  ensureColumn(db, 'routes', 'thumb_type', 'TEXT');
+  ensureColumn(db, 'routes', 'thumb_at', 'TEXT');
   if (ensureColumn(db, 'sessions', 'workout_name', 'TEXT')) {
     // Backfill from the workouts still present, so existing history survives
     // the first workout deletion.

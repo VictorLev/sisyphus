@@ -2,6 +2,7 @@ import { Router } from 'express';
 import db from '../db/index.js';
 import { periodRange } from '../periods.js';
 import { xpFor, levelFromXp } from '../level.js';
+import { cosmeticsOf } from './shop.js';
 
 const router = Router();
 
@@ -48,6 +49,8 @@ router.get('/', (req, res) => {
       rides: r.rides,
       minutes: Math.max(0, Math.round(r.minutes)),
       distance_km: Number((Math.max(0, r.distance_m) / 1000).toFixed(1)),
+      // The avatar they bought: background and emblem ids, or null.
+      avatar: (({ avatar_bg: bg, avatar_emblem: emblem }) => ({ bg, emblem }))(cosmeticsOf(r.id)),
     };
   });
   res.json({ period, from, to, riders });

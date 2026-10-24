@@ -69,7 +69,7 @@ describe('deleting a user', () => {
     assert.equal(removed.rides, 1);
 
     assert.equal(users.findUserByUsername('bob'), undefined);
-    assert.deepEqual(Object.values(users.countUserData(bobId)), [0, 0, 0, 0, 0, 0, 0], 'nothing left behind');
+    assert.ok(Object.values(users.countUserData(bobId)).every((n) => n === 0), 'nothing left behind');
     const orphans = db.prepare(
       'SELECT COUNT(*) AS n FROM session_samples WHERE session_id NOT IN (SELECT id FROM sessions)'
     ).get().n;

@@ -23,23 +23,39 @@ const DEFAULTS = {
     sample_interval_sec: 1, // how often a session sample is recorded
     // With the rider's weight (Profile), sets the speed shown while riding.
     bike_weight_kg: 9,
-    default_mode: 'erg', // 'gears' | 'erg'
-    // Resistance units added per +1% of grade. The trainer's usable range is
-    // small (0..20), so a climb has to cost only a couple of units to leave
-    // room for the gears to matter.
+    // How the trainer is driven (Settings → Trainer):
+    //   'rear'  — the bike's own gears; resistance follows the grade only
+    //   'gears' — virtual gears; resistance follows the gear and the grade
+    // A stored 'erg' (it was a third mode) and the old default_mode read
+    // as 'gears': ERG is now erg_workouts.
+    trainer_mode: 'gears',
+    // Workouts in ERG (the trainer holds each segment's watts). Off by
+    // default; the Home workout picker can change it for one ride.
+    erg_workouts: false,
+    // Rear gears: the resistance on the flat, before any grade.
+    rear_resistance: 5,
+    // Resistance units added per +1% of grade (rear and virtual gears). The
+    // trainer's usable range is small (0..20), so a climb has to cost only a
+    // couple of units to leave room for the gears to matter.
     resistance_per_grade: 0.4,
     // YouTube virtual rides for the ride screen, separated by commas,
     // optionally named: "Swiss Alps | https://youtu.be/...". New accounts start with this ride (frontend/js/ui/scenery.js has the
     // same link as DEFAULT_SCENERY_LINK).
     scenery_videos: 'https://www.youtube.com/watch?v=D6tC1pyrsTM&list=PLiNcRO_l_QWfhgFUDiBBaJ5NEF7xyfb_f&t=60s',
-    // Which video a ride starts on: 'random' or 'sequence' (the next in order).
+    // Which video a ride starts on: 'random' (from the shared list), 'pick'
+    // (scenery_pick, a video id from it) or 'custom' (scenery_custom, the
+    // rider's own YouTube link). An old 'sequence' reads as 'random'.
     scenery_mode: 'random',
+    scenery_pick: '',
+    scenery_custom: '',
     // 'auto' follows the browser (French if it prefers French, else English).
     language: 'auto',
     // 'dark' (the original look) or 'light' (lighter beige).
     theme: 'dark',
     // Show the "Download for Strava" box on each ride. Off by default.
     strava_export: false,
+    // The first-login walkthrough has been finished or skipped.
+    tutorial_done: false,
   },
 };
 
@@ -55,10 +71,18 @@ export function writeConfig(userId, key, value) {
   upsertConfig.run({ userId, key, value: JSON.stringify(value) });
 }
 
+export const TRAINER_MODES = ['rear', 'gears'];
+
 export function readConfig(userId, key) {
   const row = selectConfig.get(userId, key);
   const stored = row ? JSON.parse(row.value) : {};
-  return { ...DEFAULTS[key], ...stored };
+  // Before trainer modes, the choice was default_mode ('gears' | 'erg');
+  // then ERG was a trainer mode. Both read as virtual gears now.
+  if (key === 'settings' && stored.trainer_mode === undefined && stored.default_mode) stored.trainer_mode = 'gears';
+  if (key === 'settings' && stored.trainer_mode === 'erg') stored.trainer_mode = 'gears';
+  if (key === 'settings' && stored.scenery_mode === 'sequence') stored.scenery_mode = 'random';
+  const { default_mode, ...current } = { ...DEFAULTS[key], ...stored };
+  return current;
 }
 
 // Only keys present in the defaults are accepted, so a typo or a stale client
@@ -94,8 +118,11 @@ function validateSettings(s) {
   if (s.language != null && !['auto', 'en', 'fr'].includes(s.language)) {
     return "language must be 'auto', 'en' or 'fr'";
   }
-  if (s.scenery_mode != null && !['random', 'sequence'].includes(s.scenery_mode)) {
-    return "scenery_mode must be 'random' or 'sequence'";
+  if (s.scenery_mode != null && !['random', 'pick', 'custom'].includes(s.scenery_mode)) {
+    return "scenery_mode must be 'random', 'pick' or 'custom'";
+  }
+  if (s.scenery_custom && (s.scenery_custom.length > 500 || !/^https?:\/\//.test(s.scenery_custom))) {
+    return 'scenery_custom must be a link';
   }
   if (s.theme != null && !['dark', 'light'].includes(s.theme)) {
     return "theme must be 'dark' or 'light'";
@@ -103,8 +130,11 @@ function validateSettings(s) {
   if (s.bike_weight_kg != null && !(s.bike_weight_kg >= 3 && s.bike_weight_kg <= 40)) {
     return 'bike_weight_kg must be between 3 and 40';
   }
-  if (s.default_mode != null && !['gears', 'erg'].includes(s.default_mode)) {
-    return "default_mode must be 'gears' or 'erg'";
+  if (s.trainer_mode != null && !TRAINER_MODES.includes(s.trainer_mode)) {
+    return "trainer_mode must be 'rear' or 'gears'";
+  }
+  if (s.rear_resistance != null && !(s.rear_resistance >= 0 && s.rear_resistance <= 20)) {
+    return 'rear_resistance must be between 0 and 20';
   }
   return null;
 }

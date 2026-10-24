@@ -154,7 +154,8 @@ describe('upgrading a single-user database', () => {
     assert.equal(profile.name, 'Victor');
     const settings = await (await me.get('/api/settings')).json();
     assert.equal(settings.gear_count, 14);
-    assert.equal(settings.default_mode, 'gears');
+    assert.equal(settings.trainer_mode, 'gears', 'an old default_mode reads as virtual gears');
+    assert.equal(settings.default_mode, undefined);
     assert.equal(settings.sample_interval_sec, 1, 'settings added since still get their defaults');
 
     const workouts = await (await me.get('/api/workouts')).json();

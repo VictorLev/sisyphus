@@ -62,6 +62,8 @@ CREATE TABLE IF NOT EXISTS sessions (
   -- past ride actually was.
   workout_name TEXT,
   description TEXT, -- the rider's words about the ride, sent along to Strava
+  title TEXT, -- the ride's title for Strava (null: the app suggests one)
+  route_id INTEGER, -- the route ridden, if any (kept if the route is deleted)
   started_at TEXT NOT NULL,
   ended_at TEXT,
   distance_m REAL,
@@ -134,6 +136,62 @@ CREATE TABLE IF NOT EXISTS ftp_history (
   source TEXT NOT NULL, -- 'test' | 'manual'
   session_id INTEGER REFERENCES sessions(id), -- the test ride, for source 'test'
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Routes: a ride along a filmed road. The profile and video sync are kept
+-- here; the video itself is a file in ROUTES_DIR/<id>/video.mp4, uploaded
+-- in pieces (video_received counts the bytes so far).
+CREATE TABLE IF NOT EXISTS routes (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  distance_m REAL NOT NULL,
+  ascent_m REAL NOT NULL,
+  duration_s REAL NOT NULL, -- length of the video
+  points TEXT NOT NULL, -- JSON: [{ d, alt, lat?, lon? }], metres along the road
+  video_points TEXT NOT NULL, -- JSON: [{ d, t }], distance -> second of video
+  video_size INTEGER NOT NULL, -- bytes expected
+  video_received INTEGER NOT NULL DEFAULT 0, -- bytes stored so far
+  thumb_type TEXT, -- the card's picture, ROUTES_DIR/<id>/thumb.<jpg|png|webp>, if any
+  thumb_at TEXT, -- when it was last set (busts the browser's cache)
+  created_by INTEGER REFERENCES users(id),
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Each rider's starred routes, shown first in the Home route picker.
+CREATE TABLE IF NOT EXISTS route_stars (
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  route_id INTEGER NOT NULL REFERENCES routes(id),
+  PRIMARY KEY (user_id, route_id)
+);
+
+-- What each rider has bought in the shop (backend/src/shop-catalog.js).
+-- Their balance is worked out from their riding and badges minus these;
+-- what they wear is user_config 'cosmetics'.
+CREATE TABLE IF NOT EXISTS purchases (
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  item_id TEXT NOT NULL,
+  price INTEGER NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (user_id, item_id)
+);
+
+-- Drachmas an admin gave a rider (Admin Panel, or npm run give-drachmas),
+-- added to what their riding and badges earned.
+CREATE TABLE IF NOT EXISTS drachma_gifts (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  amount INTEGER NOT NULL,
+  note TEXT,
+  given_by INTEGER, -- the admin; no foreign key, so it outlives their account
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Settings for the whole site, set in the Admin Panel (e.g. the shared
+-- scenery list). Key/value, the value JSON.
+CREATE TABLE IF NOT EXISTS site_config (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL,
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
 -- One-off migration steps that have run, so they are never repeated.

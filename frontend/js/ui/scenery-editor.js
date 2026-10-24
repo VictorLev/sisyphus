@@ -1,15 +1,16 @@
-// Settings → Scenery: one row per video (a name and a YouTube link), with
-// + to add and × to remove. The rows are saved as the scenery_videos text
-// ("Name | link, ..."), through the hidden #setting-scenery-videos input
-// that the settings form reads.
+// Admin Panel → Scenery: one row per video (a name and a YouTube link),
+// with + to add (up to `max`) and × to remove. commit() turns the rows into
+// the scenery text ("Name | link, ...") the server keeps.
 
 import { t } from '../i18n.js';
 import { parseYouTube, sceneryRows, serializeSceneryRows } from './scenery.js';
 
-export function initSceneryEditor() {
+export function initSceneryEditor({ max = Infinity } = {}) {
   const listEl = document.getElementById('scenery-rows');
-  const hiddenEl = document.getElementById('setting-scenery-videos');
   const addBtn = document.getElementById('scenery-add-btn');
+  const full = () => {
+    addBtn.disabled = listEl.children.length >= max;
+  };
 
   function addRow({ name = '', link = '' } = {}, focus = false) {
     const li = document.createElement('li');
@@ -41,11 +42,13 @@ export function initSceneryEditor() {
       li.remove();
       // Always leave one row to type into.
       if (!listEl.children.length) addRow();
+      full();
       changed();
     });
 
     li.append(nameInput, linkInput, remove);
     listEl.appendChild(li);
+    full();
     if (focus) nameInput.focus();
   }
 
@@ -54,6 +57,7 @@ export function initSceneryEditor() {
   const changed = () => listEl.dispatchEvent(new Event('input', { bubbles: true }));
 
   addBtn.addEventListener('click', () => {
+    if (listEl.children.length >= max) return;
     addRow({}, true);
     changed();
   });
@@ -66,8 +70,8 @@ export function initSceneryEditor() {
       (rows.length ? rows : [{}]).forEach((row) => addRow(row));
     },
 
-    // Into the hidden input before saving. Returns an error message for the
-    // first link that isn't a YouTube video (and marks its row), else null.
+    // The rows as scenery text: { text }, or { error } for the first link
+    // that isn't a YouTube video (its row is marked).
     commit() {
       const rows = [...listEl.children].map((li) => ({
         li,
@@ -78,10 +82,9 @@ export function initSceneryEditor() {
       if (bad) {
         bad.li.classList.add('is-invalid');
         bad.li.querySelector('.scenery-link').focus();
-        return t('scenery.badLink', { link: bad.link });
+        return { error: t('scenery.badLink', { link: bad.link }) };
       }
-      hiddenEl.value = serializeSceneryRows(rows);
-      return null;
+      return { text: serializeSceneryRows(rows) };
     },
   };
 }

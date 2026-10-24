@@ -9,7 +9,7 @@
 // API requests are never cached: a training log showing a stale ride list
 // would be worse than showing an error.
 
-const CACHE = 'sisyphus-shell-v9';
+const CACHE = 'sisyphus-shell-v24';
 
 const SHELL = [
   '/',
@@ -18,6 +18,7 @@ const SHELL = [
   '/js/app.js',
   '/js/log.js',
   '/js/i18n.js',
+  '/js/theme.js',
   '/js/i18n/en.js',
   '/js/i18n/fr.js',
   '/js/zones.js',
@@ -28,6 +29,7 @@ const SHELL = [
   '/js/ble/ftms-parser.js',
   '/js/ble/trainer-control.js',
   '/js/metrics/distance.js',
+  '/js/metrics/virtual-speed.js',
   '/js/metrics/rolling-average.js',
   '/js/session/recorder.js',
   '/js/session/pending.js',
@@ -37,6 +39,8 @@ const SHELL = [
   '/js/workout/runner.js',
   '/js/workout/targets.js',
   '/js/ui/badges.js',
+  '/js/ui/cards.js',
+  '/js/ui/image-resize.js',
   '/js/ui/chart.js',
   '/js/ui/chronicle.js',
   '/js/ui/config-forms.js',
@@ -50,8 +54,26 @@ const SHELL = [
   '/js/ui/ride-hero.js',
   '/js/ui/sisyphus-loop.js',
   '/js/ui/trainer-button.js',
+  '/js/ui/trainer-settings.js',
+  '/js/ui/remote-link.js',
+  '/js/ui/routes.js',
+  '/js/ui/ride-picker.js',
+  '/js/ui/trainer-gate.js',
+  '/js/ui/tutorial.js',
+  '/js/ui/shop.js',
+  '/js/ui/admin.js',
+  '/js/ui/settings-tabs.js',
+  '/js/ui/profile-tabs.js',
+  '/js/shop/cosmetics.js',
+  '/js/shop/avatar.js',
+  '/js/ui/route-player.js',
+  '/js/workout/route-track.js',
   '/js/ui/views.js',
   '/js/ui/scenery.js',
+  '/js/ui/scenery-editor.js',
+  '/js/ui/scenery-settings.js',
+  '/js/ui/strava-export.js',
+  '/js/ui/strava-text.js',
   '/js/ui/workouts.js',
   '/manifest.webmanifest',
   '/icons/icon-192.png',

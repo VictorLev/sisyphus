@@ -3,6 +3,20 @@ import { installLogCapture, logEvent } from './log.js';
 import { initLanguage, rememberSetting, resolveLanguage, language, t, tp, num } from './i18n.js';
 import { applyTheme } from './theme.js';
 import { setStravaExport, askToPostRide } from './ui/strava-export.js';
+import { TRAINER_MODES } from './ui/trainer-settings.js';
+import { initRemoteLink } from './ui/remote-link.js';
+import { initRoutes } from './ui/routes.js';
+import { initRidePicker } from './ui/ride-picker.js';
+import { initTrainerGate } from './ui/trainer-gate.js';
+import { initTutorial } from './ui/tutorial.js';
+import { initShop } from './ui/shop.js';
+import { initAdmin } from './ui/admin.js';
+import { initSettingsTabs } from './ui/settings-tabs.js';
+import { initProfileTabs } from './ui/profile-tabs.js';
+import { setEquipped } from './shop/cosmetics.js';
+import { avatarSvg } from './shop/avatar.js';
+import { createRoutePlayer } from './ui/route-player.js';
+import { RouteTrack } from './workout/route-track.js';
 import { TrainerConnection } from './ble/connection.js';
 import { TrainerControl } from './ble/trainer-control.js';
 import { GearModel } from './gears.js';
@@ -18,7 +32,7 @@ import { initBuilder } from './workout/builder.js';
 import { initLiveScreen } from './ui/live-screen.js';
 import { createRideHero } from './ui/ride-hero.js';
 import { initScenery } from './ui/scenery.js';
-import { createSession, getSettings, getProfile, getLevel } from './api/client.js';
+import { createSession, getSettings, saveSettings, getProfile, getLevel, getRoute, getWallet, getScenery } from './api/client.js';
 import { initProfile, initSettings } from './ui/config-forms.js';
 import { initSisyphusLoop } from './ui/sisyphus-loop.js';
 import { initChronicle, setChronicleFtp } from './ui/chronicle.js';
@@ -26,7 +40,7 @@ import { initWorkouts } from './ui/workouts.js';
 import { initFeats } from './ui/feats.js';
 import { initBadges, showRideBadges, refreshBadgeCount } from './ui/badges.js';
 import { initLeaderboard } from './ui/leaderboard.js';
-import { requireLogin, initAccount } from './ui/login.js';
+import { requireLogin, initAccount, watchSession } from './ui/login.js';
 import { initTrainerButton } from './ui/trainer-button.js';
 import { initLogPanel } from './ui/log-panel.js';
 
@@ -43,6 +57,7 @@ import { showFtpResult, initFtpHistory, initFtpTestPanel } from './ui/ftp-test.j
 // when the server is unreachable, so the offline shell still starts).
 const currentUser = await requireLogin();
 if (currentUser) document.getElementById('nav-name').textContent = currentUser.display_name;
+watchSession(currentUser, { isRiding: () => !document.querySelector('[data-view="live"]').hidden });
 
 const trainerConnection = new TrainerConnection();
 const gears = new GearModel();
@@ -61,14 +76,24 @@ const scenery = initScenery({
 });
 
 let runner = null;
-// 'gears'  — rider shifts, trainer holds a fixed resistance per gear
+// Trainer modes (Settings → Trainer):
+// 'rear'   — rider shifts on the bike; resistance is a flat-road level plus
+//            the segment's grade
+// 'gears'  — virtual gears: the rider shifts on screen, keyboard or phone;
+//            resistance is the gear's plus the grade
 // 'erg'    — trainer holds the segment's target watts, gearing is irrelevant
-// Both modes drive the same Control Point, so only one may write at a time.
+// All drive the same Control Point, so only one may write at a time.
 // preferredMode is what the rider chose; rideMode is what the current ride
-// actually runs (a free ride forces gears without discarding the choice).
-let preferredMode = 'erg';
-let rideMode = 'erg';
+// actually runs (ERG has nothing to hold on a free ride or an FTP test, so
+// those fall back to virtual gears without discarding the choice).
+let preferredMode = 'gears';
+let rideMode = 'gears';
 let activeWorkout = null;
+// A route ride: { route, track } (see workout/route-track.js), else null.
+let activeRoute = null;
+let lastRouteGrade = null;
+let lastGradeAppliedAt = 0;
+let routeFinished = false;
 let latestReading = null;
 let rideStartedAt = null;
 let rideStartedMs = null; // performance clock, for the elapsed readout
@@ -78,6 +103,8 @@ let recordIntervalId = null;
 let sampleIntervalMs = 1000; // overridden by saved settings
 let riderFtp = null; // shows targets as %FTP when set
 let resistancePerGrade = 0.4; // resistance units added per +1% of grade
+let rearResistance = 5; // rear gears: resistance on the flat
+let ergWorkouts = false; // workouts in ERG unless chosen otherwise when picking
 
 initViews();
 showView('home');
@@ -90,16 +117,99 @@ const liveScreen = initLiveScreen({
   onDiscardRide: () => discardRide(),
 });
 
-const home = initHome({
-  trainerConnection,
-  onStartRide: (workout) => startRide(workout),
+// Drachmas and cosmetics: the header shows the balance (opening the shop)
+// and the avatar; Sisyphus wears what was bought (shop/cosmetics.js).
+function showWallet({ balance, equipped }) {
+  const coins = document.getElementById('nav-coins');
+  coins.hidden = false;
+  document.getElementById('nav-coins-count').textContent = num(balance);
+  document.getElementById('nav-avatar').innerHTML =
+    avatarSvg({ bg: equipped.avatar_bg, emblem: equipped.avatar_emblem, name: currentUser?.display_name ?? '' }, { size: 32, title: currentUser?.display_name ?? '' });
+  setEquipped(equipped);
+}
+async function refreshWallet() {
+  if (!currentUser) return;
+  try {
+    showWallet(await getWallet());
+  } catch { /* offline: the header keeps what it had */ }
+}
+document.getElementById('nav-coins').addEventListener('click', () => showView('shop'));
+document.getElementById('nav-level').addEventListener('click', () => showView('profile'));
+document.getElementById('nav-profile-btn').addEventListener('click', () => showView('profile'));
+initProfileTabs();
+initShop({ onChange: showWallet, getName: () => currentUser?.display_name ?? '' });
+refreshWallet();
+
+// Scenery: one list for everyone, set in the Admin Panel.
+let sharedScenery = '';
+let sceneryChoice = { mode: 'random' };
+async function loadScenery() {
+  try {
+    sharedScenery = (await getScenery()).videos;
+    scenery.setList(sharedScenery, sceneryChoice);
+  } catch { /* offline: the default ride */ }
+}
+loadScenery();
+
+// The Admin Panel, for admins: from Settings.
+if (currentUser?.is_admin) {
+  document.getElementById('open-admin-btn').addEventListener('click', () => showView('admin'));
+  initAdmin({
+    onWalletChange: () => refreshWallet(),
+    onSceneryChange: (videos) => {
+      sharedScenery = videos;
+      scenery.setList(sharedScenery, sceneryChoice);
+    },
+  });
+}
+
+// The walkthrough: on first login, and from Settings → Replay the tutorial.
+let tutorialShown = false;
+const tutorial = initTutorial({
+  onDone: () => saveSettings({ tutorial_done: true }).catch(() => {}),
+});
+document.getElementById('replay-tutorial-btn').addEventListener('click', () => tutorial.start());
+
+// Every start goes through here: no trainer connected, no ride (the pop-up
+// offers to connect it, then the ride starts).
+const trainerGate = initTrainerGate(trainerConnection);
+const whenTrainerReady = (start) => async (...args) => {
+  if (await trainerGate.ensure()) start(...args);
+};
+const startWorkoutRide = whenTrainerReady((workout, options) => startRide(workout, options));
+const startRouteRide = whenTrainerReady(async (summary) => {
+  try {
+    startRide(null, { route: await getRoute(summary.id) });
+  } catch (err) {
+    alert(err.message);
+  }
+});
+
+const picker = initRidePicker({
+  onPick: (kind, item, { erg }) => (kind === 'routes' ? startRouteRide(item) : startWorkoutRide(item, { erg })),
+  ergDefault: () => ergWorkouts,
+});
+initHome({
+  onFreeRide: whenTrainerReady(() => startRide(null)),
+  onPick: (kind) => picker.open(kind),
+});
+
+// Routes: a filmed road, played at the rider's speed, its climbs setting
+// the resistance.
+const routePlayer = createRoutePlayer({
+  frameEl: document.getElementById('scenery-frame'),
+  progressEl: document.getElementById('route-progress'),
+  format: ({ doneM, totalM, grade }) =>
+    `${num(doneM / 1000, 2)} / ${num(totalM / 1000, 1)} km · ${grade > 0 ? '+' : ''}${num(grade, 1)}%`,
+});
+initRoutes({
+  isAdmin: Boolean(currentUser?.is_admin),
+  onStartRoute: startRouteRide,
 });
 
 initWorkouts({
-  onStartRide: (workout) => startRide(workout),
+  onStartRide: startWorkoutRide,
   onEditWorkout: (workout) => editWorkout(workout),
-  // Starring or deleting changes what the home launchpad should show.
-  onLibraryChanged: () => home.refreshWorkoutList(),
 });
 
 const builder = initBuilder({});
@@ -125,14 +235,16 @@ initFeats({ onOpenRide: (id) => chronicle.openDetail(id) });
 initLeaderboard();
 initBadges({ onOpenRide: (id) => chronicle.openDetail(id), onOpenBadges: () => showView('badges') });
 initProfile();
-initSettings({ onSaved: (saved) => applySettings(saved) });
+initSettings({ onSaved: (saved) => applySettings(saved), getSharedScenery: () => sharedScenery });
 initAccount(currentUser);
-// The diagnostic log is for whoever fixes bugs: admins only. Entries are
-// still captured for everyone, in case an admin rides on this browser.
-document.getElementById('log-panel').hidden = !currentUser?.is_admin;
+// Settings tabs. The Admin Panel link is for admins; the diagnostic log is
+// on the Admin Panel page (entries are still captured for everyone, in case
+// an admin rides on this browser).
+const settingsTabs = initSettingsTabs();
+if (currentUser?.is_admin) document.getElementById('admin-link').hidden = false;
 initLogPanel();
 initFtpHistory();
-initFtpTestPanel({ onStart: (workout) => startRide(workout) });
+initFtpTestPanel({ onStart: startWorkoutRide });
 updateModeUi();
 
 // Settings are stored server-side, so the objects are built with defaults and
@@ -148,8 +260,15 @@ function applySettings(settings) {
     }
   }
   applyTheme(settings.theme);
+  // A new rider (or one who hasn't seen it yet): the walkthrough, once.
+  if (currentUser && settings.tutorial_done === false && !tutorialShown) {
+    tutorialShown = true;
+    tutorial.start();
+  }
   setStravaExport(settings.strava_export);
-  scenery.setList(settings.scenery_videos, settings.scenery_mode);
+  // The videos are everyone's (Admin Panel); the order is the rider's.
+  sceneryChoice = { mode: settings.scenery_mode, pick: settings.scenery_pick, custom: settings.scenery_custom };
+  scenery.setList(sharedScenery, sceneryChoice);
   gears.configure({
     gearCount: settings.gear_count,
     minResistance: settings.min_resistance,
@@ -162,8 +281,10 @@ function applySettings(settings) {
     resistancePerGrade = settings.resistance_per_grade;
   }
   sampleIntervalMs = Math.max(1, settings.sample_interval_sec) * 1000;
-  if (settings.default_mode === 'gears' || settings.default_mode === 'erg') {
-    preferredMode = settings.default_mode;
+  if (Number.isFinite(settings.rear_resistance)) rearResistance = settings.rear_resistance;
+  ergWorkouts = settings.erg_workouts === true;
+  if (TRAINER_MODES.includes(settings.trainer_mode)) {
+    preferredMode = settings.trainer_mode;
     rideMode = preferredMode;
   }
   updateModeUi();
@@ -270,9 +391,10 @@ async function ensureTrainerControl() {
 // Applies a shift and confirms it on screen — even at an end stop, where
 // the gear number can't change — so a press is always visibly acknowledged.
 function handleShift(direction) {
-  if (rideMode === 'erg') {
-    // Writing resistance now would fight the trainer's ERG target.
-    flashRideNote(t('note.ergNoGears'), 1500);
+  if (rideMode !== 'gears') {
+    // ERG: writing resistance would fight its target. Rear gears: the
+    // bike's own gears do the shifting.
+    flashRideNote(t(rideMode === 'erg' ? 'note.ergNoGears' : 'note.rearNoGears'), 1500);
     return;
   }
   const up = direction === 'up';
@@ -307,6 +429,31 @@ document.addEventListener('keydown', (event) => {
   handleShift(direction);
 });
 
+// The phone remote (/remote): shifts from the rider's phone land here like
+// the on-screen buttons, and the phone is kept up to date with the ride.
+let liveSpeedKmh = null;
+const remote = currentUser ? initRemoteLink({
+  onShift: (direction) => {
+    if (!liveViewEl.hidden && pausedAtMs == null) handleShift(direction);
+  },
+  getState: () => {
+    const riding = !liveViewEl.hidden;
+    if (!riding) return { riding: false };
+    return {
+      riding,
+      paused: pausedAtMs != null,
+      mode: rideMode,
+      gear: gears.gearNumber,
+      gears: gears.gearCount,
+      power: rollingAverage.average() != null ? Math.round(rollingAverage.average()) : null,
+      cadence: latestReading?.instantaneousCadenceRpm ?? null,
+      speed: liveSpeedKmh != null ? Math.round(liveSpeedKmh * 10) / 10 : null,
+      workout: activeWorkout ? workoutName(activeWorkout) : activeRoute?.route.name ?? null,
+    };
+  },
+  onPhones: (count) => { document.getElementById('remote-indicator').hidden = count === 0; },
+}) : { update() {} };
+
 // Applies whichever control the current mode owns. In ERG that's the active
 // segment's target watts; in gears it's the current gear's resistance.
 async function applyRideMode() {
@@ -333,43 +480,57 @@ async function applyRideMode() {
   }
 }
 
-// Mode is chosen before a ride starts, never during one — so this only
-// records the choice. The trainer is written to in startRide.
-function setRideMode(mode) {
-  preferredMode = mode;
-  rideMode = mode;
-  updateModeUi();
-}
-
+// The mode is chosen in Settings → Trainer before a ride, never during one.
+// Home says which one rides will use, with a way to change it.
 function updateModeUi() {
-  const erg = rideMode === 'erg';
-  document.getElementById('mode-gears-btn').classList.toggle('is-active', !erg);
-  document.getElementById('mode-erg-btn').classList.toggle('is-active', erg);
-  document.getElementById('mode-description').textContent = t(erg ? 'mode.ergDescription' : 'mode.gearsDescription');
+  document.getElementById('home-trainer-mode').textContent =
+    t(ergWorkouts ? 'trainer.usingErg' : 'trainer.using', { mode: t(`trainer.name.${preferredMode}`) });
   updateGearDisplay(gears.gearNumber);
 }
 
-document.getElementById('mode-gears-btn').addEventListener('click', () => setRideMode('gears'));
-document.getElementById('mode-erg-btn').addEventListener('click', () => setRideMode('erg'));
+document.getElementById('home-trainer-change').addEventListener('click', () => {
+  showView('settings');
+  settingsTabs.select('ride');
+});
+document.getElementById('shift-up-btn').addEventListener('click', () => handleShift('up'));
+document.getElementById('shift-down-btn').addEventListener('click', () => handleShift('down'));
 
 // The trainer only has one resistance dial, so terrain and gearing are
 // composed into it: the segment's grade sets the load, the gear is the
 // rider's lever against it. Clamped to the device's 0..20 domain, so a
 // descent bottoms out at freewheel rather than going negative.
 function currentGrade() {
-  if (rideMode !== 'gears') return 0; // ERG holds watts; terrain is irrelevant
+  if (rideMode === 'erg') return 0; // ERG holds watts; terrain is irrelevant
+  if (activeRoute) return activeRoute.track.gradeAt(distanceTracker.currentTotalM);
   return runner?.state.currentSegment?.grade_percent ?? 0;
 }
 
+// On a route the grade changes as the rider moves, not at segment
+// boundaries: rewrite the resistance when it has moved by half a percent,
+// at most once a second (the trainer doesn't need more, and BLE writes
+// queue up).
+function followRouteGrade(now) {
+  const grade = currentGrade();
+  if (lastRouteGrade != null && Math.abs(grade - lastRouteGrade) < 0.5) return;
+  if (now - lastGradeAppliedAt < 1000) return;
+  lastRouteGrade = grade;
+  lastGradeAppliedAt = now;
+  applyResistance(terrainResistance());
+  updateGearDisplay(gears.gearNumber);
+}
+
+// Rear gears start from a fixed flat-road level, virtual gears from the
+// gear's; the grade adds to either.
 function terrainResistance() {
-  const withGrade = gears.resistance + currentGrade() * resistancePerGrade;
-  return Math.max(0, Math.min(20, withGrade));
+  const base = rideMode === 'rear' ? rearResistance : gears.resistance;
+  return Math.max(0, Math.min(20, base + currentGrade() * resistancePerGrade));
 }
 
 // A gear change updates the display and writes the new resistance.
 gears.addEventListener('change', (event) => {
   updateGearDisplay(event.detail.gear);
-  applyResistance(terrainResistance());
+  if (rideMode === 'gears') applyResistance(terrainResistance());
+  remote.update();
 });
 
 // Writes resistance, re-acquiring control if the trainer dropped it (FTMS
@@ -418,6 +579,7 @@ trainerConnection.addEventListener('reading', (event) => {
     ? virtualSpeed.update(reading.instantaneousPowerW, currentGrade(), receivedAt)
     : reading.instantaneousSpeedKmh;
   distanceTracker.update({ instantaneousSpeedKmh: speed }, receivedAt);
+  liveSpeedKmh = speed;
   // Accumulate every notification; the recording tick commits their mean.
   recorder.addReading({
     power: reading.instantaneousPowerW,
@@ -433,14 +595,21 @@ trainerConnection.addEventListener('reading', (event) => {
   });
   // Only fires when the zone actually changes: Sisyphus leans in harder and
   // works faster the deeper the rider is into their zones.
-  if (zone) rideHero.setZone(zone.id, zone.color);
+  if (zone) {
+    rideHero.setZone(zone.id, zone.color);
+    // Z5 and Z6 set the ride screen alight (the .intensity-overlay).
+    liveViewEl.dataset.intensity = zone.id >= 6 ? 'z6' : zone.id === 5 ? 'z5' : '';
+  }
 });
 
-function startRide(workout) {
+function startRide(workout, { route = null, erg = ergWorkouts } = {}) {
   // Library targets are % of FTP; from here on everything is in watts,
   // fixed at the FTP the rider has as the ride starts.
   if (workout) workout = { ...workout, structure: resolveTargets(workout.structure, riderFtp) };
   activeWorkout = workout;
+  activeRoute = route ? { route, track: new RouteTrack(route) } : null;
+  lastRouteGrade = null;
+  routeFinished = false;
   rollingAverage.reset();
   distanceTracker.reset();
   virtualSpeed.reset();
@@ -458,18 +627,23 @@ function startRide(workout) {
     // begins; in gears mode this is a no-op.
     // Every segment boundary changes the load: a new ERG target, or new
     // terrain to push the gears against.
-    runner.addEventListener('segment-change', () => applyRideMode());
+    runner.addEventListener('segment-change', () => {
+      applyRideMode();
+      updateGearDisplay(gears.gearNumber); // rear gears show the grade
+    });
   }
 
   // ERG needs a workout's targets, so free rides always run in gears — but
   // that must not discard an ERG choice made for the next workout. FTP tests
   // run in gears too: ERG would hold the test block at your CURRENT FTP, so
   // it could only ever measure what you already have.
+  // ERG only for a workout with watts to hold: never a free ride, a route
+  // or an FTP test (ERG would hold the test at your CURRENT FTP).
   const isTest = Boolean(workout?.test);
-  rideMode = workout && !isTest ? preferredMode : 'gears';
+  rideMode = erg && workout && !isTest ? 'erg' : preferredMode;
   updateModeUi();
 
-  liveScreen.buildTimeline(workout ? workout.structure : null, workout ? workoutName(workout) : null);
+  liveScreen.buildTimeline(workout ? workout.structure : null, workout ? workoutName(workout) : route?.name ?? null);
   liveScreen.updateWorkoutInfo(runner ? runner.state : null);
   liveScreen.setElapsed(0);
   updateTotals();
@@ -479,7 +653,8 @@ function startRide(workout) {
   if (isTest) {
     flashRideNote(t('note.ftpTest'), 12000);
   }
-  scenery.start();
+  if (activeRoute) routePlayer.start(route, activeRoute.track);
+  else scenery.start();
   startLoop();
   applyRideMode();
 }
@@ -494,6 +669,14 @@ function startLoop() {
   }, sampleIntervalMs);
 
   function frame(now) {
+    if (activeRoute) {
+      routePlayer.update({ distanceM: distanceTracker.currentTotalM, speedKmh: liveSpeedKmh, paused: pausedAtMs != null });
+      followRouteGrade(now);
+      if (!routeFinished && distanceTracker.currentTotalM >= activeRoute.track.distanceM) {
+        routeFinished = true;
+        flashRideNote(t('note.routeDone'), 15000);
+      }
+    }
     if (runner) {
       const state = runner.tick(now);
       liveScreen.updateWorkoutInfo(state);
@@ -533,6 +716,7 @@ function pauseRide({ confirmEnd = false } = {}) {
   runner?.stop();
   recorder.pause(now);
   scenery.pause();
+  routePlayer.pause();
   const workout = runner?.state;
   liveScreen.showPauseDialog({
     distanceM: distanceTracker.currentTotalM,
@@ -576,6 +760,8 @@ async function releaseTrainer() {
 async function discardRide() {
   stopLoop();
   scenery.stop();
+  routePlayer.stop();
+  activeRoute = null;
   pausedAtMs = null;
   recorder.reset();
   await releaseTrainer();
@@ -587,6 +773,9 @@ async function discardRide() {
 async function endRide() {
   stopLoop();
   scenery.stop();
+  routePlayer.stop();
+  const routeId = activeRoute?.route.id ?? null;
+  activeRoute = null;
   // A ride ended from the pause pop-up ends where the riding stopped.
   const endMs = pausedAtMs ?? performance.now();
   pausedAtMs = null;
@@ -600,6 +789,7 @@ async function endRide() {
 
   const payload = {
     workout_id: activeWorkout?.id ?? null,
+    route_id: routeId,
     started_at: rideStartedAt,
     // Start plus riding time, not the wall clock: duration, XP and the
     // longest-ride record all read ended_at - started_at, so a pause must
@@ -621,11 +811,12 @@ async function endRide() {
     const session = await createSession(payload);
     refreshLevel();
     refreshBadgeCount();
+    refreshWallet();
     showSummary(session);
     if (activeWorkout?.test) showFtpResult(document.getElementById('summary-ftp-result'), session.id);
     showRideBadges(document.getElementById('summary-badges'), session.id, { onOpenRide: (id) => chronicle.openDetail(id) });
     // Settings → Strava on: ask for a description, then download + upload page.
-    askToPostRide(session.id);
+    askToPostRide(session);
   } catch (err) {
     // Never drop the ride. Park it and retry on the next load — the rider
     // cannot pedal the hour again.
@@ -647,7 +838,7 @@ async function retryPendingRides() {
   if (saved > 0) {
     refreshLevel();
     refreshBadgeCount();
-    home.refreshWorkoutList();
+    refreshWallet();
     flashRideNote(tp('save.recovered', saved), 8000);
     console.info(`[app] recovered ${saved} pending ride(s)`);
   }
@@ -661,10 +852,16 @@ function updateGearDisplay(gear) {
   const value = document.getElementById('gear-value');
   const label = metric.querySelector('.metric-label');
   metric.hidden = false;
+  document.getElementById('shift-buttons').hidden = rideMode !== 'gears';
   if (rideMode === 'erg') {
     // The gear number is meaningless while the trainer holds a wattage.
     value.textContent = 'ERG';
     label.textContent = t('live.mode');
+  } else if (rideMode === 'rear') {
+    // The bike's gears are the rider's; what the trainer adds is the grade.
+    const grade = currentGrade();
+    value.textContent = `${grade > 0 ? '+' : ''}${num(grade, grade % 1 ? 1 : 0)}%`;
+    label.textContent = t('live.grade');
   } else {
     value.textContent = gear;
     label.textContent = t('live.gear');

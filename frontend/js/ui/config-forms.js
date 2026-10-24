@@ -1,6 +1,7 @@
 import { getProfile, saveProfile, getSettings, saveSettings } from '../api/client.js';
 import { t } from '../i18n.js';
-import { initSceneryEditor } from './scenery-editor.js';
+import { initTrainerSettings } from './trainer-settings.js';
+import { initScenerySettings } from './scenery-settings.js';
 
 // Generic form binding for the profile and settings pages. Both are the same
 // shape — load a JSON document, edit named fields, save it back — so they
@@ -74,8 +75,9 @@ export function initProfile() {
   return form;
 }
 
-export function initSettings({ onSaved }) {
-  const scenery = initSceneryEditor();
+export function initSettings({ onSaved, getSharedScenery = () => '' }) {
+  const trainer = initTrainerSettings();
+  const scenery = initScenerySettings({ getShared: getSharedScenery });
   const form = bindForm({
     fields: [
       'setting-gear-count',
@@ -86,9 +88,12 @@ export function initSettings({ onSaved }) {
       'setting-power-smoothing-sec',
       'setting-sample-interval-sec',
       'setting-bike-weight-kg',
-      'setting-default-mode',
-      'setting-scenery-videos',
+      'setting-trainer-mode',
+      'setting-erg-workouts',
+      'setting-rear-resistance',
       'setting-scenery-mode',
+      'setting-scenery-pick',
+      'setting-scenery-custom',
       'setting-language',
       'setting-theme',
       'setting-strava-export',
@@ -97,8 +102,11 @@ export function initSettings({ onSaved }) {
     save: saveSettings,
     statusEl: document.getElementById('settings-status'),
     onSaved,
-    beforeSubmit: () => scenery.commit(),
-    afterLoad: (data) => scenery.load(data.scenery_videos),
+    afterLoad: (data) => {
+      trainer.render(data.trainer_mode);
+      scenery.render(data);
+    },
+    beforeSubmit: () => scenery.check(),
   });
 
   // The Save button stays quiet (outlined) until a setting changes, then
@@ -110,7 +118,7 @@ export function initSettings({ onSaved }) {
   const onEdit = (event) => {
     const target = event.target;
     // Only the settings themselves: not the password fields or the log.
-    if (!target.id?.startsWith('setting-') && !target.closest?.('.scenery-editor')) return;
+    if (!target.id?.startsWith('setting-')) return;
     if (saveBtn.classList.contains('secondary')) statusEl.textContent = '';
     setDirty(true);
   };

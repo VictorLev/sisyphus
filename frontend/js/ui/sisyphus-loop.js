@@ -5,6 +5,8 @@
 // grid blitted with fillRect and scaled up crisply, so no image assets are
 // needed and it stays sharp at any size.
 
+import { drawHat, drawBoulder } from '../shop/cosmetics.js';
+
 // Sprites as rows of characters: X = solid, anything else = transparent.
 const BOULDER = [
   '.XXXX.',
@@ -26,6 +28,13 @@ const PUSHER = [
   '.X.X..',
   'X...X.',
 ];
+
+// Where a pusher sprite's head is: its top row of pixels.
+function headOf(sprite) {
+  const top = sprite.findIndex((row) => row.includes('X'));
+  const left = sprite[top].indexOf('X');
+  return { left, width: sprite[top].lastIndexOf('X') - left + 1, top };
+}
 
 const GRID_W = 64;
 const GRID_H = 22;
@@ -85,7 +94,19 @@ export function initSisyphusLoop() {
     });
   };
 
+  // Sisyphus, with the hat he bought.
+  const head = headOf(PUSHER);
+  function pusher(x) {
+    const top = restRow(PUSHER, x);
+    blit(PUSHER, x, top, figureColor);
+    drawHat(px, x + head.left, head.width, top + head.top);
+  }
+
+  let lastT = 0;
+  document.addEventListener('cosmeticschange', () => draw(lastT));
+
   function draw(t) {
+    lastT = t;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     // The slope, drawn as a filled mass in the dimmer tone so the figure
@@ -97,14 +118,14 @@ export function initSisyphusLoop() {
     if (t < PUSH_END) {
       const p = t / PUSH_END;
       const x = Math.round(START_X + p * (TOP_X - START_X));
-      blit(PUSHER, x, restRow(PUSHER, x), figureColor);
-      blit(BOULDER, x + 7, restRow(BOULDER, x + 7), figureColor);
+      pusher(x);
+      drawBoulder(px, BOULDER, x + 7, restRow(BOULDER, x + 7), figureColor);
     } else {
       // The boulder gets away and rolls back down past him.
       const p = (t - PUSH_END) / (1 - PUSH_END);
       const bx = Math.round(TOP_X + 7 - p * (TOP_X - START_X));
-      blit(BOULDER, bx, restRow(BOULDER, bx), figureColor);
-      blit(PUSHER, TOP_X, restRow(PUSHER, TOP_X), figureColor);
+      drawBoulder(px, BOULDER, bx, restRow(BOULDER, bx), figureColor);
+      pusher(TOP_X);
     }
   }
 

@@ -97,6 +97,7 @@ jobs:
         with:
           context: .
           push: true
+          build-args: GIT_SHA=${{ github.sha }}
           tags: |
             ${{ env.REGISTRY_IMAGE }}:latest
             ${{ env.REGISTRY_IMAGE }}:${{ github.sha }}

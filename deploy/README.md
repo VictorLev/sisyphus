@@ -125,15 +125,71 @@ It prints a temporary password. Send the rider the public URL, their
 username and that password; they can change it under **Settings →
 Account**.
 
+Or, logged in as an admin: **Settings → Admin Panel** lists the riders,
+creates them, resets their passwords and deletes them. Passwords are
+made the same way and shown once. The commands below still work.
+
 | To... | Run on the VM |
 | --- | --- |
 | Add a rider | `docker exec sisyphus npm run add-user -- <name> [--name "Shown Name"]` |
 | Reset a forgotten password | `docker exec sisyphus npm run reset-password -- <name>` (also logs them out everywhere) |
 | List accounts | `docker exec sisyphus npm run list-users` |
+| Give a rider drachmas for the shop | `docker exec sisyphus npm run give-drachmas -- <name> <amount>` (or Settings → Account → Admin Panel → Give drachmas) |
 | Delete an account and all its data | `docker exec sisyphus npm run delete-user -- <name>` shows what would go; add `--yes` to delete. The last admin can't be deleted. |
 
 Usernames are case-insensitive. After 10 failed logins for one username, or
 20 from one IP address, logins are refused for 15 minutes.
+
+## Routes
+
+**Routes** are rides along a filmed road. The video plays at your speed,
+and the road's grade sets the resistance. The admin imports them from the
+Routes page, with two files: the route file (JSON: `geometry` with distance
+and altitude, plus `video_points` mapping distance to video time) and the
+video (MP4).
+
+- The videos live in `routes/<id>/video.mp4` beside the compose file, on
+  the NFS share. The compose file mounts it as `/routes`. Before the first
+  import, create it with `mkdir routes` and `chown 1000:1000 routes`.
+- Uploads go in 32 MB pieces and resume where they stopped if interrupted.
+  That's because Cloudflare refuses requests over 100 MB.
+- Videos aren't in the database backups (too big). They're only on the
+  share.
+- **Many routes at once: the inbox.** Copy one folder per route into
+  `routes/inbox/` (on the homelab, from Windows:
+  `\\192.168.0.38\storage\docker\sisyphus\routes\inbox`):
+  ```
+  routes/inbox/<route name>/video.mp4
+                           /route.json
+                           /picture.jpg   (optional: .jpg, .png or .webp, up to 5 MB)
+  ```
+  Then press **Scan for new routes** in the Admin Panel, or run
+  `docker exec sisyphus npm run import-routes` (`-- --list` only shows what's
+  there). The folder's name becomes the route's name. The video is moved,
+  not copied (it's the same disk), and the folder is removed. A folder
+  written to in the last minute is still being copied and waits for the
+  next scan. A name already in the library is skipped, so scanning twice is
+  harmless. If the container can't delete the folders Samba created, the
+  videos are copied instead and the folders stay: delete them by hand.
+- **Make videos smaller before importing.** A 1080p route video can run at
+  20+ Mbit/s, and everyone outside the house streams it from the home
+  connection through Cloudflare. 720p at a moderate quality is plenty
+  behind a dashboard:
+  ```sh
+  ffmpeg -i video.mp4 -vf scale=-2:720 -c:v libx264 -preset slow -crf 26 -an -movflags +faststart route-720p.mp4
+  ```
+  `-an` drops the sound, and `+faststart` lets playback start before the
+  whole file has loaded.
+- **Smoother slow motion (optional, slow to run).** Below 0.9x the app
+  blends frames, fading each into the next, but a 30 fps video still has
+  only 16 real frames a second at 0.55x. Motion interpolation makes real
+  in-between frames at 60 fps, so slow riding has twice the frames to show.
+  It's much slower than the plain shrink, so expect hours for a 10-minute
+  1080p video:
+  ```sh
+  ffmpeg -i video.mp4 -vf "scale=-2:720,minterpolate=fps=60:mi_mode=mci:mc_mode=aobmc:me_mode=bidir:vsbmc=1" -c:v libx264 -preset slow -crf 26 -an -movflags +faststart route-720p60.mp4
+  ```
+  The route file doesn't change: it maps distance to seconds, not frames.
 
 ## Backups
 
