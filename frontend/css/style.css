@@ -242,7 +242,8 @@ h2 {
   letter-spacing: 0.02em;
 }
 
-.main-nav button svg {
+/* The menu items' line icons only: not the avatar or the shop bag. */
+.main-nav > button svg {
   width: 18px;
   height: 18px;
   fill: none;

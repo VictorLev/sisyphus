@@ -123,7 +123,7 @@ function showWallet({ balance, equipped }) {
   coins.hidden = false;
   document.getElementById('nav-coins-count').textContent = num(balance);
   document.getElementById('nav-avatar').innerHTML =
-    avatarSvg({ bg: equipped.avatar_bg, emblem: equipped.avatar_emblem, name: currentUser?.display_name ?? '' }, { size: 26, title: currentUser?.display_name ?? '' });
+    avatarSvg({ bg: equipped.avatar_bg, emblem: equipped.avatar_emblem, name: currentUser?.display_name ?? '' }, { size: 32, title: currentUser?.display_name ?? '' });
   setEquipped(equipped);
 }
 async function refreshWallet() {
