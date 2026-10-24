@@ -26,9 +26,12 @@ const DEFAULTS = {
     // How the trainer is driven (Settings → Trainer):
     //   'rear'  — the bike's own gears; resistance follows the grade only
     //   'gears' — virtual gears; resistance follows the gear and the grade
-    //   'erg'   — the trainer holds each segment's target watts
-    // Replaced default_mode ('gears' | 'erg'), which readConfig carries over.
-    trainer_mode: 'erg',
+    // A stored 'erg' (it was a third mode) and the old default_mode read
+    // as 'gears': ERG is now erg_workouts.
+    trainer_mode: 'gears',
+    // Workouts in ERG (the trainer holds each segment's watts). Off by
+    // default; the Home workout picker can change it for one ride.
+    erg_workouts: false,
     // Rear gears: the resistance on the flat, before any grade.
     rear_resistance: 5,
     // Resistance units added per +1% of grade (rear and virtual gears). The
@@ -64,15 +67,15 @@ export function writeConfig(userId, key, value) {
   upsertConfig.run({ userId, key, value: JSON.stringify(value) });
 }
 
-export const TRAINER_MODES = ['rear', 'gears', 'erg'];
+export const TRAINER_MODES = ['rear', 'gears'];
 
 export function readConfig(userId, key) {
   const row = selectConfig.get(userId, key);
   const stored = row ? JSON.parse(row.value) : {};
-  // Before trainer modes, the choice was default_mode ('gears' | 'erg').
-  if (key === 'settings' && stored.trainer_mode === undefined && TRAINER_MODES.includes(stored.default_mode)) {
-    stored.trainer_mode = stored.default_mode;
-  }
+  // Before trainer modes, the choice was default_mode ('gears' | 'erg');
+  // then ERG was a trainer mode. Both read as virtual gears now.
+  if (key === 'settings' && stored.trainer_mode === undefined && stored.default_mode) stored.trainer_mode = 'gears';
+  if (key === 'settings' && stored.trainer_mode === 'erg') stored.trainer_mode = 'gears';
   const { default_mode, ...current } = { ...DEFAULTS[key], ...stored };
   return current;
 }
@@ -120,7 +123,7 @@ function validateSettings(s) {
     return 'bike_weight_kg must be between 3 and 40';
   }
   if (s.trainer_mode != null && !TRAINER_MODES.includes(s.trainer_mode)) {
-    return "trainer_mode must be 'rear', 'gears' or 'erg'";
+    return "trainer_mode must be 'rear' or 'gears'";
   }
   if (s.rear_resistance != null && !(s.rear_resistance >= 0 && s.rear_resistance <= 20)) {
     return 'rear_resistance must be between 0 and 20';

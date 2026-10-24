@@ -84,8 +84,8 @@ let runner = null;
 // preferredMode is what the rider chose; rideMode is what the current ride
 // actually runs (ERG has nothing to hold on a free ride or an FTP test, so
 // those fall back to virtual gears without discarding the choice).
-let preferredMode = 'erg';
-let rideMode = 'erg';
+let preferredMode = 'gears';
+let rideMode = 'gears';
 let activeWorkout = null;
 // A route ride: { route, track } (see workout/route-track.js), else null.
 let activeRoute = null;
@@ -102,6 +102,7 @@ let sampleIntervalMs = 1000; // overridden by saved settings
 let riderFtp = null; // shows targets as %FTP when set
 let resistancePerGrade = 0.4; // resistance units added per +1% of grade
 let rearResistance = 5; // rear gears: resistance on the flat
+let ergWorkouts = false; // workouts in ERG unless chosen otherwise when picking
 
 initViews();
 showView('home');
@@ -170,7 +171,7 @@ const trainerGate = initTrainerGate(trainerConnection);
 const whenTrainerReady = (start) => async (...args) => {
   if (await trainerGate.ensure()) start(...args);
 };
-const startWorkoutRide = whenTrainerReady((workout) => startRide(workout));
+const startWorkoutRide = whenTrainerReady((workout, options) => startRide(workout, options));
 const startRouteRide = whenTrainerReady(async (summary) => {
   try {
     startRide(null, { route: await getRoute(summary.id) });
@@ -180,7 +181,8 @@ const startRouteRide = whenTrainerReady(async (summary) => {
 });
 
 const picker = initRidePicker({
-  onPick: (kind, item) => (kind === 'routes' ? startRouteRide(item) : startWorkoutRide(item)),
+  onPick: (kind, item, { erg }) => (kind === 'routes' ? startRouteRide(item) : startWorkoutRide(item, { erg })),
+  ergDefault: () => ergWorkouts,
 });
 initHome({
   onFreeRide: whenTrainerReady(() => startRide(null)),
@@ -273,6 +275,7 @@ function applySettings(settings) {
   }
   sampleIntervalMs = Math.max(1, settings.sample_interval_sec) * 1000;
   if (Number.isFinite(settings.rear_resistance)) rearResistance = settings.rear_resistance;
+  ergWorkouts = settings.erg_workouts === true;
   if (TRAINER_MODES.includes(settings.trainer_mode)) {
     preferredMode = settings.trainer_mode;
     rideMode = preferredMode;
@@ -474,7 +477,7 @@ async function applyRideMode() {
 // Home says which one rides will use, with a way to change it.
 function updateModeUi() {
   document.getElementById('home-trainer-mode').textContent =
-    t('trainer.using', { mode: t(`trainer.name.${preferredMode}`) });
+    t(ergWorkouts ? 'trainer.usingErg' : 'trainer.using', { mode: t(`trainer.name.${preferredMode}`) });
   updateGearDisplay(gears.gearNumber);
 }
 
@@ -589,7 +592,7 @@ trainerConnection.addEventListener('reading', (event) => {
   }
 });
 
-function startRide(workout, { route = null } = {}) {
+function startRide(workout, { route = null, erg = ergWorkouts } = {}) {
   // Library targets are % of FTP; from here on everything is in watts,
   // fixed at the FTP the rider has as the ride starts.
   if (workout) workout = { ...workout, structure: resolveTargets(workout.structure, riderFtp) };
@@ -624,9 +627,10 @@ function startRide(workout, { route = null } = {}) {
   // that must not discard an ERG choice made for the next workout. FTP tests
   // run in gears too: ERG would hold the test block at your CURRENT FTP, so
   // it could only ever measure what you already have.
-  // A route has no watts to hold either: its climbs need gears.
+  // ERG only for a workout with watts to hold: never a free ride, a route
+  // or an FTP test (ERG would hold the test at your CURRENT FTP).
   const isTest = Boolean(workout?.test);
-  rideMode = preferredMode === 'erg' && (!workout || isTest) ? 'gears' : preferredMode;
+  rideMode = erg && workout && !isTest ? 'erg' : preferredMode;
   updateModeUi();
 
   liveScreen.buildTimeline(workout ? workout.structure : null, workout ? workoutName(workout) : route?.name ?? null);

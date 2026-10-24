@@ -187,7 +187,8 @@ describe('config API', () => {
   test('returns defaults before anything is saved', async () => {
     const settings = await (await api('/api/settings')).json();
     assert.equal(settings.gear_count, 12);
-    assert.equal(settings.trainer_mode, 'erg');
+    assert.equal(settings.trainer_mode, 'gears');
+    assert.equal(settings.erg_workouts, false, 'ERG off unless the rider turns it on');
     assert.equal(settings.rear_resistance, 5);
   });
 
@@ -206,18 +207,20 @@ describe('config API', () => {
     await postJson('/api/settings', { bike_weight_kg: 9 }, 'PUT');
   });
 
-  test('trainer mode: rear gears, virtual gears or ERG; an old default_mode carries over', async () => {
+  test('trainer mode: rear or virtual gears; ERG is its own switch; old ERG choices read as virtual gears', async () => {
     assert.equal((await (await postJson('/api/settings', { trainer_mode: 'rear' }, 'PUT')).json()).trainer_mode, 'rear');
+    assert.equal((await postJson('/api/settings', { trainer_mode: 'erg' }, 'PUT')).status, 400, 'no longer a mode');
+    assert.equal((await (await postJson('/api/settings', { erg_workouts: true }, 'PUT')).json()).erg_workouts, true);
+    await postJson('/api/settings', { erg_workouts: false }, 'PUT');
     const { default: db } = await import('../backend/src/db/index.js');
     const row = db.prepare("SELECT user_id, value FROM user_config WHERE key = 'settings'").get();
     const old = JSON.parse(row.value);
-    delete old.trainer_mode;
-    old.default_mode = 'gears';
+    old.trainer_mode = 'erg';
     db.prepare("UPDATE user_config SET value = ? WHERE user_id = ? AND key = 'settings'").run(JSON.stringify(old), row.user_id);
     const settings = await (await api('/api/settings')).json();
     assert.equal(settings.trainer_mode, 'gears');
     assert.equal(settings.default_mode, undefined);
-    await postJson('/api/settings', { trainer_mode: 'erg' }, 'PUT');
+    await postJson('/api/settings', { trainer_mode: 'gears' }, 'PUT');
   });
 
   test('the theme is dark unless the rider picks light', async () => {

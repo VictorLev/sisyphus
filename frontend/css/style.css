@@ -389,7 +389,7 @@ button.secondary:hover:not(:disabled) {
 
 /* Three trainer modes side by side (Settings → Trainer). */
 .mode-select-3 {
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
 }
 
 .trainer-mode-description {
@@ -3502,4 +3502,18 @@ kbd {
 
 .card.has-image .card-graph {
   height: 2.2rem;
+}
+
+.trainer-erg {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--color-rule);
+}
+
+.picker-erg {
+  margin: 0.75rem 0 0;
+}
+
+.picker-erg[hidden] {
+  display: none;
 }

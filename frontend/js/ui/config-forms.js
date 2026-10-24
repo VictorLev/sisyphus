@@ -87,6 +87,7 @@ export function initSettings({ onSaved }) {
       'setting-sample-interval-sec',
       'setting-bike-weight-kg',
       'setting-trainer-mode',
+      'setting-erg-workouts',
       'setting-rear-resistance',
       'setting-scenery-mode',
       'setting-language',

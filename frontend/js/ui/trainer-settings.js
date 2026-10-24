@@ -2,13 +2,14 @@
 //   Rear gears    — shift on the bike; resistance follows the grade only
 //   Virtual gears — shift on screen, keyboard or phone; resistance follows
 //                   the gear and the grade
-//   ERG           — the trainer holds each segment's target watts
+// ERG (the trainer holds a workout's watts) is a separate switch below,
+// for workouts only.
 // The choice lives in the hidden #setting-trainer-mode the settings form
 // saves; the buttons set it, and only the fields for that mode show.
 
 import { t } from '../i18n.js';
 
-export const TRAINER_MODES = ['rear', 'gears', 'erg'];
+export const TRAINER_MODES = ['rear', 'gears'];
 
 export function initTrainerSettings() {
   const input = document.getElementById('setting-trainer-mode');
@@ -16,7 +17,7 @@ export function initTrainerSettings() {
   const descriptionEl = document.getElementById('trainer-mode-description');
 
   function render(mode) {
-    const current = TRAINER_MODES.includes(mode) ? mode : 'erg';
+    const current = TRAINER_MODES.includes(mode) ? mode : 'gears';
     input.value = current;
     for (const btn of group.querySelectorAll('[data-mode]')) {
       const on = btn.dataset.mode === current;

@@ -137,7 +137,7 @@
         <h2 data-i18n="routes.listTitle">Roads to ride</h2>
         <p class="hint" data-i18n="routes.hint">The video plays at your speed, and the road's climbs
           set the resistance, the way your trainer mode handles a workout's
-          climbs (ERG uses virtual gears here).</p>
+          climbs. Routes always ride on your gears, never in ERG.</p>
         <ul id="route-list" class="card-grid route-list"></ul>
       </div>
 
@@ -547,7 +547,6 @@
             <div class="mode-select mode-select-3" role="radiogroup" aria-label="Trainer mode" data-i18n-attr="aria-label:trainer.title" id="trainer-mode-group">
               <button type="button" class="mode-btn" role="radio" data-mode="rear" data-i18n="trainer.rear">Rear gears</button>
               <button type="button" class="mode-btn" role="radio" data-mode="gears" data-i18n="trainer.gears">Virtual gears</button>
-              <button type="button" class="mode-btn" role="radio" data-mode="erg">ERG</button>
             </div>
             <p id="trainer-mode-description" class="hint trainer-mode-description"></p>
 
@@ -599,6 +598,18 @@
               </label>
               <p class="hint" data-i18n="settings.perGradeHint">A workout's climbs add this much resistance
                 for each 1% of grade; raise it to make them bite harder.</p>
+            </div>
+
+            <!-- ERG: workouts only, off unless turned on (also per workout on Home). -->
+            <div class="trainer-erg">
+              <label class="check-field">
+                <input id="setting-erg-workouts" type="checkbox" />
+                <span data-i18n="settings.ergWorkouts">Use ERG for workouts</span>
+              </label>
+              <p class="hint" data-i18n="settings.ergHint">ERG: the trainer holds each segment's target watts,
+                whatever your gear or cadence. Workouts only; free rides, routes and FTP
+                tests always use your gears. You can also switch it for one workout
+                when you pick it on Home.</p>
             </div>
           </div>
 
@@ -1011,6 +1022,11 @@
         <h2 id="ride-picker-title"></h2>
         <button id="ride-picker-close" type="button" class="secondary picker-close" aria-label="Close" data-i18n-attr="aria-label:picker.close">×</button>
       </div>
+      <!-- Workouts only: ERG for the ride about to start (preset from Settings). -->
+      <label class="check-field picker-erg" id="ride-picker-erg-field" hidden>
+        <input id="ride-picker-erg" type="checkbox" />
+        <span data-i18n="picker.erg">ERG for this workout (the trainer holds the watts)</span>
+      </label>
       <div class="picker-tabs" role="tablist" id="ride-picker-tabs">
         <button type="button" role="tab" data-tab="starred" data-i18n="picker.starred">Starred</button>
         <button type="button" role="tab" data-tab="all" data-i18n="picker.all">All</button>

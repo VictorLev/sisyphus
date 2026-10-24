@@ -28,7 +28,7 @@ const FILTERS = {
   },
 };
 
-export function initRidePicker({ onPick }) {
+export function initRidePicker({ onPick, ergDefault = () => false }) {
   const dialog = document.getElementById('ride-picker');
   const titleEl = document.getElementById('ride-picker-title');
   const tabs = document.getElementById('ride-picker-tabs');
@@ -96,9 +96,12 @@ export function initRidePicker({ onPick }) {
     }
   }
 
+  const ergField = document.getElementById('ride-picker-erg-field');
+  const ergBox = document.getElementById('ride-picker-erg');
+
   function pick(item) {
     dialog.close();
-    onPick(kind, item);
+    onPick(kind, item, { erg: kind === 'workouts' && ergBox.checked });
   }
 
   function render() {
@@ -144,6 +147,8 @@ export function initRidePicker({ onPick }) {
     async open(which) {
       kind = which;
       titleEl.textContent = t(`picker.title.${kind}`);
+      ergField.hidden = kind !== 'workouts';
+      ergBox.checked = ergDefault();
       searchEl.value = '';
       buildChips();
       items = [];
