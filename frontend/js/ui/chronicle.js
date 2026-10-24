@@ -327,7 +327,7 @@ export function initChronicle() {
     const ftpResultEl = document.getElementById('detail-ftp-result');
     ftpResultEl.hidden = true;
     showRideBadges(document.getElementById('detail-badges'), session.id, { title: t('badges.thisRide') });
-    showRideExport(document.getElementById('detail-strava'), session.id);
+    showRideExport(document.getElementById('detail-strava'), session);
     if (session.workout_id) {
       try {
         const workout = await getWorkout(session.workout_id);

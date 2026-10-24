@@ -1761,6 +1761,24 @@ button.secondary:hover:not(:disabled) {
   background: rgba(10, 9, 7, 0.75);
 }
 
+.strava-preview {
+  margin: 0.5rem 0;
+  padding: 0.6rem 0.8rem;
+  border-left: 3px solid var(--color-bronze);
+  background: var(--color-well);
+  white-space: pre-wrap;
+  max-height: 8rem;
+  overflow: auto;
+}
+
+.strava-detail-description {
+  margin-top: 0.5rem;
+}
+
+#detail-strava-status {
+  margin-left: 0.75rem;
+}
+
 .strava-dialog .row-actions {
   margin-top: 1rem;
 }

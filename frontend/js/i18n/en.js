@@ -395,4 +395,6 @@ export const EN = {
   "scenery.badLink": "Not a YouTube video link: {link}",
   "lb.empty": "No rides yet in this period. Be the first to push the boulder.",
   "workout.firstRide": "My First Ride",
+  "strava.copied": "Copied. Paste it into Strava's Description box (Ctrl+V).",
+  "strava.copyFailed": "Couldn't copy automatically: select the text and copy it (Ctrl+C).",
 };

@@ -236,8 +236,17 @@
           <li><a href="https://www.strava.com/upload/select" target="_blank" rel="noopener" class="strava-link" data-i18n="strava.uploadPage">Open Strava's upload page</a>
             <span data-i18n="strava.uploadStep">and choose the file you just downloaded.</span></li>
         </ol>
+        <label class="field strava-detail-description">
+          <span data-i18n="strava.description">Description</span>
+          <textarea id="detail-strava-description" rows="3" maxlength="2000"
+            placeholder="How did it go?" data-i18n-attr="placeholder:strava.descriptionPlaceholder"></textarea>
+        </label>
+        <button id="detail-strava-copy" type="button" class="secondary" data-i18n="strava.copy">Copy description</button>
+        <span id="detail-strava-status" class="hint" role="status"></span>
         <p class="hint" data-i18n="strava.exportHint">Strava reads power, cadence, speed and distance from
-          it. Tick "Indoor" or pick "Virtual Ride" there if it isn't already.</p>
+          the file, but not the description: paste it into Strava's
+          Description box. Tick "Indoor" or pick "Virtual Ride" there if it
+          isn't already.</p>
       </div>
       <button id="detail-back-btn" type="button" class="secondary" data-i18n="detail.back">Back to the Chronicle</button>
     </section>
@@ -723,19 +732,38 @@
     <!-- After a ride, with Settings → Strava on (ui/strava-export.js). -->
     <dialog id="strava-dialog" class="panel strava-dialog" aria-labelledby="strava-dialog-title">
       <form method="dialog" id="strava-form">
-        <h2 id="strava-dialog-title" data-i18n="strava.dialogTitle">Post this ride to Strava</h2>
-        <label class="field">
-          <span data-i18n="strava.description">Description</span>
-          <textarea id="strava-description" rows="4" maxlength="2000"
-            placeholder="How did it go?" data-i18n-attr="placeholder:strava.descriptionPlaceholder"></textarea>
-        </label>
-        <p class="hint" data-i18n="strava.dialogHint">Save downloads the ride and opens Strava's upload
-          page: pick the file there. The description is copied, so you can
-          paste it into Strava's description box.</p>
-        <p id="strava-dialog-status" class="status" role="status"></p>
-        <div class="row-actions">
-          <button id="strava-save-btn" type="button" data-i18n="strava.save">Save</button>
-          <button id="strava-skip-btn" type="button" class="secondary" data-i18n="strava.skip">Not this time</button>
+        <!-- Step 1: write it. -->
+        <div id="strava-step-write">
+          <h2 id="strava-dialog-title" data-i18n="strava.dialogTitle">Post this ride to Strava</h2>
+          <label class="field">
+            <span data-i18n="strava.description">Description</span>
+            <textarea id="strava-description" rows="4" maxlength="2000"
+              placeholder="How did it go?" data-i18n-attr="placeholder:strava.descriptionPlaceholder"></textarea>
+          </label>
+          <p class="hint" data-i18n="strava.dialogHint">Save downloads the ride and opens Strava's upload
+            page in a new tab.</p>
+          <div class="row-actions">
+            <button id="strava-save-btn" type="button" data-i18n="strava.save">Save</button>
+            <button id="strava-skip-btn" type="button" class="secondary" data-i18n="strava.skip">Not this time</button>
+          </div>
+        </div>
+        <!-- Step 2: what to do on Strava's page. Strava ignores a description
+             inside the file, so it has to be pasted there. -->
+        <div id="strava-step-next" hidden>
+          <h2 data-i18n="strava.nextTitle">Now, on Strava's page</h2>
+          <ol class="strava-steps">
+            <li data-i18n="strava.nextFile">Choose the .tcx file you just downloaded (in your Downloads).</li>
+            <li id="strava-next-paste"><span data-i18n-html="strava.nextPaste">Click in Strava's
+              <strong>Description</strong> box and paste (Ctrl+V). It's copied:</span>
+              <blockquote id="strava-description-preview" class="strava-preview"></blockquote>
+              <button id="strava-copy-btn" type="button" class="secondary" data-i18n="strava.copyAgain">Copy again</button></li>
+            <li data-i18n="strava.nextSave">Save the activity on Strava.</li>
+          </ol>
+          <p class="hint"><a href="https://www.strava.com/upload/select" target="_blank" rel="noopener" class="strava-link" data-i18n="strava.reopen">Strava's tab didn't open? Open it here.</a></p>
+          <p id="strava-dialog-status" class="status" role="status"></p>
+          <div class="row-actions">
+            <button id="strava-done-btn" type="button" data-i18n="strava.done">Done</button>
+          </div>
         </div>
       </form>
     </dialog>
