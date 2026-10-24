@@ -579,4 +579,11 @@ export const FR = {
   "strava.title": "Titre",
   "strava.nextTitlePaste": "Cliquez dans la case <strong>Titre</strong> de Strava, sélectionnez ce qui s'y trouve et collez (Ctrl+V). Il est déjà copié :",
   "strava.copyTitle": "Copier le titre",
+  "stravaText.title.morning": "Sortie intérieure du matin",
+  "stravaText.title.afternoon": "Sortie intérieure de l'après-midi",
+  "stravaText.title.evening": "Sortie intérieure du soir",
+  "stravaText.title.night": "Sortie intérieure de nuit",
+  "stravaText.avgPower": "Puissance moy. : {watts} W",
+  "stravaText.time": "Durée : {time}",
+  "stravaText.distance": "Distance : {km} km",
 };

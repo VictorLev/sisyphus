@@ -9,7 +9,7 @@
 // API requests are never cached: a training log showing a stale ride list
 // would be worse than showing an error.
 
-const CACHE = 'sisyphus-shell-v10';
+const CACHE = 'sisyphus-shell-v11';
 
 const SHELL = [
   '/',
@@ -56,6 +56,7 @@ const SHELL = [
   '/js/ui/scenery.js',
   '/js/ui/scenery-editor.js',
   '/js/ui/strava-export.js',
+  '/js/ui/strava-text.js',
   '/js/ui/workouts.js',
   '/manifest.webmanifest',
   '/icons/icon-192.png',

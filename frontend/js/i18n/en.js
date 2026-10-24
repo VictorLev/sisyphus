@@ -398,4 +398,11 @@ export const EN = {
   "strava.copied": "Copied. Paste it into Strava's Description box (Ctrl+V).",
   "strava.copyFailed": "Couldn't copy automatically: select the text and copy it (Ctrl+C).",
   "strava.copiedTitle": "Title copied. Paste it into Strava's Title box (Ctrl+V).",
+  "stravaText.title.morning": "Indoor Morning Ride",
+  "stravaText.title.afternoon": "Indoor Afternoon Ride",
+  "stravaText.title.evening": "Indoor Evening Ride",
+  "stravaText.title.night": "Indoor Night Ride",
+  "stravaText.avgPower": "Avg power: {watts} W",
+  "stravaText.time": "Time: {time}",
+  "stravaText.distance": "Distance: {km} km",
 };

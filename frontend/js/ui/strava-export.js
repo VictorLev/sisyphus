@@ -11,7 +11,7 @@
 
 import { setSessionText } from '../api/client.js';
 import { t } from '../i18n.js';
-import { rideName } from '../workout/names.js';
+import { suggestedTitle, suggestedDescription } from './strava-text.js';
 
 const UPLOAD_PAGE = 'https://www.strava.com/upload/select';
 
@@ -24,12 +24,6 @@ export function setStravaExport(on) {
 export const stravaExportOn = () => enabled;
 
 const tcxUrl = (sessionId) => `/api/sessions/${sessionId}/tcx`;
-
-// The title to offer when the rider hasn't set one: the workout, or "Free
-// ride", and where it was ridden.
-export function suggestedTitle(session) {
-  return `${rideName(session.workout_name) || t('home.freeRide')} · Sisyphus`;
-}
 
 // Resolves true once copied. Must start inside the click: a copy begun
 // after an await counts as unasked-for and is refused.
@@ -62,7 +56,7 @@ export function showRideExport(el, session) {
     description: [el.querySelector('#detail-strava-description'), el.querySelector('#detail-strava-copy')],
   };
   fields.title[0].value = session.title ?? suggestedTitle(session);
-  fields.description[0].value = session.description ?? '';
+  fields.description[0].value = session.description ?? suggestedDescription(session);
 
   for (const [name, [input, button]] of Object.entries(fields)) {
     let saved = input.value;
@@ -84,7 +78,8 @@ export function showRideExport(el, session) {
   }
 }
 
-// After a ride: a title (suggested) and a description, then Save downloads
+// After a ride: a title and a description (both suggested, see
+// strava-text.js), then Save downloads
 // the file, opens Strava's upload page and copies the title; the box then
 // walks through Strava's form with a copy button for each. "Not this time"
 // just closes.
@@ -97,7 +92,7 @@ export function askToPostRide(session) {
   const statusEl = $('strava-dialog-status');
   const saveBtn = $('strava-save-btn');
   titleEl.value = session.title ?? suggestedTitle(session);
-  textEl.value = session.description ?? '';
+  textEl.value = session.description ?? suggestedDescription(session);
   statusEl.textContent = '';
   saveBtn.disabled = false;
   $('strava-step-write').hidden = false;
