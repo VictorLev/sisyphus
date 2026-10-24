@@ -5,6 +5,9 @@ import { applyTheme } from './theme.js';
 import { setStravaExport, askToPostRide } from './ui/strava-export.js';
 import { TRAINER_MODES } from './ui/trainer-settings.js';
 import { initRemoteLink } from './ui/remote-link.js';
+import { initRoutes } from './ui/routes.js';
+import { createRoutePlayer } from './ui/route-player.js';
+import { RouteTrack } from './workout/route-track.js';
 import { TrainerConnection } from './ble/connection.js';
 import { TrainerControl } from './ble/trainer-control.js';
 import { GearModel } from './gears.js';
@@ -20,7 +23,7 @@ import { initBuilder } from './workout/builder.js';
 import { initLiveScreen } from './ui/live-screen.js';
 import { createRideHero } from './ui/ride-hero.js';
 import { initScenery } from './ui/scenery.js';
-import { createSession, getSettings, getProfile, getLevel } from './api/client.js';
+import { createSession, getSettings, getProfile, getLevel, getRoute } from './api/client.js';
 import { initProfile, initSettings } from './ui/config-forms.js';
 import { initSisyphusLoop } from './ui/sisyphus-loop.js';
 import { initChronicle, setChronicleFtp } from './ui/chronicle.js';
@@ -77,6 +80,11 @@ let runner = null;
 let preferredMode = 'erg';
 let rideMode = 'erg';
 let activeWorkout = null;
+// A route ride: { route, track } (see workout/route-track.js), else null.
+let activeRoute = null;
+let lastRouteGrade = null;
+let lastGradeAppliedAt = 0;
+let routeFinished = false;
 let latestReading = null;
 let rideStartedAt = null;
 let rideStartedMs = null; // performance clock, for the elapsed readout
@@ -102,6 +110,26 @@ const liveScreen = initLiveScreen({
 const home = initHome({
   trainerConnection,
   onStartRide: (workout) => startRide(workout),
+});
+
+// Routes: a filmed road, played at the rider's speed, its climbs setting
+// the resistance.
+const routePlayer = createRoutePlayer({
+  frameEl: document.getElementById('scenery-frame'),
+  progressEl: document.getElementById('route-progress'),
+  format: ({ doneM, totalM, grade }) =>
+    `${num(doneM / 1000, 2)} / ${num(totalM / 1000, 1)} km · ${grade > 0 ? '+' : ''}${num(grade, 1)}%`,
+});
+initRoutes({
+  isAdmin: Boolean(currentUser?.is_admin),
+  onStartRoute: async (summary) => {
+    try {
+      const route = await getRoute(summary.id);
+      startRide(null, { route });
+    } catch (err) {
+      alert(err.message);
+    }
+  },
 });
 
 initWorkouts({
@@ -337,7 +365,7 @@ const remote = currentUser ? initRemoteLink({
       power: rollingAverage.average() != null ? Math.round(rollingAverage.average()) : null,
       cadence: latestReading?.instantaneousCadenceRpm ?? null,
       speed: liveSpeedKmh != null ? Math.round(liveSpeedKmh * 10) / 10 : null,
-      workout: activeWorkout ? workoutName(activeWorkout) : null,
+      workout: activeWorkout ? workoutName(activeWorkout) : activeRoute?.route.name ?? null,
     };
   },
   onPhones: (count) => { document.getElementById('remote-indicator').hidden = count === 0; },
@@ -387,7 +415,22 @@ document.getElementById('shift-down-btn').addEventListener('click', () => handle
 // descent bottoms out at freewheel rather than going negative.
 function currentGrade() {
   if (rideMode === 'erg') return 0; // ERG holds watts; terrain is irrelevant
+  if (activeRoute) return activeRoute.track.gradeAt(distanceTracker.currentTotalM);
   return runner?.state.currentSegment?.grade_percent ?? 0;
+}
+
+// On a route the grade changes as the rider moves, not at segment
+// boundaries: rewrite the resistance when it has moved by half a percent,
+// at most once a second (the trainer doesn't need more, and BLE writes
+// queue up).
+function followRouteGrade(now) {
+  const grade = currentGrade();
+  if (lastRouteGrade != null && Math.abs(grade - lastRouteGrade) < 0.5) return;
+  if (now - lastGradeAppliedAt < 1000) return;
+  lastRouteGrade = grade;
+  lastGradeAppliedAt = now;
+  applyResistance(terrainResistance());
+  updateGearDisplay(gears.gearNumber);
 }
 
 // Rear gears start from a fixed flat-road level, virtual gears from the
@@ -469,11 +512,14 @@ trainerConnection.addEventListener('reading', (event) => {
   if (zone) rideHero.setZone(zone.id, zone.color);
 });
 
-function startRide(workout) {
+function startRide(workout, { route = null } = {}) {
   // Library targets are % of FTP; from here on everything is in watts,
   // fixed at the FTP the rider has as the ride starts.
   if (workout) workout = { ...workout, structure: resolveTargets(workout.structure, riderFtp) };
   activeWorkout = workout;
+  activeRoute = route ? { route, track: new RouteTrack(route) } : null;
+  lastRouteGrade = null;
+  routeFinished = false;
   rollingAverage.reset();
   distanceTracker.reset();
   virtualSpeed.reset();
@@ -501,11 +547,12 @@ function startRide(workout) {
   // that must not discard an ERG choice made for the next workout. FTP tests
   // run in gears too: ERG would hold the test block at your CURRENT FTP, so
   // it could only ever measure what you already have.
+  // A route has no watts to hold either: its climbs need gears.
   const isTest = Boolean(workout?.test);
   rideMode = preferredMode === 'erg' && (!workout || isTest) ? 'gears' : preferredMode;
   updateModeUi();
 
-  liveScreen.buildTimeline(workout ? workout.structure : null, workout ? workoutName(workout) : null);
+  liveScreen.buildTimeline(workout ? workout.structure : null, workout ? workoutName(workout) : route?.name ?? null);
   liveScreen.updateWorkoutInfo(runner ? runner.state : null);
   liveScreen.setElapsed(0);
   updateTotals();
@@ -515,7 +562,8 @@ function startRide(workout) {
   if (isTest) {
     flashRideNote(t('note.ftpTest'), 12000);
   }
-  scenery.start();
+  if (activeRoute) routePlayer.start(route, activeRoute.track);
+  else scenery.start();
   startLoop();
   applyRideMode();
 }
@@ -530,6 +578,14 @@ function startLoop() {
   }, sampleIntervalMs);
 
   function frame(now) {
+    if (activeRoute) {
+      routePlayer.update({ distanceM: distanceTracker.currentTotalM, speedKmh: liveSpeedKmh, paused: pausedAtMs != null });
+      followRouteGrade(now);
+      if (!routeFinished && distanceTracker.currentTotalM >= activeRoute.track.distanceM) {
+        routeFinished = true;
+        flashRideNote(t('note.routeDone'), 15000);
+      }
+    }
     if (runner) {
       const state = runner.tick(now);
       liveScreen.updateWorkoutInfo(state);
@@ -569,6 +625,7 @@ function pauseRide({ confirmEnd = false } = {}) {
   runner?.stop();
   recorder.pause(now);
   scenery.pause();
+  routePlayer.pause();
   const workout = runner?.state;
   liveScreen.showPauseDialog({
     distanceM: distanceTracker.currentTotalM,
@@ -612,6 +669,8 @@ async function releaseTrainer() {
 async function discardRide() {
   stopLoop();
   scenery.stop();
+  routePlayer.stop();
+  activeRoute = null;
   pausedAtMs = null;
   recorder.reset();
   await releaseTrainer();
@@ -623,6 +682,9 @@ async function discardRide() {
 async function endRide() {
   stopLoop();
   scenery.stop();
+  routePlayer.stop();
+  const routeId = activeRoute?.route.id ?? null;
+  activeRoute = null;
   // A ride ended from the pause pop-up ends where the riding stopped.
   const endMs = pausedAtMs ?? performance.now();
   pausedAtMs = null;
@@ -636,6 +698,7 @@ async function endRide() {
 
   const payload = {
     workout_id: activeWorkout?.id ?? null,
+    route_id: routeId,
     started_at: rideStartedAt,
     // Start plus riding time, not the wall clock: duration, XP and the
     // longest-ride record all read ended_at - started_at, so a pause must

@@ -40,6 +40,10 @@
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16M4 12h16M4 19h10"/><circle cx="19" cy="19" r="2"/></svg>
           <span data-i18n="nav.workouts">Workouts</span>
         </button>
+        <button type="button" data-nav="routes">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 20l6-9 4 5 3-4 7 8z"/><circle cx="17" cy="5" r="2"/></svg>
+          <span data-i18n="nav.routes">Routes</span>
+        </button>
         <button type="button" data-nav="chronicle">
           <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="1"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
           <span data-i18n="nav.chronicle">Chronicle</span>
@@ -119,6 +123,48 @@
         </div>
       </div>
 
+    </section>
+
+    <section data-view="routes" class="view">
+      <h1 class="title" data-i18n="routes.title">ROUTES</h1>
+      <p class="tagline" id="routes-summary">&nbsp;</p>
+
+      <div class="panel">
+        <h2 data-i18n="routes.listTitle">Roads to ride</h2>
+        <p class="hint" data-i18n="routes.hint">The video plays at your speed, and the road's climbs
+          set the resistance, the way your trainer mode handles a workout's
+          climbs (ERG uses virtual gears here).</p>
+        <ul id="route-list" class="workout-list route-list"></ul>
+      </div>
+
+      <!-- Admins only (ui/routes.js shows it). -->
+      <div class="panel" id="route-import" hidden>
+        <h2 data-i18n="routes.importTitle">Import a route</h2>
+        <form id="route-import-form">
+          <label class="field">
+            <span data-i18n="routes.name">Name</span>
+            <input id="route-import-name" type="text" maxlength="120" required />
+          </label>
+          <div class="form-row">
+            <label class="field">
+              <span data-i18n="routes.file">Route file (.json)</span>
+              <input id="route-import-file" type="file" accept=".json,application/json" required />
+            </label>
+            <label class="field">
+              <span data-i18n="routes.videoFile">Video (.mp4)</span>
+              <input id="route-import-video" type="file" accept="video/mp4,video/*" required />
+            </label>
+          </div>
+          <button type="submit" data-i18n="routes.import">Import</button>
+          <progress id="route-import-progress" class="route-progress" hidden></progress>
+          <p id="route-import-status" class="status" role="status"></p>
+        </form>
+        <p class="hint" data-i18n="routes.importHint">The route file holds the road (geometry: distance and
+          altitude) and how the video lines up with it (video_points). Big
+          videos go up in pieces; if it stops, press Resume upload on the
+          route and pick the same video. Smaller videos stream better: see
+          the deploy guide for shrinking them to 720p.</p>
+      </div>
     </section>
 
     <section data-view="workouts" class="view">
@@ -699,6 +745,16 @@
           <!-- 5. Intensity timeline -->
           <div class="ride-timeline">
             <div id="segment-timeline" class="segment-timeline" hidden></div>
+            <!-- Route rides: the road's profile and how far along you are. -->
+            <div id="route-progress" class="route-progress-live" hidden>
+              <svg viewBox="0 0 1000 100" preserveAspectRatio="none" aria-hidden="true">
+                <polygon class="route-area" points="" />
+                <polygon class="route-done" points="" />
+                <polyline class="route-line" points="" />
+                <line class="route-marker" x1="0" x2="0" y1="0" y2="100" />
+              </svg>
+              <span class="route-progress-text"></span>
+            </div>
           </div>
 
           <!-- 6 & 7. Controls and gear -->

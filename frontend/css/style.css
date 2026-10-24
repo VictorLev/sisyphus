@@ -2805,3 +2805,92 @@ kbd {
   font-weight: 700;
   font-size: 1.1rem;
 }
+
+/* ---------------------------------------------------------------- routes */
+
+.route-card {
+  align-items: center;
+}
+
+.route-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.route-profile {
+  display: block;
+  width: 100%;
+  max-width: 28rem;
+  height: 3rem;
+  margin-top: 0.5rem;
+}
+
+.route-profile polygon,
+.route-progress-live .route-area {
+  fill: var(--color-well-deep);
+}
+
+.route-profile polyline,
+.route-progress-live .route-line {
+  fill: none;
+  stroke: var(--color-bronze);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.route-progress {
+  width: 100%;
+  margin-top: 0.75rem;
+  accent-color: var(--color-bronze);
+}
+
+.route-progress[hidden] {
+  display: none;
+}
+
+/* The route's video fills the scenery frame. */
+.route-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: #000;
+}
+
+/* Ride screen: the road's profile with the part ridden filled in. */
+.route-progress-live {
+  position: relative;
+  height: 100%;
+  min-height: 4rem;
+}
+
+.route-progress-live[hidden] {
+  display: none;
+}
+
+.route-progress-live svg {
+  width: 100%;
+  height: 100%;
+}
+
+.route-progress-live .route-done {
+  fill: var(--color-bronze-dim);
+  clip-path: inset(0 calc(100% - var(--route-done, 0%)) 0 0);
+}
+
+.route-progress-live .route-marker {
+  stroke: var(--color-bronze-bright);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.route-progress-text {
+  position: absolute;
+  top: 0.4rem;
+  left: 0.6rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--color-text);
+  text-shadow: var(--shadow-text);
+}

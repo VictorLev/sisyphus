@@ -1,0 +1,196 @@
+// The Routes page: filmed roads to ride. Each card has the distance, the
+// climbing, the video's length and a small elevation profile, and Start.
+// An admin also imports routes (a route file and its video) and deletes
+// them. The video goes up in 32 MB pieces with a progress bar; an upload
+// that stopped resumes from where the server says it got to, once the same
+// file is picked again.
+
+import { listRoutes, createRoute, deleteRoute } from '../api/client.js';
+import { t, tp, num } from '../i18n.js';
+
+const CHUNK = 32 * 1024 * 1024;
+
+const km = (m) => `${num(m / 1000, 1)} km`;
+const minutes = (s) => (s < 60 ? `${Math.round(s)} s` : `${Math.round(s / 60)} min`);
+
+// The elevation preview as a filled SVG line.
+function profileSvg(altitudes) {
+  const w = 300;
+  const h = 48;
+  const min = Math.min(...altitudes);
+  const range = Math.max(10, Math.max(...altitudes) - min); // flat roads stay flat-looking
+  const pts = altitudes.map((a, i) => `${((i / (altitudes.length - 1)) * w).toFixed(1)},${(h - 2 - ((a - min) / range) * (h - 6)).toFixed(1)}`);
+  return `<svg class="route-profile" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true">
+    <polygon points="0,${h} ${pts.join(' ')} ${w},${h}" /><polyline points="${pts.join(' ')}" /></svg>`;
+}
+
+// Sends file from offset on, in pieces; onProgress(bytesDone).
+async function uploadVideo(routeId, file, offset, onProgress) {
+  let at = offset;
+  while (at < file.size) {
+    const res = await fetch(`/api/routes/${routeId}/video?offset=${at}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/octet-stream' },
+      body: file.slice(at, Math.min(file.size, at + CHUNK)),
+    });
+    const body = await res.json().catch(() => ({}));
+    if (res.status === 409 && Number.isInteger(body.video_received)) {
+      at = body.video_received; // the server has more (or less) than we thought
+    } else if (!res.ok) {
+      throw new Error(body.error || `upload failed (${res.status})`);
+    } else {
+      at = body.video_received;
+    }
+    onProgress(at);
+  }
+}
+
+export function initRoutes({ isAdmin, onStartRoute }) {
+  const listEl = document.getElementById('route-list');
+  const summaryEl = document.getElementById('routes-summary');
+  const importPanel = document.getElementById('route-import');
+  const form = document.getElementById('route-import-form');
+  const statusEl = document.getElementById('route-import-status');
+  const bar = document.getElementById('route-import-progress');
+  importPanel.hidden = !isAdmin;
+  let busy = false;
+
+  function setStatus(text, isError = false) {
+    statusEl.textContent = text;
+    statusEl.style.color = isError ? 'var(--color-error)' : '';
+  }
+
+  function showProgress(done, total) {
+    bar.hidden = false;
+    bar.max = total;
+    bar.value = done;
+    setStatus(t('routes.uploading', { pct: Math.floor((done / total) * 100), done: num(done / 1e6, 0), total: num(total / 1e6, 0) }));
+  }
+
+  async function sendVideo(route, file) {
+    busy = true;
+    try {
+      showProgress(route.video_received, route.video_size);
+      await uploadVideo(route.id, file, route.video_received, (done) => showProgress(done, route.video_size));
+      setStatus(t('routes.imported', { name: route.name }));
+      form.reset();
+    } catch (err) {
+      setStatus(t('routes.uploadStopped', { error: err.message }), true);
+    } finally {
+      busy = false;
+      bar.hidden = true;
+      refresh();
+    }
+  }
+
+  // An unfinished upload: pick the same video again to carry on.
+  function resume(route) {
+    const picker = document.createElement('input');
+    picker.type = 'file';
+    picker.accept = 'video/mp4,video/*';
+    picker.onchange = () => {
+      const file = picker.files[0];
+      if (!file) return;
+      if (file.size !== route.video_size) {
+        setStatus(t('routes.wrongFile', { size: num(route.video_size / 1e6, 0) }), true);
+        return;
+      }
+      sendVideo(route, file);
+    };
+    picker.click();
+  }
+
+  function card(route) {
+    const li = document.createElement('li');
+    li.className = 'route-card';
+    const info = document.createElement('div');
+    info.className = 'route-info';
+    const name = document.createElement('span');
+    name.className = 'workout-name';
+    name.textContent = route.name;
+    const meta = document.createElement('span');
+    meta.className = 'workout-meta';
+    meta.textContent = [km(route.distance_m), t('routes.ascent', { m: num(route.ascent_m) }), t('routes.video', { time: minutes(route.duration_s) })].join(' · ');
+    info.append(name, meta);
+    info.insertAdjacentHTML('beforeend', profileSvg(route.profile));
+
+    const actions = document.createElement('div');
+    actions.className = 'row-actions';
+    if (route.ready) {
+      const start = document.createElement('button');
+      start.type = 'button';
+      start.textContent = t('workouts.start');
+      start.addEventListener('click', () => onStartRoute(route));
+      actions.append(start);
+    } else {
+      const pending = document.createElement('span');
+      pending.className = 'hint';
+      pending.textContent = t('routes.notReady', { pct: Math.floor((route.video_received / route.video_size) * 100) });
+      actions.append(pending);
+      if (isAdmin) {
+        const more = document.createElement('button');
+        more.type = 'button';
+        more.className = 'secondary';
+        more.textContent = t('routes.resume');
+        more.addEventListener('click', () => !busy && resume(route));
+        actions.append(more);
+      }
+    }
+    if (isAdmin) {
+      const del = document.createElement('button');
+      del.type = 'button';
+      del.className = 'secondary';
+      del.textContent = t('workouts.delete');
+      del.addEventListener('click', async () => {
+        if (!confirm(t('routes.confirmDelete', { name: route.name }))) return;
+        await deleteRoute(route.id);
+        refresh();
+      });
+      actions.append(del);
+    }
+    li.append(info, actions);
+    return li;
+  }
+
+  async function refresh() {
+    let routes;
+    try {
+      routes = await listRoutes();
+    } catch (err) {
+      summaryEl.textContent = err.message;
+      return;
+    }
+    summaryEl.textContent = tp('routes.count', routes.length);
+    listEl.innerHTML = '';
+    if (routes.length === 0) {
+      const empty = document.createElement('li');
+      empty.className = 'empty';
+      empty.textContent = t(isAdmin ? 'routes.emptyAdmin' : 'routes.empty');
+      listEl.append(empty);
+    }
+    for (const route of routes) listEl.append(card(route));
+  }
+
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (busy) return;
+    const routeFile = document.getElementById('route-import-file').files[0];
+    const video = document.getElementById('route-import-video').files[0];
+    const name = document.getElementById('route-import-name').value.trim();
+    if (!routeFile || !video || !name) return;
+    let route;
+    try {
+      route = await createRoute({ name, route: await routeFile.text(), video_size: video.size });
+    } catch (err) {
+      setStatus(err.message, true);
+      return;
+    }
+    refresh();
+    sendVideo(route, video);
+  });
+
+  document.addEventListener('viewchange', (event) => {
+    if (event.detail.view === 'routes') refresh();
+  });
+  return { refresh };
+}

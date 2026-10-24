@@ -200,3 +200,25 @@ export function setSessionText(id, fields) {
     body: JSON.stringify(fields),
   });
 }
+
+// Routes: filmed roads to ride. The video is uploaded and streamed
+// separately (ui/routes.js, /api/routes/:id/video).
+export function listRoutes() {
+  return request('/api/routes');
+}
+
+export function getRoute(id) {
+  return request(`/api/routes/${id}`);
+}
+
+export function createRoute(body) {
+  return request('/api/routes', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+
+export function deleteRoute(id) {
+  return request(`/api/routes/${id}`, { method: 'DELETE' });
+}
