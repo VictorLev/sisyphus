@@ -107,6 +107,27 @@ describe('routes API', () => {
     assert.equal((await rider.patch('/api/routes/9999/starred', { starred: true })).status, 404);
   });
 
+  test('a route can have a picture, replaced or removed by the admin', async () => {
+    const png = Buffer.from('89504e470d0a1a0a0000000d49484452', 'hex');
+    const put = (who, type, body) => fetch(`${base}/api/routes/${routeId}/thumbnail`, { method: 'PUT', headers: { Cookie: who.cookie, 'Content-Type': type }, body });
+    assert.equal((await put(rider, 'image/png', png)).status, 403);
+    assert.equal((await put(admin, 'text/plain', Buffer.from('hi'))).status, 400, 'pictures only');
+    const set = await (await put(admin, 'image/png', png)).json();
+    assert.match(set.thumbnail, /^\/api\/routes\/\d+\/thumbnail\?v=/);
+    const listed = (await (await rider.get('/api/routes')).json())[0];
+    assert.equal(listed.thumbnail, set.thumbnail);
+    const img = await rider.get(listed.thumbnail);
+    assert.equal(img.status, 200);
+    assert.deepEqual(Buffer.from(await img.arrayBuffer()), png);
+    const jpg = await (await put(admin, 'image/jpeg', Buffer.from([0xff, 0xd8, 0xff]))).json();
+    assert.ok(existsSync(path.join(process.env.ROUTES_DIR, String(routeId), 'thumb.jpg')));
+    assert.ok(!existsSync(path.join(process.env.ROUTES_DIR, String(routeId), 'thumb.png')), 'the old one goes');
+    assert.notEqual(jpg.thumbnail, null);
+    const removed = await (await admin.del(`/api/routes/${routeId}/thumbnail`)).json();
+    assert.equal(removed.thumbnail, null);
+    assert.equal((await rider.get(`/api/routes/${routeId}/thumbnail`)).status, 404);
+  });
+
   test('only an admin imports, renames or deletes', async () => {
     assert.equal((await rider.post('/api/routes', { name: 'X', route: routeFile, video_size: 10 })).status, 403);
     assert.equal((await put(rider, routeId, 1000, Buffer.from([1]))).status, 403);

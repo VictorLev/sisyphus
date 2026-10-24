@@ -873,4 +873,6 @@ export const FR = {
   "admin.sceneryHint": "Jusqu'à 10 sorties YouTube, les mêmes pour tous. Chacun choisit encore Au hasard ou Dans l'ordre dans ses Réglages.",
   "admin.save": "Enregistrer les paysages",
   "admin.releases": "Notes de version",
+  "routes.picture": "Image",
+  "routes.pictureFile": "Image pour la carte (facultative)",
 };

@@ -57,9 +57,19 @@ export function starButton(starred, onToggle) {
 
 // A card: graph on top, title and details, then the actions. Returns the
 // <li> and its actions box to fill.
-export function card({ graph, title, meta, tag, starred, onToggleStar }) {
+// `image` (a URL) puts a picture on top, with the graph as a strip under it.
+export function card({ graph, image, title, meta, tag, starred, onToggleStar }) {
   const li = document.createElement('li');
   li.className = 'card';
+  if (image) {
+    const img = document.createElement('img');
+    img.className = 'card-image';
+    img.src = image;
+    img.alt = '';
+    img.loading = 'lazy';
+    li.append(img);
+    li.classList.add('has-image');
+  }
   li.insertAdjacentHTML('beforeend', graph);
   if (onToggleStar) li.append(starButton(starred, onToggleStar));
   const body = document.createElement('div');

@@ -124,6 +124,7 @@ export function initRidePicker({ onPick }) {
       } else {
         const { li, actions } = card({
           graph: routeProfileSvg(item.profile),
+          image: item.thumbnail,
           title: item.name,
           meta: routeMeta(item),
           starred: item.starred,

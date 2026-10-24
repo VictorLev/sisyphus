@@ -1,5 +1,5 @@
 import { Router, raw } from 'express';
-import { mkdirSync, openSync, writeSync, closeSync, rmSync, existsSync } from 'node:fs';
+import { mkdirSync, openSync, writeSync, closeSync, rmSync, existsSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import db from '../db/index.js';
 import { parseRouteFile, RouteFileError } from '../route-file.js';
@@ -24,6 +24,7 @@ const videoPath = (id) => path.join(routesDir(), String(id), 'video.mp4');
 const q = {
   list: db.prepare(
     `SELECT r.id, r.name, r.distance_m, r.ascent_m, r.duration_s, r.points, r.video_size, r.video_received, r.created_at,
+            r.thumb_type, r.thumb_at,
             (s.user_id IS NOT NULL) AS starred
      FROM routes r LEFT JOIN route_stars s ON s.route_id = r.id AND s.user_id = ?
      ORDER BY r.name COLLATE NOCASE`
@@ -40,6 +41,7 @@ const q = {
   received: db.prepare('UPDATE routes SET video_received = ? WHERE id = ?'),
   remove: db.prepare('DELETE FROM routes WHERE id = ?'),
   rename: db.prepare('UPDATE routes SET name = ? WHERE id = ?'),
+  setThumb: db.prepare('UPDATE routes SET thumb_type = ?, thumb_at = ? WHERE id = ?'),
 };
 
 // A few dozen altitudes for the list's little elevation profile.
@@ -71,6 +73,8 @@ function summary(row, userId) {
     video_size: row.video_size,
     video_received: row.video_received,
     profile: preview(JSON.parse(row.points)),
+    // The card's picture, if one was uploaded (?v= changes with it).
+    thumbnail: row.thumb_type ? `/api/routes/${row.id}/thumbnail?v=${encodeURIComponent(row.thumb_at)}` : null,
   };
 }
 
@@ -163,6 +167,40 @@ router.get('/:id/video', (req, res) => {
     return res.status(409).json({ error: 'the video is not fully uploaded yet' });
   }
   res.sendFile(path.resolve(videoPath(row.id)), { headers: { 'Content-Type': 'video/mp4', 'Cache-Control': 'private, max-age=86400' } });
+});
+
+// The card's picture: a JPEG, PNG or WebP of up to 5 MB (the app shrinks
+// photos before sending), replacing any earlier one.
+const THUMB_TYPES = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
+const THUMB_MAX = 5 * 1024 * 1024;
+const thumbPath = (id, ext) => path.join(routesDir(), String(id), `thumb.${ext}`);
+
+router.put('/:id/thumbnail', requireAdmin, raw({ type: Object.keys(THUMB_TYPES), limit: THUMB_MAX }), (req, res) => {
+  const row = q.get.get(req.params.id);
+  if (!row) return res.status(404).json({ error: 'route not found' });
+  const ext = THUMB_TYPES[req.get('content-type')?.split(';')[0]];
+  if (!ext || !Buffer.isBuffer(req.body) || req.body.length === 0) {
+    return res.status(400).json({ error: 'send a JPEG, PNG or WebP picture' });
+  }
+  mkdirSync(path.dirname(thumbPath(row.id, ext)), { recursive: true });
+  for (const other of Object.values(THUMB_TYPES)) rmSync(thumbPath(row.id, other), { force: true });
+  writeFileSync(thumbPath(row.id, ext), req.body);
+  q.setThumb.run(ext, new Date().toISOString(), row.id);
+  res.json(summary(q.get.get(row.id), req.user.id));
+});
+
+router.get('/:id/thumbnail', (req, res) => {
+  const row = q.get.get(req.params.id);
+  if (!row?.thumb_type || !existsSync(thumbPath(row.id, row.thumb_type))) return res.status(404).json({ error: 'no picture' });
+  res.sendFile(path.resolve(thumbPath(row.id, row.thumb_type)), { headers: { 'Cache-Control': 'private, max-age=31536000, immutable' } });
+});
+
+router.delete('/:id/thumbnail', requireAdmin, (req, res) => {
+  const row = q.get.get(req.params.id);
+  if (!row) return res.status(404).json({ error: 'route not found' });
+  for (const ext of Object.values(THUMB_TYPES)) rmSync(thumbPath(row.id, ext), { force: true });
+  db.prepare('UPDATE routes SET thumb_type = NULL, thumb_at = NULL WHERE id = ?').run(row.id);
+  res.json(summary(q.get.get(row.id), req.user.id));
 });
 
 // Rides on the route keep their route_id and name; only the route goes.

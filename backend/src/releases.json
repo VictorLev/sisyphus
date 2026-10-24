@@ -11,6 +11,7 @@
       "Fire on the ride screen in Z5 and Z6",
       "Home: three ways to start, pickers with tabs and filters, a trainer check before every ride",
       "Workouts and routes as cards, route stars",
+      "Route cards can have a picture, with the elevation profile under it",
       "Routes: ride a filmed road at your own speed, its climbs setting the resistance",
       "Trainer modes in Settings (rear gears, virtual gears, ERG) and a phone remote for virtual gears",
       "Strava: suggested title and description with copy buttons",
@@ -21,7 +22,9 @@
     "version": "v1.7.0",
     "date": "2026-10-20",
     "commit": "95b3dc9",
-    "notes": ["New accounts start with \"My First Ride\", starred"]
+    "notes": [
+      "New accounts start with \"My First Ride\", starred"
+    ]
   },
   {
     "version": "v1.6.0",
@@ -37,7 +40,9 @@
     "version": "v1.5.0",
     "date": "2026-10-18",
     "commit": "c1eeb71",
-    "notes": ["Download rides for Strava (.tcx), with a description pop-up when a ride ends, behind a setting"]
+    "notes": [
+      "Download rides for Strava (.tcx), with a description pop-up when a ride ends, behind a setting"
+    ]
   },
   {
     "version": "v1.4.0",
@@ -54,13 +59,18 @@
     "version": "v1.3.0",
     "date": "2026-10-18",
     "commit": "86bd815",
-    "notes": ["npm run delete-user"]
+    "notes": [
+      "npm run delete-user"
+    ]
   },
   {
     "version": "v1.2.1",
     "date": "2026-10-17",
     "commit": "401e590",
-    "notes": ["Leaderboard on the Ride page", "Scenery: a comma list, a random video each ride"]
+    "notes": [
+      "Leaderboard on the Ride page",
+      "Scenery: a comma list, a random video each ride"
+    ]
   },
   {
     "version": "v1.1.0",
@@ -77,6 +87,10 @@
     "version": "v1.0.0",
     "date": "2026-10-17",
     "commit": "ab0fe58",
-    "notes": ["Accounts and per-rider data", "Workout library in % of FTP", "Cloudflare Tunnel deploy, backups"]
+    "notes": [
+      "Accounts and per-rider data",
+      "Workout library in % of FTP",
+      "Cloudflare Tunnel deploy, backups"
+    ]
   }
 ]

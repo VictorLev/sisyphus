@@ -634,4 +634,5 @@ export const EN = {
   "admin.running": "The server runs commit {commit}.",
   "admin.runningUnknown": "The server's commit isn't known (a local build).",
   "admin.next": "Next (not released)",
+  "routes.picture": "Picture",
 };

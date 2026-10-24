@@ -151,6 +151,8 @@ CREATE TABLE IF NOT EXISTS routes (
   video_points TEXT NOT NULL, -- JSON: [{ d, t }], distance -> second of video
   video_size INTEGER NOT NULL, -- bytes expected
   video_received INTEGER NOT NULL DEFAULT 0, -- bytes stored so far
+  thumb_type TEXT, -- the card's picture, ROUTES_DIR/<id>/thumb.<jpg|png|webp>, if any
+  thumb_at TEXT, -- when it was last set (busts the browser's cache)
   created_by INTEGER REFERENCES users(id),
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );

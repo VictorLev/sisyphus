@@ -8,6 +8,16 @@
 import { listRoutes, createRoute, deleteRoute, setRouteStarred } from '../api/client.js';
 import { t, tp, num } from '../i18n.js';
 import { card, routeProfileSvg } from './cards.js';
+import { shrinkImage } from './image-resize.js';
+
+// A route's card picture: shrunk, then sent. Resolves to the updated route.
+export async function uploadThumbnail(routeId, file) {
+  const blob = await shrinkImage(file);
+  const res = await fetch(`/api/routes/${routeId}/thumbnail`, { method: 'PUT', headers: { 'Content-Type': 'image/jpeg' }, body: blob });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(body.error || `upload failed (${res.status})`);
+  return body;
+}
 
 const CHUNK = 32 * 1024 * 1024;
 
@@ -97,6 +107,7 @@ export function initRoutes({ isAdmin, onStartRoute }) {
   function routeCard(route) {
     const { li, actions } = card({
       graph: routeProfileSvg(route.profile),
+      image: route.thumbnail,
       title: route.name,
       meta: routeMeta(route),
       starred: route.starred,
@@ -127,6 +138,27 @@ export function initRoutes({ isAdmin, onStartRoute }) {
       }
     }
     if (isAdmin) {
+      // Add or replace the card's picture.
+      const pic = document.createElement('button');
+      pic.type = 'button';
+      pic.className = 'secondary';
+      pic.textContent = t('routes.picture');
+      pic.addEventListener('click', () => {
+        const picker = document.createElement('input');
+        picker.type = 'file';
+        picker.accept = 'image/*';
+        picker.onchange = async () => {
+          if (!picker.files[0]) return;
+          try {
+            await uploadThumbnail(route.id, picker.files[0]);
+            refresh();
+          } catch (err) {
+            setStatus(err.message, true);
+          }
+        };
+        picker.click();
+      });
+      actions.append(pic);
       const del = document.createElement('button');
       del.type = 'button';
       del.className = 'secondary';
@@ -165,6 +197,7 @@ export function initRoutes({ isAdmin, onStartRoute }) {
     if (busy) return;
     const routeFile = document.getElementById('route-import-file').files[0];
     const video = document.getElementById('route-import-video').files[0];
+    const picture = document.getElementById('route-import-picture').files[0];
     const name = document.getElementById('route-import-name').value.trim();
     if (!routeFile || !video || !name) return;
     let route;
@@ -173,6 +206,14 @@ export function initRoutes({ isAdmin, onStartRoute }) {
     } catch (err) {
       setStatus(err.message, true);
       return;
+    }
+    // The picture first: it's small, and the card looks right at once.
+    if (picture) {
+      try {
+        Object.assign(route, await uploadThumbnail(route.id, picture));
+      } catch (err) {
+        setStatus(err.message, true);
+      }
     }
     refresh();
     sendVideo(route, video);
