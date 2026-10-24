@@ -3,6 +3,11 @@ backend/data/*.db
 backend/data/*.db-journal
 backend/data/*.db-wal
 backend/data/*.db-shm
+# Route videos imported into a local server (GBs each), and its backups.
+backend/data/routes/
+backend/data/backups/
+# Route videos on the server, beside the compose file.
+/deploy/routes/
 .env
 
 # Source media: full-resolution originals stay local; only the optimised

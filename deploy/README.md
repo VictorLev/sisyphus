@@ -159,6 +159,16 @@ video (MP4).
   ```
   `-an` drops the sound, and `+faststart` lets playback start before the
   whole file has loaded.
+- **Smoother slow motion (optional, slow to run).** Below 0.9x the app
+  blends frames, fading each into the next, but a 30 fps video still has
+  only 16 real frames a second at 0.55x. Motion interpolation makes real
+  in-between frames at 60 fps, so slow riding has twice the frames to show.
+  It's much slower than the plain shrink, so expect hours for a 10-minute
+  1080p video:
+  ```sh
+  ffmpeg -i video.mp4 -vf "scale=-2:720,minterpolate=fps=60:mi_mode=mci:mc_mode=aobmc:me_mode=bidir:vsbmc=1" -c:v libx264 -preset slow -crf 26 -an -movflags +faststart route-720p60.mp4
+  ```
+  The route file doesn't change: it maps distance to seconds, not frames.
 
 ## Backups
 
