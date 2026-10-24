@@ -227,6 +227,64 @@ describe('yearly champions', () => {
   });
 });
 
+describe('the second fifty', () => {
+  test('Employee of the Month: the most minutes of everyone in a month, once it\'s over', () => {
+    const now = Date.parse('2026-11-02T00:00:00Z');
+    const won = badges([], { now, monthTotals: { '2026-10': { mine: 600, best: 600 } } })['employee-month'];
+    assert.equal(won.earned, true);
+    assert.equal(won.earned_at, '2026-11-01T12:00:00.000Z');
+    assert.equal(badges([], { now, monthTotals: { '2026-10': { mine: 599, best: 600 } } })['employee-month'].earned, false);
+    const during = badges([], { now: Date.parse('2026-10-20T00:00:00Z'), monthTotals: { '2026-10': { mine: 300, best: 450 } } })['employee-month'];
+    assert.equal(during.earned, false);
+    assert.deepEqual([during.progress.value, during.progress.target], [300, 450]);
+  });
+
+  test('Employee of the Quarter: three months won', () => {
+    const now = Date.parse('2027-01-05T00:00:00Z');
+    const months = { '2026-08': { mine: 5, best: 5 }, '2026-10': { mine: 9, best: 9 }, '2026-09': { mine: 1, best: 4 } };
+    assert.equal(badges([], { now, monthTotals: months })['employee-quarter'].progress.value, 2);
+    months['2026-12'] = { mine: 3, best: 3 };
+    const b = badges([], { now, monthTotals: months })['employee-quarter'];
+    assert.equal(b.earned, true);
+    assert.equal(b.earned_at, '2027-01-01T12:00:00.000Z', 'on the third month won');
+  });
+
+  test('Overtime, Weekend Warrior, Double Header, Lunch Break Hero', () => {
+    const tenHours = days(10, '2026-03-02').map((date) => ride({ date, minutes: 60 }));
+    assert.equal(badges(tenHours).overtime.earned, true);
+    assert.equal(badges(tenHours.slice(0, 9)).overtime.earned, false);
+    // Four weekends, Saturday and Sunday each (7 March 2026 is a Saturday).
+    const weekends = [0, 7, 14, 21].flatMap((w) => days(2, new Date(Date.UTC(2026, 2, 7 + w)).toISOString().slice(0, 10)).map((date) => ride({ date })));
+    assert.equal(badges(weekends)['weekend-warrior'].earned, true);
+    assert.equal(badges(weekends.slice(0, 7))['weekend-warrior'].progress.value, 3);
+    assert.equal(badges([ride({ time: '07:00' }), ride({ time: '18:00' })])['double-header'].earned, true);
+    assert.equal(badges([ride({ date: '2026-03-02' }), ride({ date: '2026-03-03' })])['double-header'].earned, false);
+    const lunches = days(14, '2026-03-02').map((date) => ride({ date, time: '12:15' }));
+    assert.equal(badges(lunches)['lunch-break'].earned, true, '10 weekday lunches among 14 days');
+  });
+
+  test('Diesel, Speed Demon, Architect, Don\'t Panic', () => {
+    assert.equal(badges([ride({ minutes: 30, avg_power: 205 })])['avg-200'].earned, true);
+    assert.equal(badges([ride({ minutes: 20, avg_power: 300 })])['avg-200'].earned, false, 'needs 30 minutes');
+    assert.equal(badges([ride({ minutes: 25, avg_speed: 41 })])['speed-40'].earned, true);
+    const own = { id: 7, library: false, test: false, totalSec: 1200 };
+    assert.equal(badges([ride({ minutes: 20, workout_id: 7 })], { workouts: [own] }).architect.earned, true);
+    assert.equal(badges([ride({ minutes: 42 })])['dont-panic'].earned, true);
+  });
+
+  test('Routes: ridden, finished, every one', () => {
+    const routes = [{ id: 1, distance_m: 10000, ascent_m: 50 }, { id: 2, distance_m: 5000, ascent_m: 400 }, { id: 3, distance_m: 2000, ascent_m: 0 }];
+    const partial = ride({ route_id: 2, km: 3 });
+    let b = badges([partial], { routes });
+    assert.deepEqual([b['route-1'].earned, b['route-finish'].earned], [true, false]);
+    b = badges([partial, ride({ route_id: 2, km: 4.95, date: '2026-03-03' })], { routes });
+    assert.deepEqual([b['route-finish'].earned, b['route-climber'].earned], [true, true], '98% of the road counts');
+    b = badges([1, 2, 3].map((id, i) => ride({ route_id: id, km: routes[i].distance_m / 1000, date: `2026-03-0${i + 2}` })), { routes });
+    assert.equal(b['route-all'].earned, true);
+    assert.equal(badges([], { routes: routes.slice(0, 2) })['route-all'].earned, false, 'not before there are three routes');
+  });
+});
+
 describe('badges API', () => {
   let server;
   let alice;
