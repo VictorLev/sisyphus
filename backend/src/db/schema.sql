@@ -63,6 +63,7 @@ CREATE TABLE IF NOT EXISTS sessions (
   workout_name TEXT,
   description TEXT, -- the rider's words about the ride, sent along to Strava
   title TEXT, -- the ride's title for Strava (null: the app suggests one)
+  route_id INTEGER, -- the route ridden, if any (kept if the route is deleted)
   started_at TEXT NOT NULL,
   ended_at TEXT,
   distance_m REAL,
@@ -134,6 +135,23 @@ CREATE TABLE IF NOT EXISTS ftp_history (
   previous_ftp REAL,
   source TEXT NOT NULL, -- 'test' | 'manual'
   session_id INTEGER REFERENCES sessions(id), -- the test ride, for source 'test'
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Routes: a ride along a filmed road. The profile and video sync are kept
+-- here; the video itself is a file in ROUTES_DIR/<id>/video.mp4, uploaded
+-- in pieces (video_received counts the bytes so far).
+CREATE TABLE IF NOT EXISTS routes (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  distance_m REAL NOT NULL,
+  ascent_m REAL NOT NULL,
+  duration_s REAL NOT NULL, -- length of the video
+  points TEXT NOT NULL, -- JSON: [{ d, alt, lat?, lon? }], metres along the road
+  video_points TEXT NOT NULL, -- JSON: [{ d, t }], distance -> second of video
+  video_size INTEGER NOT NULL, -- bytes expected
+  video_received INTEGER NOT NULL DEFAULT 0, -- bytes stored so far
+  created_by INTEGER REFERENCES users(id),
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 

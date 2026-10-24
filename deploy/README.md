@@ -135,6 +135,31 @@ Account**.
 Usernames are case-insensitive. After 10 failed logins for one username, or
 20 from one IP address, logins are refused for 15 minutes.
 
+## Routes
+
+**Routes** are rides along a filmed road. The video plays at your speed,
+and the road's grade sets the resistance. The admin imports them from the
+Routes page, with two files: the route file (JSON: `geometry` with distance
+and altitude, plus `video_points` mapping distance to video time) and the
+video (MP4).
+
+- The videos live in `routes/<id>/video.mp4` beside the compose file, on
+  the NFS share. The compose file mounts it as `/routes`. Before the first
+  import, create it with `mkdir routes` and `chown 1000:1000 routes`.
+- Uploads go in 32 MB pieces and resume where they stopped if interrupted.
+  That's because Cloudflare refuses requests over 100 MB.
+- Videos aren't in the database backups (too big). They're only on the
+  share.
+- **Make videos smaller before importing.** A 1080p route video can run at
+  20+ Mbit/s, and everyone outside the house streams it from the home
+  connection through Cloudflare. 720p at a moderate quality is plenty
+  behind a dashboard:
+  ```sh
+  ffmpeg -i video.mp4 -vf scale=-2:720 -c:v libx264 -preset slow -crf 26 -an -movflags +faststart route-720p.mp4
+  ```
+  `-an` drops the sound, and `+faststart` lets playback start before the
+  whole file has loaded.
+
 ## Backups
 
 Backups use SQLite's online backup (`db.backup()`), so they're consistent

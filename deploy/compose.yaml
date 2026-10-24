@@ -30,6 +30,7 @@ services:
       # real client IP for login rate limiting, HTTPS for the Secure cookie.
       TRUST_PROXY: "1"
       BACKUP_DIR: /backups
+      ROUTES_DIR: /routes
     ports:
       # Localhost only: reachable through Caddy, not directly from the LAN.
       # (3000 on the VM is Homepage's.)
@@ -41,6 +42,10 @@ services:
       # disk. Safe because backup.js writes finished files there, never a
       # live database. The folder must be writable by uid 1000.
       - ./backups:/backups
+      # Route videos (GBs each) beside this file, on the NFS share: the VM's
+      # own disk is 32 GB. Plain files written in order and read back, so
+      # NFS is fine here. Must be writable by uid 1000, like backups/.
+      - ./routes:/routes
 
   cloudflared:
     profiles: ["tunnel"]
