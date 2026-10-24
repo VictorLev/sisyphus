@@ -81,27 +81,28 @@
     </header>
 
     <section data-view="home" class="view">
-      <div class="home-grid">
-        <div class="home-col">
-          <div class="panel">
-            <h2 data-i18n="home.freeRide">Free Ride</h2>
-            <button id="free-ride-btn" type="button" disabled data-i18n="home.startFreeRide">Start Free Ride</button>
-            <p class="hint" data-i18n="home.freeRideHint">No targets, no segments — just ride. Connect the
-              trainer (top of the page) first.</p>
-            <!-- Which trainer mode rides use, set in Settings → Trainer. -->
-            <p class="trainer-mode-line"><span id="home-trainer-mode"></span>
-              <button id="home-trainer-change" type="button" class="link-btn" data-i18n="trainer.change">Change</button></p>
-          </div>
-        </div>
+      <!-- Three ways to start; every start checks the trainer first. -->
+      <div class="start-tiles">
+        <button type="button" class="start-tile" id="start-free">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="16" r="4"/><circle cx="18" cy="16" r="4"/><path d="M6 16l4-8h5l3 8M10 8l2 8h-6M14 5h3"/></svg>
+          <span class="start-tile-title" data-i18n="home.freeRide">Free Ride</span>
+          <span class="start-tile-text" data-i18n="home.freeRideText">No targets, no segments: just ride.</span>
+        </button>
+        <button type="button" class="start-tile" id="start-routes">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 20l6-9 4 5 3-4 7 8z"/><circle cx="17" cy="5" r="2"/></svg>
+          <span class="start-tile-title" data-i18n="nav.routes">Routes</span>
+          <span class="start-tile-text" data-i18n="home.routesText">Ride a filmed road at your own speed.</span>
+        </button>
+        <button type="button" class="start-tile" id="start-workouts">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20V12h4v8M10 20V6h4v14M17 20v-9h4v9"/></svg>
+          <span class="start-tile-title" data-i18n="nav.workouts">Workouts</span>
+          <span class="start-tile-text" data-i18n="home.workoutsText">Follow a session, segment by segment.</span>
+        </button>
+      </div>
+      <p class="trainer-mode-line"><span id="home-trainer-mode"></span>
+        <button id="home-trainer-change" type="button" class="link-btn" data-i18n="trainer.change">Change</button></p>
 
-        <div class="home-col">
-          <div class="panel">
-            <h2 data-i18n="home.starred">Starred Workouts</h2>
-            <ul id="workout-list" class="workout-list"></ul>
-            <button id="open-workouts-btn" type="button" class="secondary" data-i18n="home.allWorkouts">All Workouts</button>
-          </div>
-
-          <div class="panel leaderboard-panel">
+      <div class="panel leaderboard-panel">
             <div class="calendar-header">
               <h2 data-i18n="lb.title">Leaderboard</h2>
               <div class="segmented" role="group" aria-label="Period" data-i18n-attr="aria-label:lb.period" id="leaderboard-period">
@@ -120,9 +121,6 @@
             </div>
             <ol id="leaderboard-list" class="leaderboard-list"></ol>
           </div>
-        </div>
-      </div>
-
     </section>
 
     <section data-view="routes" class="view">
@@ -862,6 +860,36 @@
           </div>
         </div>
       </form>
+    </dialog>
+
+    <!-- Before a ride, when no trainer is connected (ui/trainer-gate.js). -->
+    <dialog id="trainer-gate" class="panel trainer-gate" aria-labelledby="trainer-gate-title">
+      <h2 id="trainer-gate-title" data-i18n="gate.title">Connect your trainer</h2>
+      <p data-i18n="gate.text">The ride needs the trainer: wake it by pedalling, then press Connect
+        and pick it in Chrome's list. The ride starts as soon as it's connected.</p>
+      <p id="trainer-gate-no-bluetooth" class="status" hidden data-i18n="gate.noBluetooth">This browser can't
+        use Bluetooth. Ride from Chrome or Edge on a computer.</p>
+      <div class="row-actions">
+        <button id="trainer-gate-connect" type="button" data-i18n="trainer.connect">Connect trainer</button>
+        <button id="trainer-gate-cancel" type="button" class="secondary" data-i18n="gate.cancel">Cancel</button>
+      </div>
+    </dialog>
+
+    <!-- Home → Routes / Workouts (ui/ride-picker.js). -->
+    <dialog id="ride-picker" class="panel ride-picker" aria-labelledby="ride-picker-title">
+      <div class="ride-picker-head">
+        <h2 id="ride-picker-title"></h2>
+        <button id="ride-picker-close" type="button" class="secondary picker-close" aria-label="Close" data-i18n-attr="aria-label:picker.close">×</button>
+      </div>
+      <div class="picker-tabs" role="tablist" id="ride-picker-tabs">
+        <button type="button" role="tab" data-tab="starred" data-i18n="picker.starred">Starred</button>
+        <button type="button" role="tab" data-tab="all" data-i18n="picker.all">All</button>
+      </div>
+      <div class="picker-filters" id="ride-picker-filters" hidden>
+        <input id="ride-picker-search" type="search" placeholder="Search by name" data-i18n-attr="placeholder:picker.search" />
+        <div class="picker-chips" id="ride-picker-chips"></div>
+      </div>
+      <ul id="ride-picker-list" class="card-grid picker-list"></ul>
     </dialog>
 
     <dialog id="login-dialog" class="panel login-dialog" aria-labelledby="login-title">

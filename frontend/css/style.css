@@ -2985,3 +2985,167 @@ kbd {
 .card-star:hover:not(:disabled) {
   background: rgba(20, 18, 15, 0.8);
 }
+
+/* ------------------------------------------------------------------ home */
+
+.start-tiles {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+.start-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.4rem;
+  min-height: 11rem;
+  padding: 1.5rem;
+  text-align: left;
+  background: linear-gradient(160deg, var(--color-surface-raised), var(--color-surface));
+  color: var(--color-text);
+  border: var(--border-accent);
+  border-radius: 4px;
+  letter-spacing: normal;
+}
+
+.start-tile:hover:not(:disabled) {
+  background: linear-gradient(160deg, var(--color-surface-raised), var(--color-surface));
+  border-color: var(--color-bronze);
+  transform: translateY(-2px);
+}
+
+.start-tile svg {
+  width: 2.6rem;
+  height: 2.6rem;
+  fill: none;
+  stroke: var(--color-bronze-bright);
+  stroke-width: 1.6;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  margin-bottom: auto;
+}
+
+.start-tile-title {
+  font-family: var(--font-pixel);
+  font-size: 1.05rem;
+  color: var(--color-bronze-bright);
+  margin-top: 1rem;
+}
+
+.start-tile-text {
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: var(--color-text-dim);
+}
+
+[data-view="home"] .trainer-mode-line {
+  margin: 0.75rem 0 1.5rem;
+}
+
+@media (max-width: 800px) {
+  .start-tiles {
+    grid-template-columns: 1fr;
+  }
+  .start-tile {
+    min-height: 0;
+  }
+}
+
+/* The trainer check and the ride picker. */
+.trainer-gate {
+  width: min(30rem, calc(100vw - 2rem));
+  color: var(--color-text);
+  padding: 1.75rem 1.5rem;
+}
+
+.trainer-gate::backdrop,
+.ride-picker::backdrop {
+  background: rgba(10, 9, 7, 0.75);
+}
+
+.ride-picker {
+  width: min(64rem, calc(100vw - 2rem));
+  max-height: calc(100vh - 3rem);
+  color: var(--color-text);
+  padding: 1.25rem 1.5rem 1.5rem;
+  overflow: auto;
+}
+
+.ride-picker-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.ride-picker-head h2 {
+  margin: 0;
+}
+
+.picker-close {
+  width: 2.4rem;
+  height: 2.4rem;
+  padding: 0;
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.picker-tabs {
+  display: flex;
+  gap: 0.25rem;
+  margin: 1rem 0;
+  border-bottom: var(--border);
+}
+
+.picker-tabs button {
+  background: none;
+  color: var(--color-text-dim);
+  border: none;
+  border-bottom: 3px solid transparent;
+  border-radius: 0;
+  padding: 0.6rem 1rem;
+  margin-bottom: -2px;
+}
+
+.picker-tabs button[aria-selected='true'] {
+  color: var(--color-bronze-bright);
+  border-bottom-color: var(--color-bronze);
+}
+
+.picker-tabs button:hover:not(:disabled) {
+  background: none;
+  color: var(--color-text);
+}
+
+.picker-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.picker-filters[hidden] {
+  display: none;
+}
+
+.picker-filters input[type='search'] {
+  flex: 1 1 14rem;
+  font: inherit;
+  padding: 0.55rem 0.7rem;
+  background: var(--color-bg);
+  color: var(--color-text);
+  border: var(--border);
+  border-radius: 2px;
+}
+
+.picker-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.picker-list {
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+}

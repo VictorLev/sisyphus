@@ -6,6 +6,8 @@ import { setStravaExport, askToPostRide } from './ui/strava-export.js';
 import { TRAINER_MODES } from './ui/trainer-settings.js';
 import { initRemoteLink } from './ui/remote-link.js';
 import { initRoutes } from './ui/routes.js';
+import { initRidePicker } from './ui/ride-picker.js';
+import { initTrainerGate } from './ui/trainer-gate.js';
 import { createRoutePlayer } from './ui/route-player.js';
 import { RouteTrack } from './workout/route-track.js';
 import { TrainerConnection } from './ble/connection.js';
@@ -107,9 +109,27 @@ const liveScreen = initLiveScreen({
   onDiscardRide: () => discardRide(),
 });
 
-const home = initHome({
-  trainerConnection,
-  onStartRide: (workout) => startRide(workout),
+// Every start goes through here: no trainer connected, no ride (the pop-up
+// offers to connect it, then the ride starts).
+const trainerGate = initTrainerGate(trainerConnection);
+const whenTrainerReady = (start) => async (...args) => {
+  if (await trainerGate.ensure()) start(...args);
+};
+const startWorkoutRide = whenTrainerReady((workout) => startRide(workout));
+const startRouteRide = whenTrainerReady(async (summary) => {
+  try {
+    startRide(null, { route: await getRoute(summary.id) });
+  } catch (err) {
+    alert(err.message);
+  }
+});
+
+const picker = initRidePicker({
+  onPick: (kind, item) => (kind === 'routes' ? startRouteRide(item) : startWorkoutRide(item)),
+});
+initHome({
+  onFreeRide: whenTrainerReady(() => startRide(null)),
+  onPick: (kind) => picker.open(kind),
 });
 
 // Routes: a filmed road, played at the rider's speed, its climbs setting
@@ -122,21 +142,12 @@ const routePlayer = createRoutePlayer({
 });
 initRoutes({
   isAdmin: Boolean(currentUser?.is_admin),
-  onStartRoute: async (summary) => {
-    try {
-      const route = await getRoute(summary.id);
-      startRide(null, { route });
-    } catch (err) {
-      alert(err.message);
-    }
-  },
+  onStartRoute: startRouteRide,
 });
 
 initWorkouts({
-  onStartRide: (workout) => startRide(workout),
+  onStartRide: startWorkoutRide,
   onEditWorkout: (workout) => editWorkout(workout),
-  // Starring or deleting changes what the home launchpad should show.
-  onLibraryChanged: () => home.refreshWorkoutList(),
 });
 
 const builder = initBuilder({});
@@ -169,7 +180,7 @@ initAccount(currentUser);
 document.getElementById('log-panel').hidden = !currentUser?.is_admin;
 initLogPanel();
 initFtpHistory();
-initFtpTestPanel({ onStart: (workout) => startRide(workout) });
+initFtpTestPanel({ onStart: startWorkoutRide });
 updateModeUi();
 
 // Settings are stored server-side, so the objects are built with defaults and
@@ -746,7 +757,6 @@ async function retryPendingRides() {
   if (saved > 0) {
     refreshLevel();
     refreshBadgeCount();
-    home.refreshWorkoutList();
     flashRideNote(tp('save.recovered', saved), 8000);
     console.info(`[app] recovered ${saved} pending ride(s)`);
   }
