@@ -213,7 +213,8 @@ h2 {
 
 /* Narrower still: the menu's labels without their icons. */
 @media (max-width: 1440px) {
-  .main-nav button svg {
+  /* The menu items only: not the avatar or the shop bag. */
+  .main-nav > button svg {
     display: none;
   }
 }
@@ -3651,4 +3652,54 @@ kbd {
   .settings-panes {
     grid-template-columns: 1fr;
   }
+}
+
+/* Header: the level and the avatar/name are buttons to Profile; the
+   drachmas carry a little shopping bag, since they open the shop. */
+.main-nav .nav-level {
+  font-family: var(--font-pixel);
+  font-size: 0.65rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  border: none;
+  border-radius: 2px;
+  padding: 0.35rem 0.5rem;
+  cursor: pointer;
+  color: var(--color-on-accent);
+  background: var(--color-bronze);
+}
+
+.main-nav .nav-level:hover:not(:disabled) {
+  background: var(--color-bronze-bright);
+  color: var(--color-on-accent);
+}
+
+.main-nav .nav-profile {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.2rem 0.35rem;
+  border: 2px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+}
+
+.main-nav .nav-profile:hover:not(.is-active) {
+  background: rgba(176, 141, 87, 0.08);
+}
+
+.main-nav .nav-profile.is-active {
+  background: transparent;
+  border-color: var(--color-bronze);
+}
+
+.nav-shop-icon {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  margin-left: 0.15rem;
 }

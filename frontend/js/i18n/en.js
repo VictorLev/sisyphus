@@ -577,7 +577,7 @@ export const EN = {
   "tutorial.leaderboard.title": "The Leaderboard",
   "tutorial.leaderboard.text": "Everyone who rode this week, month or year, by time, distance or rides. The monthly leader becomes Employee of the Month.",
   "tutorial.progress.title": "Your level and badges",
-  "tutorial.progress.text": "Every ride earns XP for your level, and 100 badges are waiting, some of them secret. Press the medal to see them.",
+  "tutorial.progress.text": "Every ride earns XP for your level and drachmas for the shop (the coins), and 100 badges are waiting, some of them secret (the medal). Your level or your name opens your profile.",
   "tutorial.settings.title": "Make it yours",
   "tutorial.settings.text": "Settings holds your trainer (rear or virtual gears, and ERG for workouts), the phone remote, language, theme and scenery. You can replay this tour there.",
   "tutorial.step": "{n} of {total}",

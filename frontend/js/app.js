@@ -133,6 +133,7 @@ async function refreshWallet() {
   } catch { /* offline: the header keeps what it had */ }
 }
 document.getElementById('nav-coins').addEventListener('click', () => showView('shop'));
+document.getElementById('nav-level').addEventListener('click', () => showView('profile'));
 initShop({ onChange: showWallet, getName: () => currentUser?.display_name ?? '' });
 refreshWallet();
 
