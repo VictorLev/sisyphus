@@ -586,4 +586,7 @@ export const FR = {
   "stravaText.avgPower": "Puissance moy. : {watts} W",
   "stravaText.time": "Durée : {time}",
   "stravaText.distance": "Distance : {km} km",
+  "stravaText.maxPower": "Puissance max. : {watts} W",
+  "stravaText.avgCadence": "Cadence moy. : {rpm} {unit}",
+  "stravaText.avgSpeed": "Vitesse moy. : {kmh} km/h",
 };

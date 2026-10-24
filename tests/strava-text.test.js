@@ -36,24 +36,26 @@ describe('title', () => {
 });
 
 describe('description', () => {
-  test('the workout, then average power, time and distance', () => {
+  test('the workout, then one line per stat, as on the summary screen', () => {
     assert.equal(
-      suggestedDescription(ride(7, { workout_name: 'Sweet Spot 3x10', avg_power: 182.4, distance_m: 26_310 })),
-      'Sweet Spot 3x10\nAvg power: 182 W · Time: 55 min · Distance: 26.3 km'
+      suggestedDescription(ride(7, {
+        workout_name: 'Sweet Spot 3x10', distance_m: 26_310, avg_power: 182.4, max_power: 411.6, avg_cadence: 87.6, avg_speed: 28.71,
+      })),
+      'Sweet Spot 3x10\nTime: 55 min\nDistance: 26.3 km\nAvg power: 182 W\nMax power: 412 W\nAvg cadence: 88 rpm\nAvg speed: 28.7 km/h'
     );
   });
 
   test('a free ride, a long ride, and a ride without power', () => {
     const long = { ...ride(7), ended_at: new Date(Date.parse(ride(7).started_at) + 95 * 60_000).toISOString(), distance_m: 50_000 };
-    assert.equal(suggestedDescription(long), 'Free Ride\nTime: 1 h 35 · Distance: 50.0 km');
+    assert.equal(suggestedDescription(long), 'Free Ride\nTime: 1 h 35\nDistance: 50.0 km', 'no power, cadence or speed: left out');
   });
 
   test('in French, with a decimal comma', () => {
     setLanguageForTests('fr');
     try {
       assert.equal(
-        suggestedDescription(ride(7, { workout_name: 'Free ride', avg_power: 150, distance_m: 15_250 })),
-        'Free ride\nPuissance moy. : 150 W · Durée : 55 min · Distance : 15,3 km'
+        suggestedDescription(ride(7, { workout_name: 'Free ride', avg_power: 150, max_power: 300, avg_cadence: 90, avg_speed: 27.25, distance_m: 15_250 })),
+        'Free ride\nDurée : 55 min\nDistance : 15,3 km\nPuissance moy. : 150 W\nPuissance max. : 300 W\nCadence moy. : 90 tr/min\nVitesse moy. : 27,3 km/h'
       );
     } finally {
       setLanguageForTests('en');

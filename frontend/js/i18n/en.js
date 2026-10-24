@@ -405,4 +405,7 @@ export const EN = {
   "stravaText.avgPower": "Avg power: {watts} W",
   "stravaText.time": "Time: {time}",
   "stravaText.distance": "Distance: {km} km",
+  "stravaText.maxPower": "Max power: {watts} W",
+  "stravaText.avgCadence": "Avg cadence: {rpm} {unit}",
+  "stravaText.avgSpeed": "Avg speed: {kmh} km/h",
 };
