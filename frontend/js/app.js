@@ -8,6 +8,7 @@ import { initRemoteLink } from './ui/remote-link.js';
 import { initRoutes } from './ui/routes.js';
 import { initRidePicker } from './ui/ride-picker.js';
 import { initTrainerGate } from './ui/trainer-gate.js';
+import { initTutorial } from './ui/tutorial.js';
 import { createRoutePlayer } from './ui/route-player.js';
 import { RouteTrack } from './workout/route-track.js';
 import { TrainerConnection } from './ble/connection.js';
@@ -25,7 +26,7 @@ import { initBuilder } from './workout/builder.js';
 import { initLiveScreen } from './ui/live-screen.js';
 import { createRideHero } from './ui/ride-hero.js';
 import { initScenery } from './ui/scenery.js';
-import { createSession, getSettings, getProfile, getLevel, getRoute } from './api/client.js';
+import { createSession, getSettings, saveSettings, getProfile, getLevel, getRoute } from './api/client.js';
 import { initProfile, initSettings } from './ui/config-forms.js';
 import { initSisyphusLoop } from './ui/sisyphus-loop.js';
 import { initChronicle, setChronicleFtp } from './ui/chronicle.js';
@@ -108,6 +109,13 @@ const liveScreen = initLiveScreen({
   onEndRide: () => endRide(),
   onDiscardRide: () => discardRide(),
 });
+
+// The walkthrough: on first login, and from Settings → Replay the tutorial.
+let tutorialShown = false;
+const tutorial = initTutorial({
+  onDone: () => saveSettings({ tutorial_done: true }).catch(() => {}),
+});
+document.getElementById('replay-tutorial-btn').addEventListener('click', () => tutorial.start());
 
 // Every start goes through here: no trainer connected, no ride (the pop-up
 // offers to connect it, then the ride starts).
@@ -196,6 +204,11 @@ function applySettings(settings) {
     }
   }
   applyTheme(settings.theme);
+  // A new rider (or one who hasn't seen it yet): the walkthrough, once.
+  if (currentUser && settings.tutorial_done === false && !tutorialShown) {
+    tutorialShown = true;
+    tutorial.start();
+  }
   setStravaExport(settings.strava_export);
   scenery.setList(settings.scenery_videos, settings.scenery_mode);
   gears.configure({

@@ -3230,3 +3230,58 @@ kbd {
     animation: none;
   }
 }
+
+/* -------------------------------------------------------------- tutorial */
+
+.tutorial {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+}
+
+.tutorial[hidden] {
+  display: none;
+}
+
+/* The welcome step has no window: dim the whole page instead. */
+.tutorial:has(.tutorial-spot[hidden]) {
+  background: rgba(10, 9, 7, 0.72);
+}
+
+.tutorial-spot {
+  position: fixed;
+  border-radius: 6px;
+  box-shadow: 0 0 0 200vmax rgba(10, 9, 7, 0.72), 0 0 0 2px var(--color-bronze-bright);
+  transition: left 0.25s ease, top 0.25s ease, width 0.25s ease, height 0.25s ease;
+  pointer-events: none;
+}
+
+.tutorial-bubble {
+  position: fixed;
+  width: min(24rem, calc(100vw - 1.5rem));
+  padding: 1.25rem 1.25rem 1rem;
+  color: var(--color-text);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+.tutorial-step {
+  font-size: 0.75rem;
+  color: var(--color-text-dim);
+}
+
+.tutorial-title {
+  margin: 0.25rem 0 0.5rem;
+}
+
+.tutorial-text {
+  margin: 0 0 1rem;
+  line-height: 1.5;
+}
+
+.tutorial .row-actions {
+  align-items: center;
+}
+
+#tutorial-skip {
+  margin-left: auto;
+}

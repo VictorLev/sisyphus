@@ -47,6 +47,8 @@ const DEFAULTS = {
     theme: 'dark',
     // Show the "Download for Strava" box on each ride. Off by default.
     strava_export: false,
+    // The first-login walkthrough has been finished or skipped.
+    tutorial_done: false,
   },
 };
 

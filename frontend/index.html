@@ -597,6 +597,7 @@
             <p class="hint" data-i18n="settings.stravaExportHint">Adds a box to each ride's page in the
               Chronicle: download the ride as a .tcx file, then upload it on
               Strava's site. Nothing is sent to Strava by Sisyphus.</p>
+            <p class="tools-link"><button id="replay-tutorial-btn" type="button" class="link-btn" data-i18n="tutorial.replay">Replay the tutorial</button></p>
             <p class="tools-link"><a href="probe.html" data-i18n="settings.probe">Hardware diagnostics (probe)</a></p>
           </div>
         </div>
@@ -863,6 +864,21 @@
         </div>
       </form>
     </dialog>
+
+    <!-- The first-login walkthrough (ui/tutorial.js). -->
+    <div id="tutorial" class="tutorial" hidden role="dialog" aria-modal="true" aria-labelledby="tutorial-title">
+      <div class="tutorial-spot"></div>
+      <div class="tutorial-bubble panel">
+        <span class="tutorial-step"></span>
+        <h2 class="tutorial-title" id="tutorial-title"></h2>
+        <p class="tutorial-text"></p>
+        <div class="row-actions">
+          <button id="tutorial-back" type="button" class="secondary" data-i18n="tutorial.back">Back</button>
+          <button id="tutorial-next" type="button" data-i18n="tutorial.next">Next</button>
+          <button id="tutorial-skip" type="button" class="link-btn" data-i18n="tutorial.skip">Skip</button>
+        </div>
+      </div>
+    </div>
 
     <!-- Before a ride, when no trainer is connected (ui/trainer-gate.js). -->
     <dialog id="trainer-gate" class="panel trainer-gate" aria-labelledby="trainer-gate-title">
