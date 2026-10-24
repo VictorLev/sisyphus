@@ -18,6 +18,11 @@ COPY backend backend
 COPY frontend frontend
 COPY --from=deps /app/backend/node_modules backend/node_modules
 
+# The commit this image was built from, for the Admin Panel's release notes
+# (CI passes it; late in the file so it doesn't spoil the layer cache).
+ARG GIT_SHA=
+ENV GIT_SHA=$GIT_SHA
+
 # The SQLite file lives in /data so it survives image updates (mount a volume).
 # /backups is where scripts/backup.js writes (bind-mounted from the host).
 RUN mkdir -p /data /backups && chown node:node /data /backups

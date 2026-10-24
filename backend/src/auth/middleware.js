@@ -2,6 +2,12 @@ import { resolveSession } from './login-sessions.js';
 
 export const COOKIE_NAME = 'sisyphus_session';
 
+// After requireUser: only an admin gets through.
+export function requireAdmin(req, res, next) {
+  if (!req.user?.is_admin) return res.status(403).json({ error: 'admins only' });
+  next();
+}
+
 // Minimal cookie parsing; one cookie is all this app reads, so it is not
 // worth a dependency.
 export function readCookie(req, name) {

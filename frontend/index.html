@@ -197,6 +197,85 @@
       <div class="panel"><h2 data-i18n="shop.slot.avatar_emblem">Avatar emblems</h2><ul class="card-grid shop-grid" data-slot="avatar_emblem"></ul></div>
     </section>
 
+    <!-- Admins only: Settings → Admin Panel (ui/admin.js). -->
+    <section data-view="admin" class="view">
+      <h1 class="title" data-i18n="admin.heading">ADMIN PANEL</h1>
+      <p class="tagline" data-i18n="admin.tagline">For your eyes only.</p>
+
+      <div class="builder-grid">
+        <div class="home-col">
+          <div class="panel">
+            <h2 data-i18n="admin.riders">Riders</h2>
+            <table class="admin-riders">
+              <thead><tr>
+                <th data-i18n="admin.col.rider">Rider</th>
+                <th data-i18n="admin.col.rides">Rides</th>
+                <th data-i18n="admin.col.last">Last ride</th>
+                <th></th>
+              </tr></thead>
+              <tbody id="admin-riders"></tbody>
+            </table>
+            <!-- A new or reset password: shown once, to pass on. -->
+            <div id="admin-password" class="admin-password" hidden>
+              <p id="admin-password-text"></p>
+              <code id="admin-password-value"></code>
+              <button id="admin-password-copy" type="button" class="secondary" data-i18n="admin.copy">Copy</button>
+            </div>
+            <p id="admin-riders-status" class="status" role="status"></p>
+          </div>
+
+          <div class="panel">
+            <h2 data-i18n="admin.newRider">New rider</h2>
+            <form id="admin-new-rider">
+              <div class="form-row">
+                <label class="field">
+                  <span data-i18n="admin.username">Username</span>
+                  <input id="admin-new-username" type="text" autocapitalize="none" spellcheck="false" required />
+                </label>
+                <label class="field">
+                  <span data-i18n="admin.displayName">Name shown</span>
+                  <input id="admin-new-name" type="text" />
+                </label>
+              </div>
+              <label class="check-field">
+                <input id="admin-new-admin" type="checkbox" />
+                <span data-i18n="admin.makeAdmin">Admin too</span>
+              </label>
+              <button type="submit" data-i18n="admin.create">Create</button>
+            </form>
+            <p class="hint" data-i18n="admin.newRiderHint">Usernames are 2–32 letters, digits, dots, dashes
+              or underscores. Sisyphus makes a temporary password: send it with
+              the address, and they change it in Settings → Account.</p>
+          </div>
+        </div>
+
+        <div class="home-col">
+          <div class="panel">
+            <h2 data-i18n="admin.scenery">Scenery for everyone</h2>
+            <p class="hint" data-i18n="admin.sceneryHint">Up to 10 YouTube rides, the same for every rider.
+              Each rider still chooses Random or In order in their Settings.</p>
+        <div class="scenery-editor">
+          <div class="scenery-row scenery-row-head" aria-hidden="true">
+            <span data-i18n="scenery.name">Name</span>
+            <span data-i18n="scenery.link">YouTube link</span>
+            <span></span>
+          </div>
+          <ol id="scenery-rows" class="scenery-rows"></ol>
+          <button id="scenery-add-btn" type="button" class="secondary scenery-add" data-i18n="scenery.add">+ Add a video</button>
+        </div>
+            <button id="admin-scenery-save" type="button" data-i18n="admin.save">Save the scenery</button>
+            <p id="admin-scenery-status" class="status" role="status"></p>
+          </div>
+
+          <div class="panel">
+            <h2 data-i18n="admin.releases">Release notes</h2>
+            <p class="hint" id="admin-running"></p>
+            <ol id="admin-releases" class="admin-releases"></ol>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <section data-view="workouts" class="view">
       <h1 class="title" data-i18n="workouts.title">WORKOUTS</h1>
       <p class="tagline" id="workouts-summary">&nbsp;</p>
@@ -562,6 +641,13 @@
         </div>
 
         <div class="home-col">
+          <!-- Admins only (app.js shows it). -->
+          <div class="panel admin-link" id="admin-link" hidden>
+            <h2 data-i18n="admin.title">Admin Panel</h2>
+            <p class="hint" data-i18n="admin.linkHint">Riders and their passwords, the shared scenery, and
+              the release notes.</p>
+            <button id="open-admin-btn" type="button" data-i18n="admin.open">Open the Admin Panel</button>
+          </div>
           <div class="panel">
             <label class="field">
               <span data-i18n="settings.language">Language</span>
@@ -607,20 +693,10 @@
                 <option value="sequence" data-i18n="scenery.sequence">In order</option>
               </select>
             </label>
-            <div class="scenery-editor">
-              <div class="scenery-row scenery-row-head" aria-hidden="true">
-                <span data-i18n="scenery.name">Name</span>
-                <span data-i18n="scenery.link">YouTube link</span>
-                <span></span>
-              </div>
-              <ol id="scenery-rows" class="scenery-rows"></ol>
-              <button id="scenery-add-btn" type="button" class="secondary scenery-add" data-i18n="scenery.add">+ Add a video</button>
-            </div>
-            <input id="setting-scenery-videos" type="hidden" />
-            <p class="hint" data-i18n="settings.sceneryHint">Random never repeats last ride's video; In order
-              plays the next one each ride. Videos start muted; unmute in the
-              player. To switch mid-ride, use the picker on the ride screen.
-              With no videos, the default ride plays.</p>
+            <p class="hint" data-i18n="settings.sceneryHint">The videos are the same for everyone, chosen by
+              the admin. Random never repeats last ride's video; In order plays
+              the next one each ride. Videos start muted; unmute in the player.
+              To switch mid-ride, use the picker on the ride screen.</p>
             <h2 style="margin-top:1.5rem">Strava</h2>
             <label class="check-field">
               <input id="setting-strava-export" type="checkbox" />

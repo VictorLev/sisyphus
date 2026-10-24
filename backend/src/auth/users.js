@@ -75,6 +75,8 @@ const OWNED = [
   ['workouts', 'SELECT COUNT(*) AS n FROM workouts WHERE user_id = ?'],
   ['stars', 'SELECT COUNT(*) AS n FROM workout_stars WHERE user_id = ?'],
   ['FTP history entries', 'SELECT COUNT(*) AS n FROM ftp_history WHERE user_id = ?'],
+  ['route stars', 'SELECT COUNT(*) AS n FROM route_stars WHERE user_id = ?'],
+  ['shop purchases', 'SELECT COUNT(*) AS n FROM purchases WHERE user_id = ?'],
   ['settings', 'SELECT COUNT(*) AS n FROM user_config WHERE user_id = ?'],
   ['logins', 'SELECT COUNT(*) AS n FROM auth_sessions WHERE user_id = ?'],
 ];

@@ -1,6 +1,5 @@
 import { getProfile, saveProfile, getSettings, saveSettings } from '../api/client.js';
 import { t } from '../i18n.js';
-import { initSceneryEditor } from './scenery-editor.js';
 import { initTrainerSettings } from './trainer-settings.js';
 
 // Generic form binding for the profile and settings pages. Both are the same
@@ -76,7 +75,6 @@ export function initProfile() {
 }
 
 export function initSettings({ onSaved }) {
-  const scenery = initSceneryEditor();
   const trainer = initTrainerSettings();
   const form = bindForm({
     fields: [
@@ -90,7 +88,6 @@ export function initSettings({ onSaved }) {
       'setting-bike-weight-kg',
       'setting-trainer-mode',
       'setting-rear-resistance',
-      'setting-scenery-videos',
       'setting-scenery-mode',
       'setting-language',
       'setting-theme',
@@ -100,11 +97,7 @@ export function initSettings({ onSaved }) {
     save: saveSettings,
     statusEl: document.getElementById('settings-status'),
     onSaved,
-    beforeSubmit: () => scenery.commit(),
-    afterLoad: (data) => {
-      scenery.load(data.scenery_videos);
-      trainer.render(data.trainer_mode);
-    },
+    afterLoad: (data) => trainer.render(data.trainer_mode),
   });
 
   // The Save button stays quiet (outlined) until a setting changes, then
@@ -116,7 +109,7 @@ export function initSettings({ onSaved }) {
   const onEdit = (event) => {
     const target = event.target;
     // Only the settings themselves: not the password fields or the log.
-    if (!target.id?.startsWith('setting-') && !target.closest?.('.scenery-editor')) return;
+    if (!target.id?.startsWith('setting-')) return;
     if (saveBtn.classList.contains('secondary')) statusEl.textContent = '';
     setDirty(true);
   };

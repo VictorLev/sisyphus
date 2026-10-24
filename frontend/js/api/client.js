@@ -255,3 +255,15 @@ export function equipItem(slot, itemId) {
     body: JSON.stringify({ slot, item_id: itemId }),
   });
 }
+
+// The Admin Panel (admins only) and the shared scenery.
+const json = (method, body) => ({ method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+export const getScenery = () => request('/api/scenery');
+export const adminListUsers = () => request('/api/admin/users');
+export const adminCreateUser = (body) => request('/api/admin/users', json('POST', body));
+export const adminResetPassword = (id) => request(`/api/admin/users/${id}/reset-password`, { method: 'POST' });
+export const adminUserData = (id) => request(`/api/admin/users/${id}/data`);
+export const adminDeleteUser = (id) => request(`/api/admin/users/${id}`, { method: 'DELETE' });
+export const adminGetScenery = () => request('/api/admin/scenery');
+export const adminSetScenery = (videos) => request('/api/admin/scenery', json('PUT', { videos }));
+export const adminReleases = () => request('/api/admin/releases');

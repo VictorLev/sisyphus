@@ -10,6 +10,7 @@ import { initRidePicker } from './ui/ride-picker.js';
 import { initTrainerGate } from './ui/trainer-gate.js';
 import { initTutorial } from './ui/tutorial.js';
 import { initShop } from './ui/shop.js';
+import { initAdmin } from './ui/admin.js';
 import { setEquipped } from './shop/cosmetics.js';
 import { avatarSvg } from './shop/avatar.js';
 import { createRoutePlayer } from './ui/route-player.js';
@@ -29,7 +30,7 @@ import { initBuilder } from './workout/builder.js';
 import { initLiveScreen } from './ui/live-screen.js';
 import { createRideHero } from './ui/ride-hero.js';
 import { initScenery } from './ui/scenery.js';
-import { createSession, getSettings, saveSettings, getProfile, getLevel, getRoute, getWallet } from './api/client.js';
+import { createSession, getSettings, saveSettings, getProfile, getLevel, getRoute, getWallet, getScenery } from './api/client.js';
 import { initProfile, initSettings } from './ui/config-forms.js';
 import { initSisyphusLoop } from './ui/sisyphus-loop.js';
 import { initChronicle, setChronicleFtp } from './ui/chronicle.js';
@@ -133,6 +134,29 @@ document.getElementById('nav-coins').addEventListener('click', () => showView('s
 initShop({ onChange: showWallet, getName: () => currentUser?.display_name ?? '' });
 refreshWallet();
 
+// Scenery: one list for everyone, set in the Admin Panel.
+let sharedScenery = '';
+let sceneryMode = 'random';
+async function loadScenery() {
+  try {
+    sharedScenery = (await getScenery()).videos;
+    scenery.setList(sharedScenery, sceneryMode);
+  } catch { /* offline: the default ride */ }
+}
+loadScenery();
+
+// The Admin Panel, for admins: from Settings.
+if (currentUser?.is_admin) {
+  document.getElementById('admin-link').hidden = false;
+  document.getElementById('open-admin-btn').addEventListener('click', () => showView('admin'));
+  initAdmin({
+    onSceneryChange: (videos) => {
+      sharedScenery = videos;
+      scenery.setList(sharedScenery, sceneryMode);
+    },
+  });
+}
+
 // The walkthrough: on first login, and from Settings → Replay the tutorial.
 let tutorialShown = false;
 const tutorial = initTutorial({
@@ -233,7 +257,9 @@ function applySettings(settings) {
     tutorial.start();
   }
   setStravaExport(settings.strava_export);
-  scenery.setList(settings.scenery_videos, settings.scenery_mode);
+  // The videos are everyone's (Admin Panel); the order is the rider's.
+  sceneryMode = settings.scenery_mode;
+  scenery.setList(sharedScenery, sceneryMode);
   gears.configure({
     gearCount: settings.gear_count,
     minResistance: settings.min_resistance,

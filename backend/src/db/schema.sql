@@ -173,6 +173,14 @@ CREATE TABLE IF NOT EXISTS purchases (
   PRIMARY KEY (user_id, item_id)
 );
 
+-- Settings for the whole site, set in the Admin Panel (e.g. the shared
+-- scenery list). Key/value, the value JSON.
+CREATE TABLE IF NOT EXISTS site_config (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL,
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 -- One-off migration steps that have run, so they are never repeated.
 CREATE TABLE IF NOT EXISTS migrations (
   name TEXT PRIMARY KEY,

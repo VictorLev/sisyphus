@@ -1056,7 +1056,7 @@ button.secondary:hover:not(:disabled) {
 /* -------------------------------------------------------- scenery editor */
 
 .scenery-editor {
-  margin-bottom: 1rem;
+  margin: 0.9rem 0 1rem;
 }
 
 .scenery-rows {
@@ -3396,4 +3396,97 @@ kbd {
   .shop-top {
     grid-template-columns: 1fr;
   }
+}
+
+/* ----------------------------------------------------------------- admin */
+
+.admin-riders {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.admin-riders th {
+  text-align: left;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-bronze);
+  padding: 0 0.5rem 0.5rem 0;
+}
+
+.admin-riders td {
+  padding: 0.6rem 0.5rem 0.6rem 0;
+  border-top: 1px solid var(--color-rule);
+  vertical-align: middle;
+}
+
+.admin-meta {
+  color: var(--color-text-dim);
+  font-size: 0.8rem;
+}
+
+.admin-actions {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.admin-actions button {
+  padding: 0.35rem 0.6rem;
+  font-size: 0.75rem;
+  margin-left: 0.3rem;
+}
+
+.admin-password {
+  margin-top: 1rem;
+  padding: 0.8rem 1rem;
+  border: 2px solid var(--color-bronze);
+  border-radius: 4px;
+  background: var(--color-well);
+}
+
+.admin-password[hidden] {
+  display: none;
+}
+
+.admin-password p {
+  margin: 0 0 0.5rem;
+}
+
+.admin-password code {
+  display: inline-block;
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  margin-right: 0.75rem;
+  user-select: all;
+}
+
+.admin-releases {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.admin-releases > li {
+  padding: 0.75rem 0;
+  border-top: 1px solid var(--color-rule);
+}
+
+.admin-release-head code {
+  font-size: 0.75rem;
+  color: var(--color-text-dim);
+}
+
+.admin-release-head code.is-running {
+  color: var(--color-on-accent);
+  background: var(--color-bronze);
+  padding: 0 0.3rem;
+  border-radius: 2px;
+}
+
+.admin-releases ul {
+  margin: 0.4rem 0 0;
+  padding-left: 1.2rem;
+  font-size: 0.9rem;
 }

@@ -1,0 +1,82 @@
+[
+  {
+    "version": "next",
+    "date": null,
+    "commit": null,
+    "notes": [
+      "Admin Panel: riders (create, delete, reset passwords), the shared scenery list, release notes",
+      "Drachmas and the shop (The Agora): hats and boulders for Sisyphus, avatars",
+      "100 badges (+50), including Employee of the Month",
+      "A short tutorial on first login",
+      "Fire on the ride screen in Z5 and Z6",
+      "Home: three ways to start, pickers with tabs and filters, a trainer check before every ride",
+      "Workouts and routes as cards, route stars",
+      "Routes: ride a filmed road at your own speed, its climbs setting the resistance",
+      "Trainer modes in Settings (rear gears, virtual gears, ERG) and a phone remote for virtual gears",
+      "Strava: suggested title and description with copy buttons",
+      "Back to the login screen as soon as a session ends; offline mode fixed"
+    ]
+  },
+  {
+    "version": "v1.7.0",
+    "date": "2026-10-20",
+    "commit": "95b3dc9",
+    "notes": ["New accounts start with \"My First Ride\", starred"]
+  },
+  {
+    "version": "v1.6.0",
+    "date": "2026-10-19",
+    "commit": "9d76ce1",
+    "notes": [
+      "Speed from power, rider and bike weight, and grade, instead of the trainer's guess",
+      "Settings: bike weight",
+      "The leaderboard lists only riders who rode in the period"
+    ]
+  },
+  {
+    "version": "v1.5.0",
+    "date": "2026-10-18",
+    "commit": "c1eeb71",
+    "notes": ["Download rides for Strava (.tcx), with a description pop-up when a ride ends, behind a setting"]
+  },
+  {
+    "version": "v1.4.0",
+    "date": "2026-10-18",
+    "commit": "b3de51a",
+    "notes": [
+      "French and English, with a language setting",
+      "Yearly leaderboard and 2026-2028 Champion badges",
+      "Light theme",
+      "Settings: Save in the header, log for admins only, scenery editor with order and a default ride"
+    ]
+  },
+  {
+    "version": "v1.3.0",
+    "date": "2026-10-18",
+    "commit": "86bd815",
+    "notes": ["npm run delete-user"]
+  },
+  {
+    "version": "v1.2.1",
+    "date": "2026-10-17",
+    "commit": "401e590",
+    "notes": ["Leaderboard on the Ride page", "Scenery: a comma list, a random video each ride"]
+  },
+  {
+    "version": "v1.1.0",
+    "date": "2026-10-17",
+    "commit": "d9e6653",
+    "notes": [
+      "FTP test and FTP history",
+      "Badges, on their own tab",
+      "Connect button in the header, and Settings -> Log",
+      "Workouts in % of FTP, with CSV and .zwo import and export"
+    ]
+  },
+  {
+    "version": "v1.0.0",
+    "date": "2026-10-17",
+    "commit": "ab0fe58",
+    "notes": ["Accounts and per-rider data", "Workout library in % of FTP", "Cloudflare Tunnel deploy, backups"]
+  }
+]

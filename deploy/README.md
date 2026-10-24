@@ -125,6 +125,10 @@ It prints a temporary password. Send the rider the public URL, their
 username and that password; they can change it under **Settings →
 Account**.
 
+Or, logged in as an admin: **Settings → Admin Panel** lists the riders,
+creates them, resets their passwords and deletes them. Passwords are
+made the same way and shown once. The commands below still work.
+
 | To... | Run on the VM |
 | --- | --- |
 | Add a rider | `docker exec sisyphus npm run add-user -- <name> [--name "Shown Name"]` |
