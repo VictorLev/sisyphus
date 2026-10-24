@@ -3149,3 +3149,84 @@ kbd {
 .picker-list {
   grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
 }
+
+/* ------------------------------------------------- Z5-Z6 intensity fire */
+
+/* Over the whole ride screen, never in the way of a click. Off below Z5;
+   in Z5 a warm glow at the edges and low flames along the bottom; in Z6
+   redder, taller and faster. */
+.ride-view {
+  position: relative;
+}
+
+.intensity-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+  box-shadow: inset 0 0 6rem rgba(208, 133, 74, 0.35);
+}
+
+[data-intensity='z5'] .intensity-overlay,
+[data-intensity='z6'] .intensity-overlay {
+  opacity: 1;
+}
+
+[data-intensity='z6'] .intensity-overlay {
+  box-shadow: inset 0 0 9rem rgba(180, 83, 60, 0.55);
+}
+
+.flames {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 7vh;
+  opacity: 0.55;
+  background:
+    radial-gradient(ellipse 3.5rem 100% at 50% 100%, rgba(240, 216, 168, 0.85), rgba(224, 160, 90, 0.55) 35%, rgba(208, 133, 74, 0) 70%) 0 100% / 7rem 100% repeat-x;
+  filter: blur(6px);
+  mix-blend-mode: screen;
+  animation: flicker 0.9s ease-in-out infinite alternate, drift 2.4s linear infinite;
+  transform-origin: bottom;
+}
+
+.flames-back {
+  height: 9vh;
+  opacity: 0.35;
+  background-position: 3.5rem 100%;
+  animation-duration: 1.3s, 3.6s;
+  animation-direction: alternate-reverse, reverse;
+}
+
+[data-intensity='z6'] .flames {
+  height: 10vh;
+  opacity: 0.65;
+  background:
+    radial-gradient(ellipse 3.5rem 100% at 50% 100%, rgba(255, 236, 200, 0.95), rgba(214, 110, 70, 0.7) 35%, rgba(180, 83, 60, 0) 70%) 0 100% / 6rem 100% repeat-x;
+  animation-duration: 0.5s, 1.4s;
+}
+
+[data-intensity='z6'] .flames-back {
+  height: 13vh;
+  opacity: 0.4;
+  animation-duration: 0.7s, 2s;
+}
+
+@keyframes flicker {
+  from { transform: scaleY(0.85); }
+  to { transform: scaleY(1.1); }
+}
+
+@keyframes drift {
+  from { background-position-x: 0; }
+  to { background-position-x: 7rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flames {
+    animation: none;
+  }
+}

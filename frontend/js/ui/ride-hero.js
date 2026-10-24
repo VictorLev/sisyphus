@@ -50,6 +50,29 @@ const PUSHER_HARD = [
   'X...XX',
 ];
 
+// In Z5 and Z6 the boulder burns: two flame frames, flickering with his
+// stride. O is the outer flame, I the hot core.
+const FLAMES = [
+  [
+    '...O....',
+    '..OO..O.',
+    '.OOIO.OO',
+    '.OIIOOO.',
+    'OOIIIIOO',
+  ],
+  [
+    '.....O..',
+    '.O..OO..',
+    'OO.OIOO.',
+    '.OOOIIO.',
+    'OOIIIIOO',
+  ],
+];
+const FLAME_COLORS = {
+  5: { O: '#d0854a', I: '#e0c088' },
+  6: { O: '#b4533c', I: '#f0d8a8' },
+};
+
 // Per-zone character. Slope and lean rise together; the frame interval
 // falls, so he visibly labours faster under load. The slopes span nearly
 // flat to a full climb, so each zone step reads even at the small size he's
@@ -83,6 +106,7 @@ export function createRideHero(canvas) {
   const styles = getComputedStyle(document.documentElement);
 
   let effort = EFFORT[2];
+  let zone = 2;
   let zoneColor = styles.getPropertyValue('--color-bronze-bright').trim() || '#e0c088';
   let step = 0;
   let timer = null;
@@ -133,7 +157,18 @@ export function createRideHero(canvas) {
     const t = (step % 40) / 40;
     const x = Math.round(4 + t * span);
     blit(sprite, x, restRow(sprite, x, slope), zoneColor);
-    blit(BOULDER, x + 7, restRow(BOULDER, x + 7, slope), zoneColor);
+    const boulderTop = restRow(BOULDER, x + 7, slope);
+    blit(BOULDER, x + 7, boulderTop, zoneColor);
+    if (zone >= 5) {
+      const flame = FLAMES[step % 2];
+      const colors = FLAME_COLORS[zone];
+      flame.forEach((row, ry) => {
+        [...row].forEach((cell, rx) => {
+          const y = boulderTop - flame.length + ry + 1;
+          if (colors[cell] && y >= 0) px(x + 7 + rx, y, colors[cell]);
+        });
+      });
+    }
   }
 
   function schedule() {
@@ -151,7 +186,8 @@ export function createRideHero(canvas) {
     // Called as the rider's zone changes; only re-times the loop when the
     // zone actually moves, so the animation never stutters mid-stride.
     setZone(zoneId, color) {
-      const next = EFFORT[Math.max(1, Math.min(6, zoneId || 2))];
+      zone = Math.max(1, Math.min(6, zoneId || 2));
+      const next = EFFORT[zone];
       if (color) zoneColor = color;
       if (next === effort) {
         draw();

@@ -520,7 +520,11 @@ trainerConnection.addEventListener('reading', (event) => {
   });
   // Only fires when the zone actually changes: Sisyphus leans in harder and
   // works faster the deeper the rider is into their zones.
-  if (zone) rideHero.setZone(zone.id, zone.color);
+  if (zone) {
+    rideHero.setZone(zone.id, zone.color);
+    // Z5 and Z6 set the ride screen alight (the .intensity-overlay).
+    liveViewEl.dataset.intensity = zone.id >= 6 ? 'z6' : zone.id === 5 ? 'z5' : '';
+  }
 });
 
 function startRide(workout, { route = null } = {}) {
