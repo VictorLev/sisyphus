@@ -9,7 +9,7 @@
 // API requests are never cached: a training log showing a stale ride list
 // would be worse than showing an error.
 
-const CACHE = 'sisyphus-shell-v9';
+const CACHE = 'sisyphus-shell-v10';
 
 const SHELL = [
   '/',
@@ -18,6 +18,7 @@ const SHELL = [
   '/js/app.js',
   '/js/log.js',
   '/js/i18n.js',
+  '/js/theme.js',
   '/js/i18n/en.js',
   '/js/i18n/fr.js',
   '/js/zones.js',
@@ -28,6 +29,7 @@ const SHELL = [
   '/js/ble/ftms-parser.js',
   '/js/ble/trainer-control.js',
   '/js/metrics/distance.js',
+  '/js/metrics/virtual-speed.js',
   '/js/metrics/rolling-average.js',
   '/js/session/recorder.js',
   '/js/session/pending.js',
@@ -52,6 +54,8 @@ const SHELL = [
   '/js/ui/trainer-button.js',
   '/js/ui/views.js',
   '/js/ui/scenery.js',
+  '/js/ui/scenery-editor.js',
+  '/js/ui/strava-export.js',
   '/js/ui/workouts.js',
   '/manifest.webmanifest',
   '/icons/icon-192.png',

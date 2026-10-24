@@ -59,6 +59,37 @@ export async function requireLogin() {
   return new Promise(() => {});
 }
 
+// A session can end while the app sits open: it expired, the rider logged
+// out elsewhere, or changed their password (which ends the others). Without
+// a check, the app only finds out at its next call to the server, and the
+// screen keeps showing their data until then. So the session is checked
+// every minute and whenever the rider comes back to the tab; once it's gone,
+// the login screen covers everything. Not during a ride: the ride carries on
+// and, if its save is refused, it is kept and retried after logging in.
+const SESSION_CHECK_MS = 60_000;
+
+export function watchSession(user, { isRiding = () => false } = {}) {
+  if (!user) return; // the offline shell has no session to watch
+  let checking = false;
+  async function check() {
+    if (checking || isRiding() || document.getElementById('login-dialog').open) return;
+    checking = true;
+    try {
+      const me = await getMe();
+      if (me === null) window.dispatchEvent(new CustomEvent('sisyphus:unauthorized'));
+      // Logged in as someone else in another tab: start over as them.
+      else if (me.id !== user.id) window.location.reload();
+    } catch { /* server unreachable: not a reason to log anyone out */ } finally {
+      checking = false;
+    }
+  }
+  setInterval(check, SESSION_CHECK_MS);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') check();
+  });
+  window.addEventListener('focus', check);
+}
+
 // Settings → Account: who is logged in, change password, log out.
 export function initAccount(user) {
   const whoEl = document.getElementById('account-who');

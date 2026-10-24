@@ -26,7 +26,7 @@ import { initWorkouts } from './ui/workouts.js';
 import { initFeats } from './ui/feats.js';
 import { initBadges, showRideBadges, refreshBadgeCount } from './ui/badges.js';
 import { initLeaderboard } from './ui/leaderboard.js';
-import { requireLogin, initAccount } from './ui/login.js';
+import { requireLogin, initAccount, watchSession } from './ui/login.js';
 import { initTrainerButton } from './ui/trainer-button.js';
 import { initLogPanel } from './ui/log-panel.js';
 
@@ -43,6 +43,7 @@ import { showFtpResult, initFtpHistory, initFtpTestPanel } from './ui/ftp-test.j
 // when the server is unreachable, so the offline shell still starts).
 const currentUser = await requireLogin();
 if (currentUser) document.getElementById('nav-name').textContent = currentUser.display_name;
+watchSession(currentUser, { isRiding: () => !document.querySelector('[data-view="live"]').hidden });
 
 const trainerConnection = new TrainerConnection();
 const gears = new GearModel();
