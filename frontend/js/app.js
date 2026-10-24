@@ -626,7 +626,7 @@ async function endRide() {
     if (activeWorkout?.test) showFtpResult(document.getElementById('summary-ftp-result'), session.id);
     showRideBadges(document.getElementById('summary-badges'), session.id, { onOpenRide: (id) => chronicle.openDetail(id) });
     // Settings → Strava on: ask for a description, then download + upload page.
-    askToPostRide(session.id);
+    askToPostRide(session);
   } catch (err) {
     // Never drop the ride. Park it and retry on the next load — the rider
     // cannot pedal the hour again.

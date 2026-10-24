@@ -62,6 +62,7 @@ CREATE TABLE IF NOT EXISTS sessions (
   -- past ride actually was.
   workout_name TEXT,
   description TEXT, -- the rider's words about the ride, sent along to Strava
+  title TEXT, -- the ride's title for Strava (null: the app suggests one)
   started_at TEXT NOT NULL,
   ended_at TEXT,
   distance_m REAL,

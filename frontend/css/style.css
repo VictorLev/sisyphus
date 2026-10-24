@@ -1775,6 +1775,23 @@ button.secondary:hover:not(:disabled) {
   margin-top: 0.5rem;
 }
 
+/* A field with its Copy button beside it (below it on a phone). */
+.strava-copy-field {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.strava-copy-field .field {
+  flex: 1 1 18rem;
+}
+
+.strava-copy-field button {
+  margin-bottom: 1rem;
+  min-width: 13rem; /* both buttons the same, so the fields line up */
+}
+
 #detail-strava-status {
   margin-left: 0.75rem;
 }

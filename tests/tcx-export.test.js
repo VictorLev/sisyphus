@@ -83,6 +83,19 @@ describe('download API and setting', () => {
     assert.ok(!(await (await alice.get(`/api/sessions/${saved.id}/tcx`)).text()).includes('<Notes>'), 'blank clears it');
   });
 
+  test('a ride keeps a title too, set alone or with the description', async () => {
+    const saved = await (await alice.post('/api/sessions', {
+      started_at: '2026-10-18T22:00:00.000Z', ended_at: '2026-10-18T22:01:00.000Z', samples,
+    })).json();
+    let row = await (await alice.patch(`/api/sessions/${saved.id}`, { title: ' Sweet Spot · Sisyphus ', description: 'Good one' })).json();
+    assert.deepEqual([row.title, row.description], ['Sweet Spot · Sisyphus', 'Good one']);
+    row = await (await alice.patch(`/api/sessions/${saved.id}`, { title: '' })).json();
+    assert.deepEqual([row.title, row.description], [null, 'Good one'], 'only the title changed');
+    assert.equal((await alice.patch(`/api/sessions/${saved.id}`, {})).status, 400);
+    assert.equal((await alice.patch(`/api/sessions/${saved.id}`, { title: 'x'.repeat(201) })).status, 400);
+    assert.equal((await bob.patch(`/api/sessions/${saved.id}`, { title: 'mine' })).status, 404);
+  });
+
   test('the Strava box is off until the rider turns it on', async () => {
     assert.equal((await (await alice.get('/api/settings')).json()).strava_export, false);
     assert.equal((await (await alice.put('/api/settings', { strava_export: true })).json()).strava_export, true);

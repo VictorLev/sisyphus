@@ -397,4 +397,5 @@ export const EN = {
   "workout.firstRide": "My First Ride",
   "strava.copied": "Copied. Paste it into Strava's Description box (Ctrl+V).",
   "strava.copyFailed": "Couldn't copy automatically: select the text and copy it (Ctrl+C).",
+  "strava.copiedTitle": "Title copied. Paste it into Strava's Title box (Ctrl+V).",
 };
