@@ -11,6 +11,7 @@ import { initTrainerGate } from './ui/trainer-gate.js';
 import { initTutorial } from './ui/tutorial.js';
 import { initShop } from './ui/shop.js';
 import { initAdmin } from './ui/admin.js';
+import { initSettingsTabs } from './ui/settings-tabs.js';
 import { setEquipped } from './shop/cosmetics.js';
 import { avatarSvg } from './shop/avatar.js';
 import { createRoutePlayer } from './ui/route-player.js';
@@ -148,7 +149,6 @@ loadScenery();
 
 // The Admin Panel, for admins: from Settings.
 if (currentUser?.is_admin) {
-  document.getElementById('admin-link').hidden = false;
   document.getElementById('open-admin-btn').addEventListener('click', () => showView('admin'));
   initAdmin({
     onSceneryChange: (videos) => {
@@ -232,9 +232,14 @@ initBadges({ onOpenRide: (id) => chronicle.openDetail(id), onOpenBadges: () => s
 initProfile();
 initSettings({ onSaved: (saved) => applySettings(saved) });
 initAccount(currentUser);
-// The diagnostic log is for whoever fixes bugs: admins only. Entries are
-// still captured for everyone, in case an admin rides on this browser.
-document.getElementById('log-panel').hidden = !currentUser?.is_admin;
+// Settings tabs. The diagnostic log is for whoever fixes bugs: admins only
+// (entries are still captured for everyone, in case an admin rides on this
+// browser), like the Admin Panel.
+const settingsTabs = initSettingsTabs();
+if (currentUser?.is_admin) {
+  settingsTabs.showTab('log');
+  settingsTabs.showTab('admin');
+}
 initLogPanel();
 initFtpHistory();
 initFtpTestPanel({ onStart: startWorkoutRide });
@@ -481,7 +486,10 @@ function updateModeUi() {
   updateGearDisplay(gears.gearNumber);
 }
 
-document.getElementById('home-trainer-change').addEventListener('click', () => showView('settings'));
+document.getElementById('home-trainer-change').addEventListener('click', () => {
+  showView('settings');
+  settingsTabs.select('trainer');
+});
 document.getElementById('shift-up-btn').addEventListener('click', () => handleShift('up'));
 document.getElementById('shift-down-btn').addEventListener('click', () => handleShift('down'));
 

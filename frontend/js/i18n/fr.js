@@ -877,4 +877,6 @@ export const FR = {
   "settings.ergWorkouts": "Utiliser le mode ERG pour les entraînements",
   "settings.ergHint": "ERG : la base maintient la puissance visée de chaque segment, quelle que soit votre vitesse ou votre cadence. Entraînements seulement; les sorties libres, les routes et les tests FTP utilisent toujours vos vitesses. Vous pouvez aussi le changer pour un entraînement en le choisissant sur l'accueil.",
   "picker.erg": "Utiliser le mode ERG",
+  "settings.display": "Affichage",
+  "settings.more": "Plus",
 };

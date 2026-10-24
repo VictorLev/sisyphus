@@ -3590,3 +3590,51 @@ kbd {
   stroke-linecap: round;
   stroke-linejoin: round;
 }
+
+/* -------------------------------------------------------- settings tabs */
+
+.settings-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-bottom: 1.5rem;
+  border-bottom: var(--border);
+}
+
+.settings-tabs button {
+  background: none;
+  color: var(--color-text-dim);
+  border: none;
+  border-bottom: 3px solid transparent;
+  border-radius: 0;
+  padding: 0.7rem 1.1rem;
+  margin-bottom: -2px;
+  font-size: 0.9rem;
+}
+
+.settings-tabs button[hidden] {
+  display: none;
+}
+
+.settings-tabs button[aria-selected='true'] {
+  color: var(--color-bronze-bright);
+  border-bottom-color: var(--color-bronze);
+}
+
+.settings-tabs button:hover:not(:disabled) {
+  background: none;
+  color: var(--color-text);
+}
+
+/* One tab's panel at a time, at a comfortable reading width. */
+.settings-pane {
+  max-width: 48rem;
+}
+
+.settings-pane:not(.is-active) {
+  display: none;
+}
+
+.settings-more {
+  margin-top: 2rem;
+}
