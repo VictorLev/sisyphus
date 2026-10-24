@@ -183,8 +183,8 @@ h2 {
   margin-left: auto;
   display: flex;
   align-items: center;
-  gap: 0.6rem;
-  padding: 0.35rem 0.9rem 0.35rem 0.4rem;
+  gap: 0.45rem;
+  padding: 0.35rem 0.7rem 0.35rem 0.4rem;
   border: 2px solid var(--color-stone);
   border-radius: 2px;
 }
@@ -203,11 +203,26 @@ h2 {
   color: var(--color-bronze-bright);
 }
 
+/* Narrower screens: the avatar stands for the rider (their name is its
+   tooltip), so the menu stays on one line. */
+@media (max-width: 1500px) {
+  .nav-avatar:not(:empty) + .nav-name {
+    display: none;
+  }
+}
+
+/* Narrower still: the menu's labels without their icons. */
+@media (max-width: 1440px) {
+  .main-nav button svg {
+    display: none;
+  }
+}
+
 /* Persistent destinations, so no screen is a dead end needing a back button. */
 .main-nav {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: 0.3rem;
   margin-bottom: 2rem;
   border-bottom: 2px solid var(--color-stone);
   padding-bottom: 0.75rem;
@@ -221,7 +236,7 @@ h2 {
   color: var(--color-text-dim);
   border: 2px solid transparent;
   /* Tight enough that the longer French labels fit on one line too. */
-  padding: 0.6rem 0.8rem;
+  padding: 0.6rem 0.65rem;
   font-size: 0.85rem;
   letter-spacing: 0.02em;
 }
@@ -3284,4 +3299,101 @@ kbd {
 
 #tutorial-skip {
   margin-left: auto;
+}
+
+/* ------------------------------------------------------------------ shop */
+
+.nav-coins {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: transparent;
+  border: none;
+  padding: 0.3rem 0.2rem;
+  font-family: var(--font-pixel);
+  font-size: 0.65rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--color-bronze-bright);
+}
+
+.nav-coins[hidden] {
+  display: none;
+}
+
+.nav-coins:hover:not(:disabled) {
+  background: transparent;
+  color: var(--color-text);
+}
+
+/* A little drachma: a gold disc with a stamped ring. */
+.nav-coin {
+  width: 0.85rem;
+  height: 0.85rem;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #f6e3b4, #e0c088 45%, #b08d57);
+  box-shadow: inset 0 0 0 2px rgba(122, 99, 64, 0.6);
+}
+
+.nav-avatar {
+  display: inline-flex;
+}
+
+.avatar {
+  flex: none;
+  display: block;
+}
+
+.leaderboard-who .avatar {
+  margin-right: 0.15rem;
+}
+
+.shop-top {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.shop-showcase {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.shop-hero {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  height: auto;
+  image-rendering: pixelated;
+}
+
+.shop-grid {
+  grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+}
+
+.shop-look {
+  display: grid;
+  place-items: center;
+  min-height: 6rem;
+  background: var(--color-well-deep);
+}
+
+.shop-preview-canvas {
+  image-rendering: pixelated;
+}
+
+.shop-card.is-worn {
+  border-color: var(--color-bronze);
+}
+
+.shop-price {
+  color: var(--color-bronze-bright);
+}
+
+@media (max-width: 800px) {
+  .shop-top {
+    grid-template-columns: 1fr;
+  }
 }

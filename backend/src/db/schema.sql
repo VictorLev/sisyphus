@@ -162,6 +162,17 @@ CREATE TABLE IF NOT EXISTS route_stars (
   PRIMARY KEY (user_id, route_id)
 );
 
+-- What each rider has bought in the shop (backend/src/shop-catalog.js).
+-- Their balance is worked out from their riding and badges minus these;
+-- what they wear is user_config 'cosmetics'.
+CREATE TABLE IF NOT EXISTS purchases (
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  item_id TEXT NOT NULL,
+  price INTEGER NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (user_id, item_id)
+);
+
 -- One-off migration steps that have run, so they are never repeated.
 CREATE TABLE IF NOT EXISTS migrations (
   name TEXT PRIMARY KEY,

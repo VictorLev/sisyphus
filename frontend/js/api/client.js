@@ -230,3 +230,28 @@ export function setRouteStarred(id, starred) {
     body: JSON.stringify({ starred }),
   });
 }
+
+// The shop: drachmas, cosmetics, what's worn.
+export function getShop() {
+  return request('/api/shop');
+}
+
+export function getWallet() {
+  return request('/api/shop/me');
+}
+
+export function buyItem(itemId) {
+  return request('/api/shop/buy', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ item_id: itemId }),
+  });
+}
+
+export function equipItem(slot, itemId) {
+  return request('/api/shop/equip', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ slot, item_id: itemId }),
+  });
+}

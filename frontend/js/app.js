@@ -9,6 +9,9 @@ import { initRoutes } from './ui/routes.js';
 import { initRidePicker } from './ui/ride-picker.js';
 import { initTrainerGate } from './ui/trainer-gate.js';
 import { initTutorial } from './ui/tutorial.js';
+import { initShop } from './ui/shop.js';
+import { setEquipped } from './shop/cosmetics.js';
+import { avatarSvg } from './shop/avatar.js';
 import { createRoutePlayer } from './ui/route-player.js';
 import { RouteTrack } from './workout/route-track.js';
 import { TrainerConnection } from './ble/connection.js';
@@ -26,7 +29,7 @@ import { initBuilder } from './workout/builder.js';
 import { initLiveScreen } from './ui/live-screen.js';
 import { createRideHero } from './ui/ride-hero.js';
 import { initScenery } from './ui/scenery.js';
-import { createSession, getSettings, saveSettings, getProfile, getLevel, getRoute } from './api/client.js';
+import { createSession, getSettings, saveSettings, getProfile, getLevel, getRoute, getWallet } from './api/client.js';
 import { initProfile, initSettings } from './ui/config-forms.js';
 import { initSisyphusLoop } from './ui/sisyphus-loop.js';
 import { initChronicle, setChronicleFtp } from './ui/chronicle.js';
@@ -109,6 +112,26 @@ const liveScreen = initLiveScreen({
   onEndRide: () => endRide(),
   onDiscardRide: () => discardRide(),
 });
+
+// Drachmas and cosmetics: the header shows the balance (opening the shop)
+// and the avatar; Sisyphus wears what was bought (shop/cosmetics.js).
+function showWallet({ balance, equipped }) {
+  const coins = document.getElementById('nav-coins');
+  coins.hidden = false;
+  document.getElementById('nav-coins-count').textContent = num(balance);
+  document.getElementById('nav-avatar').innerHTML =
+    avatarSvg({ bg: equipped.avatar_bg, emblem: equipped.avatar_emblem, name: currentUser?.display_name ?? '' }, { size: 26, title: currentUser?.display_name ?? '' });
+  setEquipped(equipped);
+}
+async function refreshWallet() {
+  if (!currentUser) return;
+  try {
+    showWallet(await getWallet());
+  } catch { /* offline: the header keeps what it had */ }
+}
+document.getElementById('nav-coins').addEventListener('click', () => showView('shop'));
+initShop({ onChange: showWallet, getName: () => currentUser?.display_name ?? '' });
+refreshWallet();
 
 // The walkthrough: on first login, and from Settings → Replay the tutorial.
 let tutorialShown = false;
@@ -748,6 +771,7 @@ async function endRide() {
     const session = await createSession(payload);
     refreshLevel();
     refreshBadgeCount();
+    refreshWallet();
     showSummary(session);
     if (activeWorkout?.test) showFtpResult(document.getElementById('summary-ftp-result'), session.id);
     showRideBadges(document.getElementById('summary-badges'), session.id, { onOpenRide: (id) => chronicle.openDetail(id) });
@@ -774,6 +798,7 @@ async function retryPendingRides() {
   if (saved > 0) {
     refreshLevel();
     refreshBadgeCount();
+    refreshWallet();
     flashRideNote(tp('save.recovered', saved), 8000);
     console.info(`[app] recovered ${saved} pending ride(s)`);
   }

@@ -5,6 +5,8 @@
 // bike at a glance, not a subtle tell. The hill is a darker shade of the
 // zone colour the figure is drawn in, so he stays distinct where he stands.
 
+import { drawHat, drawBoulder } from '../shop/cosmetics.js';
+
 const GRID_W = 96;
 // Tall enough that a full-slope Z6 climb still fits the boulder at the top
 // of his run without clipping.
@@ -86,6 +88,13 @@ const EFFORT = {
   6: { slope: 1.0, frameMs: 70, sprite: PUSHER_HARD },
 };
 
+// Where a pusher sprite's head is: its top row of pixels.
+function headOf(sprite) {
+  const top = sprite.findIndex((row) => row.includes('X'));
+  const left = sprite[top].indexOf('X');
+  return { left, width: sprite[top].lastIndexOf('X') - left + 1, top };
+}
+
 // Hill shade: the zone colour at 65% brightness. Any darker and Z1's grey
 // would sink into the panel background.
 const HILL_SHADE = 0.65;
@@ -156,9 +165,13 @@ export function createRideHero(canvas) {
     const span = GRID_W - 22;
     const t = (step % 40) / 40;
     const x = Math.round(4 + t * span);
-    blit(sprite, x, restRow(sprite, x, slope), zoneColor);
+    const pusherTop = restRow(sprite, x, slope);
+    blit(sprite, x, pusherTop, zoneColor);
+    // What he wears from the shop (shop/cosmetics.js).
+    const head = headOf(sprite);
+    drawHat(px, x + head.left, head.width, pusherTop + head.top);
     const boulderTop = restRow(BOULDER, x + 7, slope);
-    blit(BOULDER, x + 7, boulderTop, zoneColor);
+    drawBoulder(px, BOULDER, x + 7, boulderTop, zoneColor);
     if (zone >= 5) {
       const flame = FLAMES[step % 2];
       const colors = FLAME_COLORS[zone];
@@ -181,6 +194,7 @@ export function createRideHero(canvas) {
 
   draw();
   schedule();
+  document.addEventListener('cosmeticschange', () => draw());
 
   return {
     // Called as the rider's zone changes; only re-times the loop when the

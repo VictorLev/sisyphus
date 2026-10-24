@@ -58,8 +58,8 @@ function totalsFor(rows, key, userId) {
 const yearTotalsFor = (userId) => totalsFor(selectYearTotals.all(), 'year', userId);
 const monthTotalsFor = (userId) => totalsFor(selectMonthTotals.all(), 'month', userId);
 
-router.get('/', (req, res) => {
-  const userId = req.user.id;
+// Every badge for a rider, earned or not (also the shop's drachma rewards).
+export function badgesFor(userId) {
   const sessions = selectSessions.all(userId);
 
   const sampleStats = {};
@@ -80,7 +80,7 @@ router.get('/', (req, res) => {
     totalSec: JSON.parse(w.structure).reduce((sum, seg) => sum + seg.duration_sec, 0),
   }));
 
-  const badges = computeBadges({
+  return computeBadges({
     sessions,
     sampleStats,
     best20,
@@ -91,6 +91,10 @@ router.get('/', (req, res) => {
     monthTotals: monthTotalsFor(userId),
     routes: selectRoutes.all(),
   });
+}
+
+router.get('/', (req, res) => {
+  const badges = badgesFor(req.user.id);
   res.json({
     earned: badges.filter((b) => b.earned).length,
     total: badges.length,

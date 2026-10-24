@@ -1,5 +1,6 @@
 import { getLeaderboard } from '../api/client.js';
 import { t, tp, num, locale } from '../i18n.js';
+import { avatarSvg } from '../shop/avatar.js';
 
 // Home → Leaderboard: every rider's totals for this week, month or year,
 // ranked by time (the default: fair whatever anyone's FTP), distance or
@@ -85,6 +86,7 @@ export function initLeaderboard() {
 
       const who = document.createElement('span');
       who.className = 'leaderboard-who';
+      who.insertAdjacentHTML('beforeend', avatarSvg({ ...rider.avatar, name: rider.name }, { size: 22 }));
       const name = document.createElement('span');
       name.className = 'leaderboard-name';
       name.textContent = rider.name;

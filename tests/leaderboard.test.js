@@ -108,7 +108,8 @@ describe('leaderboard API', () => {
   test('shows display names and totals only', async () => {
     const board = await (await alice.get('/api/leaderboard')).json();
     for (const rider of board.riders) {
-      assert.deepEqual(Object.keys(rider).sort(), ['distance_km', 'level', 'minutes', 'name', 'rides', 'you']);
+      assert.deepEqual(Object.keys(rider).sort(), ['avatar', 'distance_km', 'level', 'minutes', 'name', 'rides', 'you']);
+      assert.deepEqual(Object.keys(rider.avatar).sort(), ['bg', 'emblem'], 'only the look they chose');
     }
     assert.ok(!JSON.stringify(board).includes('bob"'), 'no usernames');
   });

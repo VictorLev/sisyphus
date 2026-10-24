@@ -70,6 +70,12 @@
             <span class="nav-badges-medal" aria-hidden="true"></span>
             <span id="nav-badges-count">0</span>
           </button>
+          <!-- Drachmas: opens the shop (ui/shop.js). -->
+          <button type="button" class="nav-coins" id="nav-coins" title="Drachmas: open the shop" data-i18n-attr="title:shop.open" hidden>
+            <span class="nav-coin" aria-hidden="true"></span>
+            <span id="nav-coins-count">0</span>
+          </button>
+          <span class="nav-avatar" id="nav-avatar"></span>
           <span class="nav-name" id="nav-name">—</span>
         </div>
 
@@ -163,6 +169,32 @@
           route and pick the same video. Smaller videos stream better: see
           the deploy guide for shrinking them to 720p.</p>
       </div>
+    </section>
+
+    <section data-view="shop" class="view">
+      <h1 class="title" data-i18n="shop.title">THE AGORA</h1>
+      <p class="tagline" id="shop-summary">&nbsp;</p>
+
+      <div class="shop-top">
+        <div class="panel shop-showcase">
+          <canvas id="shop-hero" class="shop-hero"></canvas>
+          <div id="shop-avatar" class="shop-avatar"></div>
+        </div>
+        <div class="panel">
+          <h2 data-i18n="shop.earnTitle">Earning drachmas</h2>
+          <p data-i18n-html="shop.earnText">Every minute you ride earns <strong>1 drachma</strong>. Every
+            badge adds more: <strong>25</strong> for bronze and fun ones, <strong>50</strong>
+            for silver, <strong>75</strong> for secrets and <strong>100</strong> for gold.
+            Everything you've already ridden counts.</p>
+          <p class="hint" id="shop-earn"></p>
+          <p id="shop-status" class="status" role="status"></p>
+        </div>
+      </div>
+
+      <div class="panel"><h2 data-i18n="shop.slot.hat">Hats for Sisyphus</h2><ul class="card-grid shop-grid" data-slot="hat"></ul></div>
+      <div class="panel"><h2 data-i18n="shop.slot.boulder">Boulders</h2><ul class="card-grid shop-grid" data-slot="boulder"></ul></div>
+      <div class="panel"><h2 data-i18n="shop.slot.avatar_bg">Avatar backgrounds</h2><ul class="card-grid shop-grid" data-slot="avatar_bg"></ul></div>
+      <div class="panel"><h2 data-i18n="shop.slot.avatar_emblem">Avatar emblems</h2><ul class="card-grid shop-grid" data-slot="avatar_emblem"></ul></div>
     </section>
 
     <section data-view="workouts" class="view">
