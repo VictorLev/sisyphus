@@ -12,6 +12,7 @@ import { initTutorial } from './ui/tutorial.js';
 import { initShop } from './ui/shop.js';
 import { initAdmin } from './ui/admin.js';
 import { initSettingsTabs } from './ui/settings-tabs.js';
+import { initProfileTabs } from './ui/profile-tabs.js';
 import { setEquipped } from './shop/cosmetics.js';
 import { avatarSvg } from './shop/avatar.js';
 import { createRoutePlayer } from './ui/route-player.js';
@@ -134,6 +135,8 @@ async function refreshWallet() {
 }
 document.getElementById('nav-coins').addEventListener('click', () => showView('shop'));
 document.getElementById('nav-level').addEventListener('click', () => showView('profile'));
+document.getElementById('nav-profile-btn').addEventListener('click', () => showView('profile'));
+initProfileTabs();
 initShop({ onChange: showWallet, getName: () => currentUser?.display_name ?? '' });
 refreshWallet();
 

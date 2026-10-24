@@ -7,8 +7,17 @@ let chromeEl = null;
 
 // Views that are sub-pages of a nav destination, so the right tab still
 // reads as active while you're on them.
-// (Build is reached from Workouts; Profile from the level or the name.)
-const NAV_PARENT = { 'ride-detail': 'chronicle', live: 'home', summary: 'home', builder: 'workouts' };
+// Build is part of Workouts; Chronicle (and a ride's page), Feats and Badges
+// are Profile's sub-pages (ui/profile-tabs.js).
+const NAV_PARENT = {
+  live: 'home',
+  summary: 'home',
+  builder: 'workouts',
+  chronicle: 'profile',
+  'ride-detail': 'profile',
+  feats: 'profile',
+  badges: 'profile',
+};
 
 export function initViews() {
   document.querySelectorAll('[data-view]').forEach((el) => {

@@ -9,7 +9,7 @@ export const FR = {
   "nav.chronicle": "Chronique",
   "nav.feats": "Exploits",
   "nav.badges": "Badges",
-  "nav.profile": "Votre profil",
+  "nav.profile": "Profil",
   "nav.settings": "Réglages",
   "home.freeRide": "Sortie libre",
   "lb.title": "Classement",
@@ -883,4 +883,5 @@ export const FR = {
   "admin.giveHow": "Combien de drachmes pour {name}?",
   "admin.given": "{n} drachmes données à {name} : {balance} maintenant.",
   "admin.data.drachma gifts": "cadeaux de drachmes",
+  "nav.profileTitle": "Votre profil",
 };

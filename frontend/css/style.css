@@ -3704,3 +3704,36 @@ kbd {
   stroke-linecap: round;
   margin-left: 0.15rem;
 }
+
+/* Profile's sub-pages: Profile, Chronicle, Feats, Badges. */
+.sub-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin: -0.75rem 0 1.5rem;
+  border-bottom: var(--border);
+}
+
+.sub-nav button {
+  background: none;
+  color: var(--color-text-dim);
+  border: none;
+  border-bottom: 3px solid transparent;
+  border-radius: 0;
+  padding: 0.6rem 1.1rem;
+  margin-bottom: -2px;
+  font-size: 0.9rem;
+}
+
+.sub-nav button.is-active {
+  color: var(--color-bronze-bright);
+  border-bottom-color: var(--color-bronze);
+}
+
+.sub-nav button:hover:not(:disabled) {
+  background: none;
+}
+
+.sub-nav button:hover:not(:disabled):not(.is-active) {
+  color: var(--color-text);
+}
