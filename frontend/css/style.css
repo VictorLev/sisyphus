@@ -372,6 +372,61 @@ button.secondary:hover:not(:disabled) {
   color: var(--color-on-accent);
 }
 
+/* Three trainer modes side by side (Settings → Trainer). */
+.mode-select-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.trainer-mode-description {
+  min-height: 3em;
+  margin-bottom: 1.25rem;
+}
+
+.trainer-panel [data-trainer-mode] + [data-trainer-mode] {
+  margin-top: 1.25rem;
+}
+
+.trainer-mode-line {
+  margin: 0.75rem 0 0;
+  font-size: 0.85rem;
+  color: var(--color-text-dim);
+}
+
+/* A button that reads as a link, for "Change" beside the trainer mode. */
+.link-btn {
+  background: none;
+  border: none;
+  padding: 0 0.25rem;
+  color: var(--color-bronze-bright);
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* Ride screen: on-screen shifting for virtual gears. */
+.shift-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.shift-buttons[hidden] {
+  display: none;
+}
+
+.shift-buttons button {
+  min-width: 3.5rem;
+  padding: 0.6rem 0.9rem;
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+@media (max-width: 600px) {
+  .mode-select-3 {
+    grid-template-columns: 1fr;
+  }
+}
+
 .nav-panel {
   display: flex;
   gap: 1rem;

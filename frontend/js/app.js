@@ -3,6 +3,7 @@ import { installLogCapture, logEvent } from './log.js';
 import { initLanguage, rememberSetting, resolveLanguage, language, t, tp, num } from './i18n.js';
 import { applyTheme } from './theme.js';
 import { setStravaExport, askToPostRide } from './ui/strava-export.js';
+import { TRAINER_MODES } from './ui/trainer-settings.js';
 import { TrainerConnection } from './ble/connection.js';
 import { TrainerControl } from './ble/trainer-control.js';
 import { GearModel } from './gears.js';
@@ -62,11 +63,16 @@ const scenery = initScenery({
 });
 
 let runner = null;
-// 'gears'  — rider shifts, trainer holds a fixed resistance per gear
+// Trainer modes (Settings → Trainer):
+// 'rear'   — rider shifts on the bike; resistance is a flat-road level plus
+//            the segment's grade
+// 'gears'  — virtual gears: the rider shifts on screen, keyboard or phone;
+//            resistance is the gear's plus the grade
 // 'erg'    — trainer holds the segment's target watts, gearing is irrelevant
-// Both modes drive the same Control Point, so only one may write at a time.
+// All drive the same Control Point, so only one may write at a time.
 // preferredMode is what the rider chose; rideMode is what the current ride
-// actually runs (a free ride forces gears without discarding the choice).
+// actually runs (ERG has nothing to hold on a free ride or an FTP test, so
+// those fall back to virtual gears without discarding the choice).
 let preferredMode = 'erg';
 let rideMode = 'erg';
 let activeWorkout = null;
@@ -79,6 +85,7 @@ let recordIntervalId = null;
 let sampleIntervalMs = 1000; // overridden by saved settings
 let riderFtp = null; // shows targets as %FTP when set
 let resistancePerGrade = 0.4; // resistance units added per +1% of grade
+let rearResistance = 5; // rear gears: resistance on the flat
 
 initViews();
 showView('home');
@@ -163,8 +170,9 @@ function applySettings(settings) {
     resistancePerGrade = settings.resistance_per_grade;
   }
   sampleIntervalMs = Math.max(1, settings.sample_interval_sec) * 1000;
-  if (settings.default_mode === 'gears' || settings.default_mode === 'erg') {
-    preferredMode = settings.default_mode;
+  if (Number.isFinite(settings.rear_resistance)) rearResistance = settings.rear_resistance;
+  if (TRAINER_MODES.includes(settings.trainer_mode)) {
+    preferredMode = settings.trainer_mode;
     rideMode = preferredMode;
   }
   updateModeUi();
@@ -271,9 +279,10 @@ async function ensureTrainerControl() {
 // Applies a shift and confirms it on screen — even at an end stop, where
 // the gear number can't change — so a press is always visibly acknowledged.
 function handleShift(direction) {
-  if (rideMode === 'erg') {
-    // Writing resistance now would fight the trainer's ERG target.
-    flashRideNote(t('note.ergNoGears'), 1500);
+  if (rideMode !== 'gears') {
+    // ERG: writing resistance would fight its target. Rear gears: the
+    // bike's own gears do the shifting.
+    flashRideNote(t(rideMode === 'erg' ? 'note.ergNoGears' : 'note.rearNoGears'), 1500);
     return;
   }
   const up = direction === 'up';
@@ -334,43 +343,38 @@ async function applyRideMode() {
   }
 }
 
-// Mode is chosen before a ride starts, never during one — so this only
-// records the choice. The trainer is written to in startRide.
-function setRideMode(mode) {
-  preferredMode = mode;
-  rideMode = mode;
-  updateModeUi();
-}
-
+// The mode is chosen in Settings → Trainer before a ride, never during one.
+// Home says which one rides will use, with a way to change it.
 function updateModeUi() {
-  const erg = rideMode === 'erg';
-  document.getElementById('mode-gears-btn').classList.toggle('is-active', !erg);
-  document.getElementById('mode-erg-btn').classList.toggle('is-active', erg);
-  document.getElementById('mode-description').textContent = t(erg ? 'mode.ergDescription' : 'mode.gearsDescription');
+  document.getElementById('home-trainer-mode').textContent =
+    t('trainer.using', { mode: t(`trainer.name.${preferredMode}`) });
   updateGearDisplay(gears.gearNumber);
 }
 
-document.getElementById('mode-gears-btn').addEventListener('click', () => setRideMode('gears'));
-document.getElementById('mode-erg-btn').addEventListener('click', () => setRideMode('erg'));
+document.getElementById('home-trainer-change').addEventListener('click', () => showView('settings'));
+document.getElementById('shift-up-btn').addEventListener('click', () => handleShift('up'));
+document.getElementById('shift-down-btn').addEventListener('click', () => handleShift('down'));
 
 // The trainer only has one resistance dial, so terrain and gearing are
 // composed into it: the segment's grade sets the load, the gear is the
 // rider's lever against it. Clamped to the device's 0..20 domain, so a
 // descent bottoms out at freewheel rather than going negative.
 function currentGrade() {
-  if (rideMode !== 'gears') return 0; // ERG holds watts; terrain is irrelevant
+  if (rideMode === 'erg') return 0; // ERG holds watts; terrain is irrelevant
   return runner?.state.currentSegment?.grade_percent ?? 0;
 }
 
+// Rear gears start from a fixed flat-road level, virtual gears from the
+// gear's; the grade adds to either.
 function terrainResistance() {
-  const withGrade = gears.resistance + currentGrade() * resistancePerGrade;
-  return Math.max(0, Math.min(20, withGrade));
+  const base = rideMode === 'rear' ? rearResistance : gears.resistance;
+  return Math.max(0, Math.min(20, base + currentGrade() * resistancePerGrade));
 }
 
 // A gear change updates the display and writes the new resistance.
 gears.addEventListener('change', (event) => {
   updateGearDisplay(event.detail.gear);
-  applyResistance(terrainResistance());
+  if (rideMode === 'gears') applyResistance(terrainResistance());
 });
 
 // Writes resistance, re-acquiring control if the trainer dropped it (FTMS
@@ -459,7 +463,10 @@ function startRide(workout) {
     // begins; in gears mode this is a no-op.
     // Every segment boundary changes the load: a new ERG target, or new
     // terrain to push the gears against.
-    runner.addEventListener('segment-change', () => applyRideMode());
+    runner.addEventListener('segment-change', () => {
+      applyRideMode();
+      updateGearDisplay(gears.gearNumber); // rear gears show the grade
+    });
   }
 
   // ERG needs a workout's targets, so free rides always run in gears — but
@@ -467,7 +474,7 @@ function startRide(workout) {
   // run in gears too: ERG would hold the test block at your CURRENT FTP, so
   // it could only ever measure what you already have.
   const isTest = Boolean(workout?.test);
-  rideMode = workout && !isTest ? preferredMode : 'gears';
+  rideMode = preferredMode === 'erg' && (!workout || isTest) ? 'gears' : preferredMode;
   updateModeUi();
 
   liveScreen.buildTimeline(workout ? workout.structure : null, workout ? workoutName(workout) : null);
@@ -662,10 +669,16 @@ function updateGearDisplay(gear) {
   const value = document.getElementById('gear-value');
   const label = metric.querySelector('.metric-label');
   metric.hidden = false;
+  document.getElementById('shift-buttons').hidden = rideMode !== 'gears';
   if (rideMode === 'erg') {
     // The gear number is meaningless while the trainer holds a wattage.
     value.textContent = 'ERG';
     label.textContent = t('live.mode');
+  } else if (rideMode === 'rear') {
+    // The bike's gears are the rider's; what the trainer adds is the grade.
+    const grade = currentGrade();
+    value.textContent = `${grade > 0 ? '+' : ''}${num(grade, grade % 1 ? 1 : 0)}%`;
+    label.textContent = t('live.grade');
   } else {
     value.textContent = gear;
     label.textContent = t('live.gear');

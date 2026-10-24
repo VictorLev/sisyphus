@@ -80,19 +80,13 @@
       <div class="home-grid">
         <div class="home-col">
           <div class="panel">
-            <h2 data-i18n="home.rideMode">Ride Mode</h2>
-            <div class="mode-select">
-              <button id="mode-gears-btn" type="button" class="mode-btn" data-i18n="mode.gears">Virtual Gears</button>
-              <button id="mode-erg-btn" type="button" class="mode-btn is-active">ERG</button>
-            </div>
-            <p id="mode-description" class="hint"></p>
-          </div>
-
-          <div class="panel">
             <h2 data-i18n="home.freeRide">Free Ride</h2>
             <button id="free-ride-btn" type="button" disabled data-i18n="home.startFreeRide">Start Free Ride</button>
-            <p class="hint" data-i18n="home.freeRideHint">No targets, no segments — just ride. Always uses
-              virtual gears. Connect the trainer (top of the page) first.</p>
+            <p class="hint" data-i18n="home.freeRideHint">No targets, no segments — just ride. Connect the
+              trainer (top of the page) first.</p>
+            <!-- Which trainer mode rides use, set in Settings → Trainer. -->
+            <p class="trainer-mode-line"><span id="home-trainer-mode"></span>
+              <button id="home-trainer-change" type="button" class="link-btn" data-i18n="trainer.change">Change</button></p>
           </div>
         </div>
 
@@ -351,9 +345,10 @@
                 common way to ruin the test.</li>
               <li data-i18n="ftp.tip2">Aim for an even effort and keep the last 3 minutes for
                 whatever you have left.</li>
-              <li data-i18n-html="ftp.tip3">The test runs in <strong>virtual gears</strong>: the trainer
-                doesn't hold a wattage for you, so shift with <kbd>+</kbd> and
-                <kbd>−</kbd> to set the pace.</li>
+              <li data-i18n-html="ftp.tip3">The test runs in <strong>virtual gears</strong> (or your bike's
+                gears, if that's your setting): the trainer doesn't hold a wattage
+                for you, so shift with <kbd>+</kbd> and <kbd>−</kbd> or the
+                on-screen buttons to set the pace.</li>
             </ul>
 
             <h3 data-i18n="ftp.result">Your result</h3>
@@ -387,8 +382,26 @@
 
       <div class="builder-grid">
         <div class="home-col">
-          <div class="panel">
-            <h2 data-i18n="mode.gears">Virtual Gears</h2>
+          <div class="panel trainer-panel">
+            <h2 data-i18n="trainer.title">Trainer</h2>
+            <input id="setting-trainer-mode" type="hidden" />
+            <div class="mode-select mode-select-3" role="radiogroup" aria-label="Trainer mode" data-i18n-attr="aria-label:trainer.title" id="trainer-mode-group">
+              <button type="button" class="mode-btn" role="radio" data-mode="rear" data-i18n="trainer.rear">Rear gears</button>
+              <button type="button" class="mode-btn" role="radio" data-mode="gears" data-i18n="trainer.gears">Virtual gears</button>
+              <button type="button" class="mode-btn" role="radio" data-mode="erg">ERG</button>
+            </div>
+            <p id="trainer-mode-description" class="hint trainer-mode-description"></p>
+
+            <!-- Rear gears -->
+            <div data-trainer-mode="rear">
+              <label class="field">
+                <span data-i18n="settings.rearResistance">Resistance on the flat</span>
+                <input id="setting-rear-resistance" type="number" min="0" max="20" step="0.5" />
+              </label>
+            </div>
+
+            <!-- Virtual gears -->
+            <div data-trainer-mode="gears">
             <div class="form-row">
               <label class="field">
                 <span data-i18n="settings.gearCount">Gear count</span>
@@ -409,14 +422,19 @@
                 <input id="setting-max-resistance" type="number" min="0" max="20" step="0.5" />
               </label>
             </div>
-            <label class="field">
-              <span data-i18n="settings.perGrade">Resistance per 1% grade</span>
-              <input id="setting-resistance-per-grade" type="number" min="0" max="2" step="0.1" />
-            </label>
             <p class="hint" data-i18n="settings.gearsHint">Gears are spread evenly between min and max. The
-              trainer accepts 0–20; lower the max if the top gears feel too hard.
-              Grade adds resistance on top of your gear — raise the per-grade
-              figure to make climbs bite harder.</p>
+              trainer accepts 0–20; lower the max if the top gears feel too hard.</p>
+            </div>
+
+            <!-- Both kinds of gears: how much a climb adds -->
+            <div data-trainer-mode="rear gears">
+              <label class="field">
+                <span data-i18n="settings.perGrade">Resistance per 1% grade</span>
+                <input id="setting-resistance-per-grade" type="number" min="0" max="2" step="0.1" />
+              </label>
+              <p class="hint" data-i18n="settings.perGradeHint">A workout's climbs add this much resistance
+                for each 1% of grade; raise it to make them bite harder.</p>
+            </div>
           </div>
 
           <div class="panel">
@@ -496,13 +514,6 @@
             <p class="hint" data-i18n="settings.bikeWeightHint">Speed while riding comes from your watts, the
               grade, and your weight (Profile) plus the bike's, as it would on
               the road: heavier is slower uphill and slower to get going.</p>
-            <label class="field">
-              <span data-i18n="settings.defaultMode">Default ride mode</span>
-              <select id="setting-default-mode">
-                <option value="erg">ERG</option>
-                <option value="gears" data-i18n="mode.gears">Virtual Gears</option>
-              </select>
-            </label>
             <p class="hint" data-i18n="settings.smoothingHint">Smoothing affects the live watts display only —
               recorded samples are always raw. Sample interval sets how often a
               data point is written to the ride log.</p>
@@ -689,6 +700,11 @@
             <div class="gear-display" id="gear-metric">
               <strong id="gear-value">--</strong>
               <span class="metric-label" data-i18n="live.gear">gear</span>
+            </div>
+            <!-- Virtual gears only; + and − on a keyboard work too. -->
+            <div class="shift-buttons" id="shift-buttons" hidden>
+              <button id="shift-down-btn" type="button" class="secondary" aria-label="Easier gear" data-i18n-attr="aria-label:live.shiftDown">▼</button>
+              <button id="shift-up-btn" type="button" class="secondary" aria-label="Harder gear" data-i18n-attr="aria-label:live.shiftUp">▲</button>
             </div>
             <div class="ride-actions">
               <button id="pause-btn" type="button" class="secondary" data-i18n="live.pause">Pause</button>

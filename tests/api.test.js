@@ -187,7 +187,8 @@ describe('config API', () => {
   test('returns defaults before anything is saved', async () => {
     const settings = await (await api('/api/settings')).json();
     assert.equal(settings.gear_count, 12);
-    assert.equal(settings.default_mode, 'erg');
+    assert.equal(settings.trainer_mode, 'erg');
+    assert.equal(settings.rear_resistance, 5);
   });
 
   test('new accounts start with the default ride, in random order', async () => {
@@ -203,6 +204,20 @@ describe('config API', () => {
     assert.equal((await postJson('/api/settings', { bike_weight_kg: 1 }, 'PUT')).status, 400);
     assert.equal((await postJson('/api/settings', { bike_weight_kg: 60 }, 'PUT')).status, 400);
     await postJson('/api/settings', { bike_weight_kg: 9 }, 'PUT');
+  });
+
+  test('trainer mode: rear gears, virtual gears or ERG; an old default_mode carries over', async () => {
+    assert.equal((await (await postJson('/api/settings', { trainer_mode: 'rear' }, 'PUT')).json()).trainer_mode, 'rear');
+    const { default: db } = await import('../backend/src/db/index.js');
+    const row = db.prepare("SELECT user_id, value FROM user_config WHERE key = 'settings'").get();
+    const old = JSON.parse(row.value);
+    delete old.trainer_mode;
+    old.default_mode = 'gears';
+    db.prepare("UPDATE user_config SET value = ? WHERE user_id = ? AND key = 'settings'").run(JSON.stringify(old), row.user_id);
+    const settings = await (await api('/api/settings')).json();
+    assert.equal(settings.trainer_mode, 'gears');
+    assert.equal(settings.default_mode, undefined);
+    await postJson('/api/settings', { trainer_mode: 'erg' }, 'PUT');
   });
 
   test('the theme is dark unless the rider picks light', async () => {
@@ -223,7 +238,8 @@ describe('config API', () => {
   test('rejects settings the trainer could not honour', async () => {
     assert.equal((await postJson('/api/settings', { max_resistance: 25 }, 'PUT')).status, 400);
     assert.equal((await postJson('/api/settings', { min_resistance: 15, max_resistance: 5 }, 'PUT')).status, 400);
-    assert.equal((await postJson('/api/settings', { default_mode: 'nonsense' }, 'PUT')).status, 400);
+    assert.equal((await postJson('/api/settings', { trainer_mode: 'nonsense' }, 'PUT')).status, 400);
+    assert.equal((await postJson('/api/settings', { rear_resistance: 25 }, 'PUT')).status, 400);
   });
 
   test('clamps start_gear instead of failing when gear_count shrinks', async () => {

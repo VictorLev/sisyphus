@@ -1,6 +1,7 @@
 import { getProfile, saveProfile, getSettings, saveSettings } from '../api/client.js';
 import { t } from '../i18n.js';
 import { initSceneryEditor } from './scenery-editor.js';
+import { initTrainerSettings } from './trainer-settings.js';
 
 // Generic form binding for the profile and settings pages. Both are the same
 // shape — load a JSON document, edit named fields, save it back — so they
@@ -76,6 +77,7 @@ export function initProfile() {
 
 export function initSettings({ onSaved }) {
   const scenery = initSceneryEditor();
+  const trainer = initTrainerSettings();
   const form = bindForm({
     fields: [
       'setting-gear-count',
@@ -86,7 +88,8 @@ export function initSettings({ onSaved }) {
       'setting-power-smoothing-sec',
       'setting-sample-interval-sec',
       'setting-bike-weight-kg',
-      'setting-default-mode',
+      'setting-trainer-mode',
+      'setting-rear-resistance',
       'setting-scenery-videos',
       'setting-scenery-mode',
       'setting-language',
@@ -98,7 +101,10 @@ export function initSettings({ onSaved }) {
     statusEl: document.getElementById('settings-status'),
     onSaved,
     beforeSubmit: () => scenery.commit(),
-    afterLoad: (data) => scenery.load(data.scenery_videos),
+    afterLoad: (data) => {
+      scenery.load(data.scenery_videos);
+      trainer.render(data.trainer_mode);
+    },
   });
 
   // The Save button stays quiet (outlined) until a setting changes, then
