@@ -155,6 +155,22 @@ video (MP4).
   That's because Cloudflare refuses requests over 100 MB.
 - Videos aren't in the database backups (too big). They're only on the
   share.
+- **Many routes at once: the inbox.** Copy one folder per route into
+  `routes/inbox/` (on the homelab, from Windows:
+  `\\192.168.0.38\storage\docker\sisyphus\routes\inbox`):
+  ```
+  routes/inbox/<route name>/video.mp4
+                           /route.json
+                           /picture.jpg   (optional: .jpg, .png or .webp, up to 5 MB)
+  ```
+  Then press **Scan for new routes** in the Admin Panel, or run
+  `docker exec sisyphus npm run import-routes` (`-- --list` only shows what's
+  there). The folder's name becomes the route's name. The video is moved,
+  not copied (it's the same disk), and the folder is removed. A folder
+  written to in the last minute is still being copied and waits for the
+  next scan. A name already in the library is skipped, so scanning twice is
+  harmless. If the container can't delete the folders Samba created, the
+  videos are copied instead and the folders stay: delete them by hand.
 - **Make videos smaller before importing.** A 1080p route video can run at
   20+ Mbit/s, and everyone outside the house streams it from the home
   connection through Cloudflare. 720p at a moderate quality is plenty

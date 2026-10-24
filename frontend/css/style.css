@@ -3543,6 +3543,34 @@ kbd {
   font-size: 0.9rem;
 }
 
+.admin-inbox {
+  list-style: none;
+  margin: 0 0 1rem;
+  padding: 0;
+  font-size: 0.9rem;
+}
+
+.admin-inbox > li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.45rem 0;
+  border-top: 1px solid var(--color-rule);
+}
+
+.admin-inbox > li > span:last-child {
+  white-space: nowrap;
+}
+
+.admin-inbox > li.empty {
+  color: var(--color-text-dim);
+}
+
+.admin-inbox-ready {
+  color: var(--color-bronze);
+  font-weight: 700;
+}
+
 /* A route card's picture, with the elevation profile as a strip under it. */
 .card-image {
   display: block;
@@ -3716,6 +3744,10 @@ kbd {
   gap: 0.25rem;
   margin: -0.75rem 0 1.5rem;
   border-bottom: var(--border);
+}
+
+.sub-nav[hidden] {
+  display: none;
 }
 
 .sub-nav button {

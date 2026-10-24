@@ -8,9 +8,11 @@ import { endAllSessions } from '../auth/login-sessions.js';
 import { getScenery, setScenery, sceneryEntries, MAX_SCENERY } from '../scenery.js';
 import { giveDrachmas } from './shop.js';
 import { GIFT_MAX } from '../shop-catalog.js';
+import { inboxDir, listInbox, scanInbox } from '../route-inbox.js';
 
 // /api/admin: the Admin Panel, admins only. Riders (list, create, delete,
-// reset a password), the shared scenery, and the release history.
+// reset a password), the shared scenery, the route inbox, and the release
+// history.
 // Passwords handed out here are random and shown once, like the CLI's.
 
 const releases = JSON.parse(readFileSync(new URL('../releases.json', import.meta.url), 'utf8'));
@@ -89,6 +91,19 @@ router.put('/scenery', (req, res) => {
   if (entries.length > MAX_SCENERY) return res.status(400).json({ error: `at most ${MAX_SCENERY} videos` });
   setScenery(entries.join(', '));
   res.json({ videos: getScenery(), max: MAX_SCENERY });
+});
+
+// The route inbox: what's waiting, then a scan that imports it.
+const inboxView = () => ({
+  dir: inboxDir(),
+  folders: listInbox().map(({ folder, size, reason }) => ({ folder, size, reason })),
+});
+
+router.get('/inbox', (req, res) => res.json(inboxView()));
+
+router.post('/inbox/scan', async (req, res) => {
+  const result = await scanInbox({ createdBy: req.user.id });
+  res.json({ ...result, ...inboxView() });
 });
 
 router.get('/releases', (req, res) => {

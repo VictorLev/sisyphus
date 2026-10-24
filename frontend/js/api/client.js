@@ -267,4 +267,6 @@ export const adminDeleteUser = (id) => request(`/api/admin/users/${id}`, { metho
 export const adminGetScenery = () => request('/api/admin/scenery');
 export const adminSetScenery = (videos) => request('/api/admin/scenery', json('PUT', { videos }));
 export const adminReleases = () => request('/api/admin/releases');
+export const adminInbox = () => request('/api/admin/inbox');
+export const adminScanInbox = () => request('/api/admin/inbox/scan', { method: 'POST' });
 export const adminGiveDrachmas = (id, amount) => request(`/api/admin/users/${id}/drachmas`, json('POST', { amount }));

@@ -75,7 +75,7 @@
     </header>
 
     <!-- Profile's sub-pages; ui/profile-tabs.js moves it onto whichever shows. -->
-    <nav class="sub-nav" id="profile-subnav" aria-label="Profile">
+    <nav class="sub-nav" id="profile-subnav" aria-label="Profile" hidden>
       <button type="button" data-subnav="profile" data-i18n="nav.profile">Profile</button>
       <button type="button" data-subnav="chronicle" data-i18n="nav.chronicle">Chronicle</button>
       <button type="button" data-subnav="feats" data-i18n="nav.feats">Feats</button>
@@ -246,6 +246,21 @@
             <p class="hint" data-i18n="admin.newRiderHint">Usernames are 2–32 letters, digits, dots, dashes
               or underscores. Sisyphus makes a temporary password: send it with
               the address, and they change it in Settings → Account.</p>
+          </div>
+
+          <!-- Routes dropped on the server's share, imported in one go. -->
+          <div class="panel">
+            <h2 data-i18n="admin.inbox">Route inbox</h2>
+            <p class="hint" data-i18n="admin.inboxHint">For many routes at once: copy one folder per route
+              (video.mp4, route.json and maybe picture.jpg) into the inbox folder in the
+              server's routes folder, then scan. The folder's name becomes the route's name.</p>
+            <p class="hint" id="admin-inbox-dir"></p>
+            <ul id="admin-inbox" class="admin-inbox"></ul>
+            <div class="row-actions">
+              <button id="admin-inbox-scan" type="button" data-i18n="admin.scan">Scan for new routes</button>
+              <button id="admin-inbox-refresh" type="button" class="secondary" data-i18n="admin.refresh">Refresh</button>
+            </div>
+            <p id="admin-inbox-status" class="status" role="status"></p>
           </div>
         </div>
 

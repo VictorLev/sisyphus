@@ -11,7 +11,7 @@ import { parseRouteFile, RouteFileError } from '../route-file.js';
 // Pieces, because Cloudflare refuses a request over 100 MB and a 2 GB video
 // can't go in one; they arrive in order, and a failed upload resumes from
 // video_received. The video streams back with range requests, so the
-// player can seek.
+// player can seek. Big batches go through the inbox instead (route-inbox.js).
 
 export const CHUNK_MAX = 32 * 1024 * 1024;
 
@@ -102,6 +102,22 @@ router.patch('/:id/starred', (req, res) => {
   res.json(summary(row, req.user.id));
 });
 
+// A new route from a parsed route file; its video is still to come.
+export function addRoute({ name, parsed, videoSize, createdBy }) {
+  const id = q.insert.run({
+    name,
+    distance_m: parsed.distanceM,
+    ascent_m: parsed.ascentM,
+    duration_s: parsed.durationS,
+    points: JSON.stringify(parsed.points),
+    video_points: JSON.stringify(parsed.videoPoints),
+    video_size: videoSize,
+    created_by: createdBy,
+  }).lastInsertRowid;
+  mkdirSync(path.dirname(videoPath(id)), { recursive: true });
+  return id;
+}
+
 router.post('/', requireAdmin, (req, res) => {
   const name = String(req.body?.name ?? '').trim();
   const size = Number(req.body?.video_size);
@@ -114,17 +130,7 @@ router.post('/', requireAdmin, (req, res) => {
     if (err instanceof RouteFileError) return res.status(400).json({ error: err.message });
     throw err;
   }
-  const id = q.insert.run({
-    name,
-    distance_m: parsed.distanceM,
-    ascent_m: parsed.ascentM,
-    duration_s: parsed.durationS,
-    points: JSON.stringify(parsed.points),
-    video_points: JSON.stringify(parsed.videoPoints),
-    video_size: size,
-    created_by: req.user.id,
-  }).lastInsertRowid;
-  mkdirSync(path.dirname(videoPath(id)), { recursive: true });
+  const id = addRoute({ name, parsed, videoSize: size, createdBy: req.user.id });
   res.status(201).json(summary(q.get.get(id), req.user.id));
 });
 

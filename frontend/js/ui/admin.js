@@ -1,10 +1,11 @@
 // The Admin Panel (admins only, from Settings): riders (create, delete,
-// reset a password), the shared scenery, and the release notes. A new or
+// reset a password), the shared scenery, the route inbox, and the release
+// notes. A new or
 // reset password is shown once, with a Copy button, to pass on.
 
 import {
   adminListUsers, adminCreateUser, adminResetPassword, adminUserData, adminDeleteUser,
-  adminGetScenery, adminSetScenery, adminReleases, adminGiveDrachmas,
+  adminGetScenery, adminSetScenery, adminReleases, adminGiveDrachmas, adminInbox, adminScanInbox,
 } from '../api/client.js';
 import { t, num, date } from '../i18n.js';
 import { initSceneryEditor } from './scenery-editor.js';
@@ -151,6 +152,64 @@ export function initAdmin({ onSceneryChange, onWalletChange }) {
     }
   });
 
+  // The route inbox: each folder waiting, and why it can't go in yet.
+  const inboxStatus = document.getElementById('admin-inbox-status');
+  const scanBtn = document.getElementById('admin-inbox-scan');
+
+  function showInbox({ dir, folders }) {
+    document.getElementById('admin-inbox-dir').textContent = t('admin.inboxDir', { dir });
+    const list = document.getElementById('admin-inbox');
+    list.innerHTML = '';
+    if (folders.length === 0) {
+      const empty = document.createElement('li');
+      empty.className = 'empty';
+      empty.textContent = t('admin.inboxEmpty');
+      list.append(empty);
+    }
+    for (const f of folders) {
+      const li = document.createElement('li');
+      const name = document.createElement('span');
+      name.textContent = f.folder;
+      const state = document.createElement('span');
+      state.className = f.reason ? 'admin-meta' : 'admin-inbox-ready';
+      state.textContent = [f.size != null ? `${num(f.size / 1e9, 1)} GB` : null, f.reason ? t(`admin.inbox.${f.reason}`) : t('admin.inboxReady')]
+        .filter(Boolean).join(' · ');
+      li.append(name, state);
+      list.append(li);
+    }
+  }
+
+  async function refreshInbox() {
+    try {
+      showInbox(await adminInbox());
+    } catch (err) {
+      say(inboxStatus, err.message, true);
+    }
+  }
+
+  document.getElementById('admin-inbox-refresh').addEventListener('click', () => {
+    say(inboxStatus, '');
+    refreshInbox();
+  });
+
+  scanBtn.addEventListener('click', async () => {
+    scanBtn.disabled = true;
+    say(inboxStatus, t('admin.scanning'));
+    try {
+      const result = await adminScanInbox();
+      showInbox(result);
+      const left = result.imported.filter((r) => r.left).map((r) => r.name);
+      say(inboxStatus, [
+        t('admin.scanned', { imported: num(result.imported.length), skipped: num(result.skipped.length) }),
+        left.length ? t('admin.scanLeft', { names: left.join(', ') }) : '',
+      ].filter(Boolean).join(' '), left.length > 0);
+    } catch (err) {
+      say(inboxStatus, err.message, true);
+    } finally {
+      scanBtn.disabled = false;
+    }
+  });
+
   async function refreshReleases() {
     try {
       const { running, releases } = await adminReleases();
@@ -191,6 +250,8 @@ export function initAdmin({ onSceneryChange, onWalletChange }) {
     say(ridersStatus, '');
     refreshRiders();
     refreshScenery();
+    say(inboxStatus, '');
+    refreshInbox();
     refreshReleases();
   });
 }

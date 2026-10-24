@@ -1,7 +1,7 @@
 // Profile's sub-pages: Profile, Chronicle, Feats and Badges share one tab
 // bar, under the main menu's Profile. The bar is a single element moved to
 // the top of whichever of them is showing (a ride's page counts as
-// Chronicle).
+// Chronicle). It stays hidden until one of them first shows.
 
 import { showView } from './views.js';
 
@@ -19,6 +19,7 @@ export function initProfileTabs() {
     if (!PAGES.includes(page)) return;
     const section = document.querySelector(`[data-view="${event.detail.view}"]`);
     section.prepend(bar);
+    bar.hidden = false;
     for (const b of bar.querySelectorAll('[data-subnav]')) {
       const on = b.dataset.subnav === page;
       b.classList.toggle('is-active', on);
