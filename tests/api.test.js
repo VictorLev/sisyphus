@@ -197,6 +197,10 @@ describe('config API', () => {
     assert.match(settings.scenery_videos, /D6tC1pyrsTM/);
     assert.equal(settings.scenery_mode, 'random');
     assert.equal((await postJson('/api/settings', { scenery_mode: 'shuffle' }, 'PUT')).status, 400);
+    const own = await (await postJson('/api/settings', { scenery_mode: 'custom', scenery_custom: 'https://youtu.be/ddddddddddd' }, 'PUT')).json();
+    assert.deepEqual([own.scenery_mode, own.scenery_custom], ['custom', 'https://youtu.be/ddddddddddd']);
+    assert.equal((await postJson('/api/settings', { scenery_custom: 'not a link' }, 'PUT')).status, 400);
+    await postJson('/api/settings', { scenery_mode: 'random', scenery_custom: '' }, 'PUT');
   });
 
   test('bike weight defaults to 9 kg and stays within a real bike\'s range', async () => {

@@ -638,4 +638,5 @@ export const EN = {
   "admin.giveHow": "How many drachmas for {name}?",
   "admin.given": "Gave {n} drachmas to {name}: they have {balance} now.",
   "admin.data.drachma gifts": "drachma gifts",
+  "scenery.mine": "My own video",
 };

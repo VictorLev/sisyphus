@@ -12,7 +12,10 @@ const ID_PATTERN = /^[A-Za-z0-9_-]{11}$/;
 // New accounts start with it (backend/src/routes/config.js has the same
 // link), and an empty list falls back to it.
 export const DEFAULT_SCENERY_LINK = 'https://www.youtube.com/watch?v=D6tC1pyrsTM&list=PLiNcRO_l_QWfhgFUDiBBaJ5NEF7xyfb_f&t=60s';
-export const SCENERY_MODES = ['random', 'sequence'];
+// Settings → Scenery: a random video from the shared list, one chosen
+// from it (scenery_pick, a video id), or the rider's own link
+// (scenery_custom).
+export const SCENERY_MODES = ['random', 'pick', 'custom'];
 
 // "90", "90s", "1m30s", "1h2m3s" -> seconds.
 function parseStart(value) {
@@ -106,12 +109,22 @@ export function pickScenery(videos, lastId = null, random = Math.random) {
   return pool[Math.floor(random() * pool.length)] ?? pool[0];
 }
 
-// In order: the one after the video that played last time, wrapping
-// around; the first when there's no last one (or it left the list).
-export function nextScenery(videos, lastId = null) {
-  if (videos.length === 0) return null;
-  const i = videos.findIndex((v) => v.id === lastId);
-  return videos[(i + 1) % videos.length];
+// The video a ride starts on, and the list its picker offers. A chosen
+// video that left the shared list, or an own link that isn't a YouTube
+// video, falls back to random.
+export function chooseScenery(shared, { mode = 'random', pick = '', custom = '' } = {}, lastId = null, random = Math.random) {
+  if (mode === 'custom') {
+    const own = parseYouTube(String(custom));
+    if (own) {
+      const video = { ...own, name: t('scenery.mine') };
+      return { video, list: [video, ...shared.filter((v) => v.id !== own.id)] };
+    }
+  }
+  if (mode === 'pick') {
+    const chosen = shared.find((v) => v.id === pick);
+    if (chosen) return { video: chosen, list: shared };
+  }
+  return { video: pickScenery(shared, lastId, random), list: shared };
 }
 
 const CHOICE_KEY = 'sisyphus.scenery';
@@ -131,8 +144,9 @@ function rememberChoice(id) {
 }
 
 export function initScenery({ frameEl, pickerEl, emptyEl }) {
+  let shared = [];
   let videos = [];
-  let mode = 'random';
+  let choice = { mode: 'random' };
   let iframe = null;
 
   function command(func) {
@@ -170,19 +184,22 @@ export function initScenery({ frameEl, pickerEl, emptyEl }) {
   });
 
   return {
-    // From saved settings; takes effect at the next ride start.
-    setList(text, order = 'random') {
-      videos = parseSceneryList(text);
-      if (videos.length === 0) videos = parseSceneryList(DEFAULT_SCENERY_LINK);
-      mode = SCENERY_MODES.includes(order) ? order : 'random';
+    // The shared list (Admin Panel) and the rider's choice (Settings:
+    // { mode, pick, custom }); either takes effect at the next ride start.
+    setList(text, rider = choice) {
+      shared = parseSceneryList(text);
+      if (shared.length === 0) shared = parseSceneryList(DEFAULT_SCENERY_LINK);
+      choice = rider ?? { mode: 'random' };
+      videos = shared;
       renderPicker();
     },
 
     start() {
-      emptyEl.hidden = videos.length > 0;
-      if (videos.length === 0) return;
-      const last = rememberedChoice();
-      const video = mode === 'sequence' ? nextScenery(videos, last) : pickScenery(videos, last);
+      const { video, list } = chooseScenery(shared, choice, rememberedChoice());
+      videos = list;
+      renderPicker();
+      emptyEl.hidden = Boolean(video);
+      if (!video) return;
       pickerEl.value = video.id;
       load(video);
     },

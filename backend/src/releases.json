@@ -6,6 +6,7 @@
     "notes": [
       "Admin Panel: riders (create, delete, reset passwords), the shared scenery list, release notes",
       "Admins can give riders drachmas (Admin Panel, or npm run give-drachmas)",
+      "Scenery: random, choose one of the shared videos, or your own YouTube link; the log moved to the Admin Panel",
       "Settings in two tabs, Ride and Account; toggle switches; card actions as icons",
       "A slimmer menu (Ride, Workouts, Routes, Profile, Settings): Chronicle, Feats and Badges are tabs inside Profile; Build opens from Workouts; the drachmas show a shop bag",
       "Drachmas and the shop (The Agora): hats and boulders for Sisyphus, avatars",

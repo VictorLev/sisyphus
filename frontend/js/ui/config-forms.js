@@ -1,6 +1,7 @@
 import { getProfile, saveProfile, getSettings, saveSettings } from '../api/client.js';
 import { t } from '../i18n.js';
 import { initTrainerSettings } from './trainer-settings.js';
+import { initScenerySettings } from './scenery-settings.js';
 
 // Generic form binding for the profile and settings pages. Both are the same
 // shape — load a JSON document, edit named fields, save it back — so they
@@ -74,8 +75,9 @@ export function initProfile() {
   return form;
 }
 
-export function initSettings({ onSaved }) {
+export function initSettings({ onSaved, getSharedScenery = () => '' }) {
   const trainer = initTrainerSettings();
+  const scenery = initScenerySettings({ getShared: getSharedScenery });
   const form = bindForm({
     fields: [
       'setting-gear-count',
@@ -90,6 +92,8 @@ export function initSettings({ onSaved }) {
       'setting-erg-workouts',
       'setting-rear-resistance',
       'setting-scenery-mode',
+      'setting-scenery-pick',
+      'setting-scenery-custom',
       'setting-language',
       'setting-theme',
       'setting-strava-export',
@@ -98,7 +102,11 @@ export function initSettings({ onSaved }) {
     save: saveSettings,
     statusEl: document.getElementById('settings-status'),
     onSaved,
-    afterLoad: (data) => trainer.render(data.trainer_mode),
+    afterLoad: (data) => {
+      trainer.render(data.trainer_mode);
+      scenery.render(data);
+    },
+    beforeSubmit: () => scenery.check(),
   });
 
   // The Save button stays quiet (outlined) until a setting changes, then

@@ -1,7 +1,7 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { parseYouTube, parseSceneryList, pickScenery, sceneryRows, serializeSceneryRows, nextScenery, DEFAULT_SCENERY_LINK } from '../frontend/js/ui/scenery.js';
+import { parseYouTube, parseSceneryList, pickScenery, sceneryRows, serializeSceneryRows, chooseScenery, DEFAULT_SCENERY_LINK } from '../frontend/js/ui/scenery.js';
 
 describe('parseYouTube', () => {
   test('reads the video from a watch link, ignoring playlist parameters', () => {
@@ -114,15 +114,27 @@ describe('the scenery editor\'s rows', () => {
   });
 });
 
-describe('ride order', () => {
-  const videos = ['a', 'b', 'c'].map((id) => ({ id }));
+describe('which video a ride starts on', () => {
+  const shared = parseSceneryList('Alps | https://youtu.be/aaaaaaaaaaa, Coast | https://youtu.be/bbbbbbbbbbb, Lake | https://youtu.be/ccccccccccc');
 
-  test('in order plays the one after last time\'s, wrapping around', () => {
-    assert.equal(nextScenery(videos, null).id, 'a');
-    assert.equal(nextScenery(videos, 'a').id, 'b');
-    assert.equal(nextScenery(videos, 'c').id, 'a');
-    assert.equal(nextScenery(videos, 'gone').id, 'a', 'a video no longer listed starts over');
-    assert.equal(nextScenery([], 'a'), null);
+  test('random: any of the shared list, never last ride\'s', () => {
+    const { video, list } = chooseScenery(shared, { mode: 'random' }, 'aaaaaaaaaaa', () => 0);
+    assert.notEqual(video.id, 'aaaaaaaaaaa');
+    assert.equal(list, shared);
+  });
+
+  test('choose one: always that video, and random again if it left the list', () => {
+    assert.equal(chooseScenery(shared, { mode: 'pick', pick: 'bbbbbbbbbbb' }).video.id, 'bbbbbbbbbbb');
+    const fallback = chooseScenery(shared, { mode: 'pick', pick: 'gone0000000' }).video;
+    assert.ok(shared.includes(fallback));
+  });
+
+  test('my own link: plays it, first in the picker; a bad link falls back to random', () => {
+    const own = chooseScenery(shared, { mode: 'custom', custom: 'https://www.youtube.com/watch?v=ddddddddddd&t=30' });
+    assert.deepEqual([own.video.id, own.video.start], ['ddddddddddd', 30]);
+    assert.equal(own.list[0].id, 'ddddddddddd');
+    assert.equal(own.list.length, 4);
+    assert.ok(shared.includes(chooseScenery(shared, { mode: 'custom', custom: 'https://example.com' }).video));
   });
 
   test('the default ride is a valid link, the same one new accounts get', () => {

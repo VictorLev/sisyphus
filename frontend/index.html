@@ -272,6 +272,23 @@
             <p class="hint" id="admin-running"></p>
             <ol id="admin-releases" class="admin-releases"></ol>
           </div>
+
+          <!-- This browser's diagnostic log, for bug reports. -->
+          <div id="log-panel" class="panel">
+            <div class="calendar-header">
+              <h2 data-i18n="log.title">Log</h2>
+              <div class="row-actions">
+                <button id="log-copy-btn" type="button" class="secondary" data-i18n="log.copy">Copy</button>
+                <button id="log-clear-btn" type="button" class="secondary" data-i18n="log.clear">Clear</button>
+              </div>
+            </div>
+            <ol id="log-list" class="log-list"></ol>
+            <p class="hint" data-i18n="log.hint">Errors, warnings and trainer events from this
+              browser, newest first: the last 200, kept on this device only.
+              When something goes wrong, press Copy and paste it into your
+              message.</p>
+            <p id="log-status" class="status"></p>
+          </div>
         </div>
       </div>
     </section>
@@ -639,16 +656,26 @@
           
             <h2 class="settings-more" data-i18n="settings.sceneryTitle">Scenery</h2>
             <label class="field">
-              <span data-i18n="settings.sceneryMode">Order</span>
+              <span data-i18n="settings.sceneryMode">Video</span>
               <select id="setting-scenery-mode">
                 <option value="random" data-i18n="scenery.random">Random</option>
-                <option value="sequence" data-i18n="scenery.sequence">In order</option>
+                <option value="pick" data-i18n="scenery.pick">Choose one</option>
+                <option value="custom" data-i18n="scenery.custom">My own link</option>
               </select>
             </label>
-            <p class="hint" data-i18n="settings.sceneryHint">The videos are the same for everyone, chosen by
-              the admin. Random never repeats last ride's video; In order plays
-              the next one each ride. Videos start muted; unmute in the player.
-              To switch mid-ride, use the picker on the ride screen.</p>
+            <label class="field" id="scenery-pick-field" hidden>
+              <span data-i18n="scenery.pickLabel">Which one</span>
+              <select id="setting-scenery-pick"></select>
+            </label>
+            <label class="field" id="scenery-custom-field" hidden>
+              <span data-i18n="scenery.customLabel">Your YouTube link</span>
+              <input id="setting-scenery-custom" type="url" spellcheck="false" placeholder="https://www.youtube.com/watch?v=…" />
+            </label>
+            <p class="hint" data-i18n="settings.sceneryHint">Random plays one of the admin's videos (never the
+              same as last ride), Choose one always plays the one you pick, and My
+              own link plays any YouTube video you like. Videos start muted;
+              unmute in the player. To switch mid-ride, use the picker on the ride
+              screen.</p>
           
             <h2 class="settings-more">Strava</h2>
             <label class="check-field">
@@ -705,22 +732,6 @@
             <h2 class="settings-more" data-i18n="settings.more">More</h2>
             <p class="tools-link"><button id="replay-tutorial-btn" type="button" class="link-btn" data-i18n="tutorial.replay">Replay the tutorial</button></p>
             <p class="tools-link"><a href="probe.html" data-i18n="settings.probe">Hardware diagnostics (probe)</a></p>
-          
-          </div>
-          <div id="log-panel" class="panel settings-pane" data-settings-pane="account" hidden>
-            <div class="calendar-header">
-              <h2 data-i18n="log.title">Log</h2>
-              <div class="row-actions">
-                <button id="log-copy-btn" type="button" class="secondary" data-i18n="log.copy">Copy</button>
-                <button id="log-clear-btn" type="button" class="secondary" data-i18n="log.clear">Clear</button>
-              </div>
-            </div>
-            <ol id="log-list" class="log-list"></ol>
-            <p class="hint" data-i18n="log.hint">Errors, warnings and trainer events from this
-              browser, newest first: the last 200, kept on this device only.
-              When something goes wrong, press Copy and paste it into your
-              message.</p>
-            <p id="log-status" class="status"></p>
           
           </div>
           <div class="panel settings-pane admin-link" id="admin-link" data-settings-pane="account" hidden>

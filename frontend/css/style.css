@@ -536,6 +536,10 @@ button.secondary:hover:not(:disabled) {
   color: var(--color-bronze);
 }
 
+.field[hidden] {
+  display: none;
+}
+
 .field input,
 .field textarea {
   font-family: inherit;

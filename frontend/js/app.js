@@ -142,11 +142,11 @@ refreshWallet();
 
 // Scenery: one list for everyone, set in the Admin Panel.
 let sharedScenery = '';
-let sceneryMode = 'random';
+let sceneryChoice = { mode: 'random' };
 async function loadScenery() {
   try {
     sharedScenery = (await getScenery()).videos;
-    scenery.setList(sharedScenery, sceneryMode);
+    scenery.setList(sharedScenery, sceneryChoice);
   } catch { /* offline: the default ride */ }
 }
 loadScenery();
@@ -158,7 +158,7 @@ if (currentUser?.is_admin) {
     onWalletChange: () => refreshWallet(),
     onSceneryChange: (videos) => {
       sharedScenery = videos;
-      scenery.setList(sharedScenery, sceneryMode);
+      scenery.setList(sharedScenery, sceneryChoice);
     },
   });
 }
@@ -235,16 +235,13 @@ initFeats({ onOpenRide: (id) => chronicle.openDetail(id) });
 initLeaderboard();
 initBadges({ onOpenRide: (id) => chronicle.openDetail(id), onOpenBadges: () => showView('badges') });
 initProfile();
-initSettings({ onSaved: (saved) => applySettings(saved) });
+initSettings({ onSaved: (saved) => applySettings(saved), getSharedScenery: () => sharedScenery });
 initAccount(currentUser);
-// Settings tabs. The diagnostic log is for whoever fixes bugs: admins only
-// (entries are still captured for everyone, in case an admin rides on this
-// browser), like the Admin Panel.
+// Settings tabs. The Admin Panel link is for admins; the diagnostic log is
+// on the Admin Panel page (entries are still captured for everyone, in case
+// an admin rides on this browser).
 const settingsTabs = initSettingsTabs();
-if (currentUser?.is_admin) {
-  document.getElementById('log-panel').hidden = false;
-  document.getElementById('admin-link').hidden = false;
-}
+if (currentUser?.is_admin) document.getElementById('admin-link').hidden = false;
 initLogPanel();
 initFtpHistory();
 initFtpTestPanel({ onStart: startWorkoutRide });
@@ -270,8 +267,8 @@ function applySettings(settings) {
   }
   setStravaExport(settings.strava_export);
   // The videos are everyone's (Admin Panel); the order is the rider's.
-  sceneryMode = settings.scenery_mode;
-  scenery.setList(sharedScenery, sceneryMode);
+  sceneryChoice = { mode: settings.scenery_mode, pick: settings.scenery_pick, custom: settings.scenery_custom };
+  scenery.setList(sharedScenery, sceneryChoice);
   gears.configure({
     gearCount: settings.gear_count,
     minResistance: settings.min_resistance,

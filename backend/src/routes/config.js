@@ -42,8 +42,12 @@ const DEFAULTS = {
     // optionally named: "Swiss Alps | https://youtu.be/...". New accounts start with this ride (frontend/js/ui/scenery.js has the
     // same link as DEFAULT_SCENERY_LINK).
     scenery_videos: 'https://www.youtube.com/watch?v=D6tC1pyrsTM&list=PLiNcRO_l_QWfhgFUDiBBaJ5NEF7xyfb_f&t=60s',
-    // Which video a ride starts on: 'random' or 'sequence' (the next in order).
+    // Which video a ride starts on: 'random' (from the shared list), 'pick'
+    // (scenery_pick, a video id from it) or 'custom' (scenery_custom, the
+    // rider's own YouTube link). An old 'sequence' reads as 'random'.
     scenery_mode: 'random',
+    scenery_pick: '',
+    scenery_custom: '',
     // 'auto' follows the browser (French if it prefers French, else English).
     language: 'auto',
     // 'dark' (the original look) or 'light' (lighter beige).
@@ -76,6 +80,7 @@ export function readConfig(userId, key) {
   // then ERG was a trainer mode. Both read as virtual gears now.
   if (key === 'settings' && stored.trainer_mode === undefined && stored.default_mode) stored.trainer_mode = 'gears';
   if (key === 'settings' && stored.trainer_mode === 'erg') stored.trainer_mode = 'gears';
+  if (key === 'settings' && stored.scenery_mode === 'sequence') stored.scenery_mode = 'random';
   const { default_mode, ...current } = { ...DEFAULTS[key], ...stored };
   return current;
 }
@@ -113,8 +118,11 @@ function validateSettings(s) {
   if (s.language != null && !['auto', 'en', 'fr'].includes(s.language)) {
     return "language must be 'auto', 'en' or 'fr'";
   }
-  if (s.scenery_mode != null && !['random', 'sequence'].includes(s.scenery_mode)) {
-    return "scenery_mode must be 'random' or 'sequence'";
+  if (s.scenery_mode != null && !['random', 'pick', 'custom'].includes(s.scenery_mode)) {
+    return "scenery_mode must be 'random', 'pick' or 'custom'";
+  }
+  if (s.scenery_custom && (s.scenery_custom.length > 500 || !/^https?:\/\//.test(s.scenery_custom))) {
+    return 'scenery_custom must be a link';
   }
   if (s.theme != null && !['dark', 'light'].includes(s.theme)) {
     return "theme must be 'dark' or 'light'";
