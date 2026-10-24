@@ -3,94 +3,48 @@ import { toCsv, toZwo, parseWorkoutFile, fileSlug } from '../workout/files.js';
 import { t, tp } from '../i18n.js';
 import { workoutName } from '../workout/names.js';
 import { showView } from './views.js';
-
-const STAR_ON = '★';
-const STAR_OFF = '☆';
+import { card, workoutGraphSvg } from './cards.js';
 
 function totalMinutes(workout) {
   return Math.round(workout.structure.reduce((sum, s) => sum + s.duration_sec, 0) / 60);
 }
 
-// Shared row renderer: the home screen shows only starred workouts with a
-// Start button, the Workouts page shows everything with full management.
-// Library workouts are shared and read-only, so they get Copy instead of
-// Edit and Delete.
+// A workout as a card: its power graph, name, duration and the star, then
+// Start and (on the Workouts page) management. Library workouts are shared
+// and read-only, so they get Copy instead of Edit and Delete. `compact`
+// cards (the Home pickers) only start and star.
 export function renderWorkoutRow(workout, { onStart, onEdit, onDelete, onCopy, onExport, onToggleStar, compact }) {
-  const li = document.createElement('li');
-
-  const info = document.createElement('div');
-  const name = document.createElement('span');
-  name.className = 'workout-name';
-  name.textContent = workoutName(workout);
-  const meta = document.createElement('span');
-  meta.className = 'workout-meta';
   const grades = workout.structure.filter((s) => s.grade_percent);
-  meta.textContent = `${tp('workouts.segments', workout.structure.length)} · ${totalMinutes(workout)} min` +
-    (grades.length ? ` · ${grades.length} with terrain` : '');
-  info.appendChild(name);
-  if (workout.library && compact) {
-    const tag = document.createElement('span');
-    tag.className = 'workout-tag';
-    tag.textContent = t('workouts.library');
-    info.appendChild(tag);
-  }
-  info.appendChild(meta);
-  li.appendChild(info);
+  const { li, actions } = card({
+    graph: workoutGraphSvg(workout.structure),
+    title: workoutName(workout),
+    meta: `${totalMinutes(workout)} min · ${tp('workouts.segments', workout.structure.length)}` +
+      (grades.length ? ` · ${t('workouts.withTerrain', { n: grades.length })}` : ''),
+    // Only where library and own workouts are mixed (the Home pickers).
+    tag: compact && workout.library ? t('workouts.library') : null,
+    starred: workout.starred,
+    onToggleStar: onToggleStar ? () => onToggleStar(workout) : null,
+  });
+  li.classList.add('workout-card');
 
-  const actions = document.createElement('div');
-  actions.className = 'row-actions';
+  const button = (label, handler, secondary = true, title = '') => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    if (secondary) b.className = 'secondary';
+    b.textContent = label;
+    if (title) b.title = title;
+    b.addEventListener('click', () => handler(workout));
+    actions.append(b);
+  };
 
-  if (onToggleStar) {
-    const star = document.createElement('button');
-    star.type = 'button';
-    star.className = `secondary star-btn${workout.starred ? ' is-starred' : ''}`;
-    star.textContent = workout.starred ? STAR_ON : STAR_OFF;
-    star.title = t(workout.starred ? 'workouts.unstar' : 'workouts.star');
-    star.setAttribute('aria-label', star.title);
-    star.addEventListener('click', () => onToggleStar(workout));
-    actions.appendChild(star);
-  }
-
-  const startBtn = document.createElement('button');
-  startBtn.type = 'button';
-  startBtn.textContent = t('workouts.start');
-  startBtn.addEventListener('click', () => onStart(workout));
-  actions.appendChild(startBtn);
-
+  button(t('workouts.start'), onStart, false);
   if (!compact && workout.library) {
-    const copyBtn = document.createElement('button');
-    copyBtn.type = 'button';
-    copyBtn.className = 'secondary';
-    copyBtn.textContent = t('workouts.copy');
-    copyBtn.addEventListener('click', () => onCopy(workout));
-    actions.appendChild(copyBtn);
+    button(t('workouts.copy'), onCopy);
   } else if (!compact) {
-    const editBtn = document.createElement('button');
-    editBtn.type = 'button';
-    editBtn.className = 'secondary';
-    editBtn.textContent = t('workouts.edit');
-    editBtn.addEventListener('click', () => onEdit(workout));
-    actions.appendChild(editBtn);
-
-    const delBtn = document.createElement('button');
-    delBtn.type = 'button';
-    delBtn.className = 'secondary';
-    delBtn.textContent = t('workouts.delete');
-    delBtn.addEventListener('click', () => onDelete(workout));
-    actions.appendChild(delBtn);
+    button(t('workouts.edit'), onEdit);
+    button(t('workouts.delete'), onDelete);
   }
-
-  if (!compact && onExport) {
-    const exportBtn = document.createElement('button');
-    exportBtn.type = 'button';
-    exportBtn.className = 'secondary';
-    exportBtn.textContent = t('workouts.export');
-    exportBtn.title = t('workouts.exportTitle');
-    exportBtn.addEventListener('click', () => onExport(workout));
-    actions.appendChild(exportBtn);
-  }
-
-  li.appendChild(actions);
+  if (!compact && onExport) button(t('workouts.export'), onExport, true, t('workouts.exportTitle'));
   return li;
 }
 

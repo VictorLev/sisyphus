@@ -436,4 +436,5 @@ export const EN = {
   "routes.uploadStopped": "The upload stopped: {error}. Press Resume upload on the route and pick the same video.",
   "routes.wrongFile": "That isn't the same video: it should be {size} MB.",
   "note.routeDone": "Route complete! End the ride when you're ready.",
+  "workouts.withTerrain": "{n} with terrain",
 };

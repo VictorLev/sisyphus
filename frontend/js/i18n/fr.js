@@ -639,4 +639,5 @@ export const FR = {
   "routes.videoFile": "Vidéo (.mp4)",
   "routes.import": "Importer",
   "routes.importHint": "Le fichier de route contient la route (geometry : distance et altitude) et la correspondance avec la vidéo (video_points). Les grosses vidéos sont envoyées par morceaux; si ça s'arrête, appuyez sur Reprendre le téléversement sur la route et choisissez la même vidéo. Les vidéos plus légères jouent mieux : voyez le guide de déploiement pour les réduire en 720p.",
+  "workouts.withTerrain": "{n} avec pente",
 };
