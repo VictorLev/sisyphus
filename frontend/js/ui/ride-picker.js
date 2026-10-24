@@ -8,7 +8,7 @@ import { listWorkouts, listRoutes, setWorkoutStarred, setRouteStarred } from '..
 import { t, tp } from '../i18n.js';
 import { workoutName } from '../workout/names.js';
 import { renderWorkoutRow } from './workouts.js';
-import { card, routeProfileSvg } from './cards.js';
+import { card, routeProfileSvg, iconButton } from './cards.js';
 import { routeMeta } from './routes.js';
 
 const minutesOf = (w) => w.structure.reduce((s, seg) => s + seg.duration_sec, 0) / 60;
@@ -133,11 +133,7 @@ export function initRidePicker({ onPick, ergDefault = () => false }) {
           starred: item.starred,
           onToggleStar: () => toggleStar(item),
         });
-        const start = document.createElement('button');
-        start.type = 'button';
-        start.textContent = t('workouts.start');
-        start.addEventListener('click', () => pick(item));
-        actions.append(start);
+        actions.append(iconButton('start', t('workouts.start'), () => pick(item), { primary: true }));
         listEl.append(li);
       }
     }

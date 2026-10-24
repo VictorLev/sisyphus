@@ -3563,3 +3563,30 @@ kbd {
 .picker-erg[hidden] {
   display: none;
 }
+
+/* Card actions as square icon buttons; Start (play) is the filled one. */
+.card-actions {
+  align-items: center;
+}
+
+.card-actions .icon-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  padding: 0;
+}
+
+.card-actions .icon-btn.is-primary {
+  width: 3.2rem;
+}
+
+.icon-btn svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}

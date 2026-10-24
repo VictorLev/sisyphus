@@ -7,7 +7,7 @@
 
 import { listRoutes, createRoute, deleteRoute, setRouteStarred } from '../api/client.js';
 import { t, tp, num } from '../i18n.js';
-import { card, routeProfileSvg } from './cards.js';
+import { card, routeProfileSvg, iconButton } from './cards.js';
 import { shrinkImage } from './image-resize.js';
 
 // A route's card picture: shrunk, then sent. Resolves to the updated route.
@@ -118,11 +118,7 @@ export function initRoutes({ isAdmin, onStartRoute }) {
     });
     li.classList.add('route-card');
     if (route.ready) {
-      const start = document.createElement('button');
-      start.type = 'button';
-      start.textContent = t('workouts.start');
-      start.addEventListener('click', () => onStartRoute(route));
-      actions.append(start);
+      actions.append(iconButton('start', t('workouts.start'), () => onStartRoute(route), { primary: true }));
     } else {
       const pending = document.createElement('span');
       pending.className = 'hint';
@@ -139,11 +135,7 @@ export function initRoutes({ isAdmin, onStartRoute }) {
     }
     if (isAdmin) {
       // Add or replace the card's picture.
-      const pic = document.createElement('button');
-      pic.type = 'button';
-      pic.className = 'secondary';
-      pic.textContent = t('routes.picture');
-      pic.addEventListener('click', () => {
+      const pic = iconButton('picture', t('routes.picture'), () => {
         const picker = document.createElement('input');
         picker.type = 'file';
         picker.accept = 'image/*';
@@ -159,11 +151,7 @@ export function initRoutes({ isAdmin, onStartRoute }) {
         picker.click();
       });
       actions.append(pic);
-      const del = document.createElement('button');
-      del.type = 'button';
-      del.className = 'secondary';
-      del.textContent = t('workouts.delete');
-      del.addEventListener('click', async () => {
+      const del = iconButton('delete', t('workouts.delete'), async () => {
         if (!confirm(t('routes.confirmDelete', { name: route.name }))) return;
         await deleteRoute(route.id);
         refresh();

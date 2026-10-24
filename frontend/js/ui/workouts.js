@@ -3,7 +3,7 @@ import { toCsv, toZwo, parseWorkoutFile, fileSlug } from '../workout/files.js';
 import { t, tp } from '../i18n.js';
 import { workoutName } from '../workout/names.js';
 import { showView } from './views.js';
-import { card, workoutGraphSvg } from './cards.js';
+import { card, workoutGraphSvg, iconButton } from './cards.js';
 
 function totalMinutes(workout) {
   return Math.round(workout.structure.reduce((sum, s) => sum + s.duration_sec, 0) / 60);
@@ -27,24 +27,17 @@ export function renderWorkoutRow(workout, { onStart, onEdit, onDelete, onCopy, o
   });
   li.classList.add('workout-card');
 
-  const button = (label, handler, secondary = true, title = '') => {
-    const b = document.createElement('button');
-    b.type = 'button';
-    if (secondary) b.className = 'secondary';
-    b.textContent = label;
-    if (title) b.title = title;
-    b.addEventListener('click', () => handler(workout));
-    actions.append(b);
-  };
+  const button = (icon, label, handler, primary = false) =>
+    actions.append(iconButton(icon, label, () => handler(workout), { primary }));
 
-  button(t('workouts.start'), onStart, false);
+  button('start', t('workouts.start'), onStart, true);
   if (!compact && workout.library) {
-    button(t('workouts.copy'), onCopy);
+    button('copy', t('workouts.copy'), onCopy);
   } else if (!compact) {
-    button(t('workouts.edit'), onEdit);
-    button(t('workouts.delete'), onDelete);
+    button('edit', t('workouts.edit'), onEdit);
+    button('delete', t('workouts.delete'), onDelete);
   }
-  if (!compact && onExport) button(t('workouts.export'), onExport, true, t('workouts.exportTitle'));
+  if (!compact && onExport) button('export', t('workouts.exportTitle'), onExport);
   return li;
 }
 

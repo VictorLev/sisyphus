@@ -93,3 +93,25 @@ export function card({ graph, image, title, meta, tag, starred, onToggleStar }) 
   li.append(body, actions);
   return { li, actions };
 }
+
+// Card actions as icons, in the menu's line style. The name stays as the
+// tooltip and for screen readers.
+const ICONS = {
+  start: '<path d="M8 5.5v13l11-6.5z" fill="currentColor" stroke="none"/>',
+  edit: '<path d="M4 20h4L19.5 8.5l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/>',
+  delete: '<path d="M4 7h16M9 7V4.5h6V7M6 7l1 13h10l1-13M10 11v5.5M14 11v5.5"/>',
+  export: '<path d="M12 4v11M7.5 10.5L12 15l4.5-4.5M5 20h14"/>',
+  copy: '<path d="M5 4h11l3 3v13H5z"/><path d="M8 4v5h7V4M8 20v-6h8v6"/>',
+  picture: '<rect x="3.5" y="5" width="17" height="14" rx="1.5"/><circle cx="9" cy="10" r="1.6"/><path d="M4 18l5-5 4 4 3-3 4 4"/>',
+};
+
+export function iconButton(icon, label, onClick, { primary = false } = {}) {
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.className = primary ? 'icon-btn is-primary' : 'icon-btn secondary';
+  b.title = label;
+  b.setAttribute('aria-label', label);
+  b.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true">${ICONS[icon]}</svg>`;
+  b.addEventListener('click', onClick);
+  return b;
+}
