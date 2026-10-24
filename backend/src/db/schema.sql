@@ -175,6 +175,17 @@ CREATE TABLE IF NOT EXISTS purchases (
   PRIMARY KEY (user_id, item_id)
 );
 
+-- Drachmas an admin gave a rider (Admin Panel, or npm run give-drachmas),
+-- added to what their riding and badges earned.
+CREATE TABLE IF NOT EXISTS drachma_gifts (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  amount INTEGER NOT NULL,
+  note TEXT,
+  given_by INTEGER, -- the admin; no foreign key, so it outlives their account
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 -- Settings for the whole site, set in the Admin Panel (e.g. the shared
 -- scenery list). Key/value, the value JSON.
 CREATE TABLE IF NOT EXISTS site_config (

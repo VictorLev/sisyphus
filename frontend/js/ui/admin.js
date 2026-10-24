@@ -4,12 +4,12 @@
 
 import {
   adminListUsers, adminCreateUser, adminResetPassword, adminUserData, adminDeleteUser,
-  adminGetScenery, adminSetScenery, adminReleases,
+  adminGetScenery, adminSetScenery, adminReleases, adminGiveDrachmas,
 } from '../api/client.js';
 import { t, num, date } from '../i18n.js';
 import { initSceneryEditor } from './scenery-editor.js';
 
-export function initAdmin({ onSceneryChange }) {
+export function initAdmin({ onSceneryChange, onWalletChange }) {
   const ridersEl = document.getElementById('admin-riders');
   const ridersStatus = document.getElementById('admin-riders-status');
   const passwordBox = document.getElementById('admin-password');
@@ -66,6 +66,19 @@ export function initAdmin({ onSceneryChange }) {
       last.textContent = u.last_ride ? date(u.last_ride, { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
       const actions = document.createElement('td');
       actions.className = 'admin-actions';
+      // Anyone, yourself included: drachmas for the shop.
+      actions.append(button(t('admin.give'), async () => {
+        const answer = prompt(t('admin.giveHow', { name: u.display_name }), '1000');
+        if (answer == null) return;
+        const amount = Number(answer.replace(/[\s,]/g, ''));
+        try {
+          const { balance } = await adminGiveDrachmas(u.id, amount);
+          say(ridersStatus, t('admin.given', { n: num(amount), name: u.display_name, balance: num(balance) }));
+          if (u.you) onWalletChange?.();
+        } catch (err) {
+          say(ridersStatus, err.message, true);
+        }
+      }));
       if (!u.you) {
         actions.append(
           button(t('admin.reset'), async () => {

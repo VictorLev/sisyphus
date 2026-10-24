@@ -5,6 +5,7 @@
     "commit": null,
     "notes": [
       "Admin Panel: riders (create, delete, reset passwords), the shared scenery list, release notes",
+      "Admins can give riders drachmas (Admin Panel, or npm run give-drachmas)",
       "Settings in two tabs, Ride and Account; toggle switches; card actions as icons",
       "A slimmer menu: Build is opened from Workouts, Profile from your level or name; the drachmas show a shop bag",
       "Drachmas and the shop (The Agora): hats and boulders for Sisyphus, avatars",

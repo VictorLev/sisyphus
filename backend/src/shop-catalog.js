@@ -27,6 +27,8 @@ export const ITEMS = [
 ];
 export const SLOTS = ['hat', 'boulder', 'avatar_bg', 'avatar_emblem'];
 
-// Drachmas earned: one per minute ridden, plus a reward per badge.
+// Drachmas earned: one per minute ridden, plus a reward per badge (plus any
+// an admin gives, up to GIFT_MAX at a time).
+export const GIFT_MAX = 1_000_000;
 export const PER_MINUTE = 1;
 export const BADGE_REWARD = { bronze: 25, silver: 50, gold: 100, fun: 25, secret: 75 };

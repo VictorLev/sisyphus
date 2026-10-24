@@ -6,6 +6,8 @@ import { generatePassword } from '../auth/password.js';
 import { createUser, deleteUser, findUserById, setPassword, countUserData, publicUser } from '../auth/users.js';
 import { endAllSessions } from '../auth/login-sessions.js';
 import { getScenery, setScenery, sceneryEntries, MAX_SCENERY } from '../scenery.js';
+import { giveDrachmas } from './shop.js';
+import { GIFT_MAX } from '../shop-catalog.js';
 
 // /api/admin: the Admin Panel, admins only. Riders (list, create, delete,
 // reset a password), the shared scenery, and the release history.
@@ -64,6 +66,19 @@ router.delete('/users/:id', (req, res) => {
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
+});
+
+// Give a rider drachmas (a whole number, 1 to GIFT_MAX).
+router.post('/users/:id/drachmas', (req, res) => {
+  const user = findUserById(req.params.id);
+  if (!user) return res.status(404).json({ error: 'no such rider' });
+  const amount = Number(req.body?.amount);
+  if (!Number.isInteger(amount) || amount < 1 || amount > GIFT_MAX) {
+    return res.status(400).json({ error: `amount must be a whole number from 1 to ${GIFT_MAX}` });
+  }
+  const note = req.body?.note ? String(req.body.note).slice(0, 200) : null;
+  const { balance } = giveDrachmas(user.id, amount, { note, givenBy: req.user.id });
+  res.json({ user: publicUser(user), amount, balance });
 });
 
 router.get('/scenery', (req, res) => res.json({ videos: getScenery(), max: MAX_SCENERY }));

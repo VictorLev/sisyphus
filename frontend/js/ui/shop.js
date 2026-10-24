@@ -108,6 +108,7 @@ export function initShop({ onChange, getName }) {
     summaryEl.textContent = t('shop.balance', { n: num(state.balance) });
     earnEl.textContent = t('shop.earnedSoFar', {
       riding: num(state.earned.riding), badges: num(state.earned.badges), count: state.earned.badge_count, spent: num(state.spent),
+      gifts: num(state.earned.gifts ?? 0),
     });
     avatarEl.innerHTML = avatarSvg({ bg: state.equipped.avatar_bg, emblem: state.equipped.avatar_emblem, name: getName() }, { size: 96 });
     for (const slot of SLOT_ORDER) {

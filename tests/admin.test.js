@@ -68,6 +68,21 @@ describe('admin API', () => {
     assert.ok(!(await (await admin.get('/api/admin/users')).json()).some((u) => u.username === 'alexis'));
   });
 
+  test('an admin gives a rider drachmas, added to their balance', async () => {
+    const id = (await (await admin.get('/api/admin/users')).json()).find((u) => u.username === 'rider').id;
+    const before = (await (await rider.get('/api/shop/me')).json()).balance;
+    const res = await admin.post(`/api/admin/users/${id}/drachmas`, { amount: 10000, note: 'welcome' });
+    assert.equal(res.status, 200);
+    assert.equal((await res.json()).balance, before + 10000);
+    const shop = await (await rider.get('/api/shop')).json();
+    assert.equal(shop.earned.gifts, 10000);
+    assert.equal(shop.balance, before + 10000);
+    for (const amount of [0, -5, 1.5, 2_000_000, 'lots']) {
+      assert.equal((await admin.post(`/api/admin/users/${id}/drachmas`, { amount })).status, 400, String(amount));
+    }
+    assert.equal((await rider.post(`/api/admin/users/${id}/drachmas`, { amount: 5 })).status, 403);
+  });
+
   test('the shared scenery: up to 10 videos, for every rider', async () => {
     const start = await (await rider.get('/api/scenery')).json();
     assert.match(start.videos, /D6tC1pyrsTM/, 'the default ride until set');

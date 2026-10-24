@@ -152,6 +152,7 @@ loadScenery();
 if (currentUser?.is_admin) {
   document.getElementById('open-admin-btn').addEventListener('click', () => showView('admin'));
   initAdmin({
+    onWalletChange: () => refreshWallet(),
     onSceneryChange: (videos) => {
       sharedScenery = videos;
       scenery.setList(sharedScenery, sceneryMode);

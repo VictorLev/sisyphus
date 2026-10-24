@@ -819,7 +819,7 @@ export const FR = {
   "shop.takeOff": "Enlever",
   "shop.wear": "Porter",
   "shop.balance": "Vous avez {n} drachmes.",
-  "shop.earnedSoFar": "Jusqu'ici : {riding} en roulant, {badges} grâce à {count} badges, {spent} dépensées.",
+  "shop.earnedSoFar": "Jusqu'ici : {riding} en roulant, {badges} grâce à {count} badges, {gifts} reçues en cadeau, {spent} dépensées.",
   "shop.open": "Drachmes : ouvrir la boutique",
   "shop.title": "L'AGORA",
   "shop.earnTitle": "Gagner des drachmes",
@@ -879,4 +879,8 @@ export const FR = {
   "settings.more": "Plus",
   "settings.tabRide": "Sortie",
   "nav.levelProfile": "Niveau : ouvrir votre profil",
+  "admin.give": "Donner des drachmes",
+  "admin.giveHow": "Combien de drachmes pour {name}?",
+  "admin.given": "{n} drachmes données à {name} : {balance} maintenant.",
+  "admin.data.drachma gifts": "cadeaux de drachmes",
 };

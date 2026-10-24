@@ -134,6 +134,7 @@ made the same way and shown once. The commands below still work.
 | Add a rider | `docker exec sisyphus npm run add-user -- <name> [--name "Shown Name"]` |
 | Reset a forgotten password | `docker exec sisyphus npm run reset-password -- <name>` (also logs them out everywhere) |
 | List accounts | `docker exec sisyphus npm run list-users` |
+| Give a rider drachmas for the shop | `docker exec sisyphus npm run give-drachmas -- <name> <amount>` (or Settings → Account → Admin Panel → Give drachmas) |
 | Delete an account and all its data | `docker exec sisyphus npm run delete-user -- <name>` shows what would go; add `--yes` to delete. The last admin can't be deleted. |
 
 Usernames are case-insensitive. After 10 failed logins for one username, or

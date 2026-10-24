@@ -610,7 +610,7 @@ export const EN = {
   "shop.takeOff": "Take off",
   "shop.wear": "Wear",
   "shop.balance": "You have {n} drachmas.",
-  "shop.earnedSoFar": "So far: {riding} from riding, {badges} from {count} badges, {spent} spent.",
+  "shop.earnedSoFar": "So far: {riding} from riding, {badges} from {count} badges, {gifts} given, {spent} spent.",
   "admin.data.rides": "rides",
   "admin.data.ride samples": "ride samples",
   "admin.data.workouts": "workouts",
@@ -634,4 +634,8 @@ export const EN = {
   "admin.next": "Next (not released)",
   "routes.picture": "Picture",
   "trainer.usingErg": "Rides use {mode}; workouts use ERG.",
+  "admin.give": "Give drachmas",
+  "admin.giveHow": "How many drachmas for {name}?",
+  "admin.given": "Gave {n} drachmas to {name}: they have {balance} now.",
+  "admin.data.drachma gifts": "drachma gifts",
 };

@@ -12,7 +12,8 @@
     "reset-password": "node scripts/reset-password.js",
     "delete-user": "node scripts/delete-user.js",
     "list-users": "node scripts/list-users.js",
-    "backup": "node scripts/backup.js"
+    "backup": "node scripts/backup.js",
+    "give-drachmas": "node scripts/give-drachmas.js"
   },
   "dependencies": {
     "better-sqlite3": "^11.3.0",

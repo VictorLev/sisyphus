@@ -14,6 +14,8 @@ const q = {
     'SELECT COALESCE(SUM((julianday(ended_at) - julianday(started_at)) * 24 * 60), 0) AS m FROM sessions WHERE user_id = ? AND ended_at IS NOT NULL'
   ),
   spent: db.prepare('SELECT COALESCE(SUM(price), 0) AS s FROM purchases WHERE user_id = ?'),
+  gifts: db.prepare('SELECT COALESCE(SUM(amount), 0) AS g FROM drachma_gifts WHERE user_id = ?'),
+  give: db.prepare('INSERT INTO drachma_gifts (user_id, amount, note, given_by) VALUES (?, ?, ?, ?)'),
   owned: db.prepare('SELECT item_id FROM purchases WHERE user_id = ?'),
   buy: db.prepare('INSERT INTO purchases (user_id, item_id, price) VALUES (?, ?, ?)'),
   getCosmetics: db.prepare("SELECT value FROM user_config WHERE user_id = ? AND key = 'cosmetics'"),
@@ -34,12 +36,23 @@ export function cosmeticsOf(userId) {
   return Object.fromEntries(SLOTS.map((slot) => [slot, byId.get(stored[slot])?.slot === slot ? stored[slot] : null]));
 }
 
-function wallet(userId) {
+export function wallet(userId) {
   const fromRiding = Math.floor(q.minutes.get(userId).m * PER_MINUTE);
   const badges = badgesFor(userId).filter((b) => b.earned);
   const fromBadges = badges.reduce((sum, b) => sum + (BADGE_REWARD[b.tier] ?? 0), 0);
+  const gifts = q.gifts.get(userId).g;
   const spent = q.spent.get(userId).s;
-  return { balance: fromRiding + fromBadges - spent, earned: { riding: fromRiding, badges: fromBadges, badge_count: badges.length }, spent };
+  return {
+    balance: fromRiding + fromBadges + gifts - spent,
+    earned: { riding: fromRiding, badges: fromBadges, badge_count: badges.length, gifts },
+    spent,
+  };
+}
+
+// An admin's gift of drachmas (Admin Panel, or npm run give-drachmas).
+export function giveDrachmas(userId, amount, { note = null, givenBy = null } = {}) {
+  q.give.run(userId, amount, note, givenBy);
+  return wallet(userId);
 }
 
 function shopState(userId) {
