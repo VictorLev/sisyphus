@@ -242,7 +242,7 @@
                 </label>
               </div>
               <label class="check-field">
-                <input id="admin-new-admin" type="checkbox" />
+                <input id="admin-new-admin" type="checkbox" role="switch" />
                 <span data-i18n="admin.makeAdmin">Admin too</span>
               </label>
               <button type="submit" data-i18n="admin.create">Create</button>
@@ -603,7 +603,7 @@
             <!-- ERG: workouts only, off unless turned on (also per workout on Home). -->
             <div class="trainer-erg">
               <label class="check-field">
-                <input id="setting-erg-workouts" type="checkbox" />
+                <input id="setting-erg-workouts" type="checkbox" role="switch" />
                 <span data-i18n="settings.ergWorkouts">Use ERG for workouts</span>
               </label>
               <p class="hint" data-i18n="settings.ergHint">ERG: the trainer holds each segment's target watts,
@@ -714,7 +714,7 @@
               To switch mid-ride, use the picker on the ride screen.</p>
             <h2 style="margin-top:1.5rem">Strava</h2>
             <label class="check-field">
-              <input id="setting-strava-export" type="checkbox" />
+              <input id="setting-strava-export" type="checkbox" role="switch" />
               <span data-i18n="settings.stravaExport">Show "Download for Strava" on my rides</span>
             </label>
             <p class="hint" data-i18n="settings.stravaExportHint">Adds a box to each ride's page in the
@@ -1024,8 +1024,8 @@
       </div>
       <!-- Workouts only: ERG for the ride about to start (preset from Settings). -->
       <label class="check-field picker-erg" id="ride-picker-erg-field" hidden>
-        <input id="ride-picker-erg" type="checkbox" />
-        <span data-i18n="picker.erg">ERG for this workout (the trainer holds the watts)</span>
+        <input id="ride-picker-erg" type="checkbox" role="switch" />
+        <span data-i18n="picker.erg">Use ERG</span>
       </label>
       <div class="picker-tabs" role="tablist" id="ride-picker-tabs">
         <button type="button" role="tab" data-tab="starred" data-i18n="picker.starred">Starred</button>
