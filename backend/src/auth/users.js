@@ -101,6 +101,7 @@ export function deleteUser(userId) {
     db.prepare('DELETE FROM ftp_history WHERE user_id = ?').run(userId);
     db.prepare('DELETE FROM sessions WHERE user_id = ?').run(userId);
     db.prepare('DELETE FROM workout_stars WHERE user_id = ? OR workout_id IN (SELECT id FROM workouts WHERE user_id = ?)').run(userId, userId);
+    db.prepare('DELETE FROM route_stars WHERE user_id = ?').run(userId);
     db.prepare('DELETE FROM workouts WHERE user_id = ?').run(userId);
     db.prepare('DELETE FROM user_config WHERE user_id = ?').run(userId);
     db.prepare('DELETE FROM auth_sessions WHERE user_id = ?').run(userId);

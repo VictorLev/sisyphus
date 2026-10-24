@@ -222,3 +222,11 @@ export function createRoute(body) {
 export function deleteRoute(id) {
   return request(`/api/routes/${id}`, { method: 'DELETE' });
 }
+
+export function setRouteStarred(id, starred) {
+  return request(`/api/routes/${id}/starred`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ starred }),
+  });
+}

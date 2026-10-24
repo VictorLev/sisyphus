@@ -22,8 +22,17 @@ export function routesDir() {
 const videoPath = (id) => path.join(routesDir(), String(id), 'video.mp4');
 
 const q = {
-  list: db.prepare('SELECT id, name, distance_m, ascent_m, duration_s, points, video_size, video_received, created_at FROM routes ORDER BY name COLLATE NOCASE'),
+  list: db.prepare(
+    `SELECT r.id, r.name, r.distance_m, r.ascent_m, r.duration_s, r.points, r.video_size, r.video_received, r.created_at,
+            (s.user_id IS NOT NULL) AS starred
+     FROM routes r LEFT JOIN route_stars s ON s.route_id = r.id AND s.user_id = ?
+     ORDER BY r.name COLLATE NOCASE`
+  ),
   get: db.prepare('SELECT * FROM routes WHERE id = ?'),
+  isStarred: db.prepare('SELECT 1 FROM route_stars WHERE user_id = ? AND route_id = ?'),
+  star: db.prepare('INSERT OR IGNORE INTO route_stars (user_id, route_id) VALUES (?, ?)'),
+  unstar: db.prepare('DELETE FROM route_stars WHERE user_id = ? AND route_id = ?'),
+  removeStars: db.prepare('DELETE FROM route_stars WHERE route_id = ?'),
   insert: db.prepare(
     `INSERT INTO routes (name, distance_m, ascent_m, duration_s, points, video_points, video_size, created_by)
      VALUES (@name, @distance_m, @ascent_m, @duration_s, @points, @video_points, @video_size, @created_by)`
@@ -49,7 +58,8 @@ function preview(points, samples = 60) {
   return out;
 }
 
-function summary(row) {
+function summary(row, userId) {
+  const starred = row.starred ?? (userId != null && Boolean(q.isStarred.get(userId, row.id)));
   return {
     id: row.id,
     name: row.name,
@@ -57,6 +67,7 @@ function summary(row) {
     ascent_m: row.ascent_m,
     duration_s: row.duration_s,
     ready: row.video_received >= row.video_size,
+    starred: Boolean(starred),
     video_size: row.video_size,
     video_received: row.video_received,
     profile: preview(JSON.parse(row.points)),
@@ -70,12 +81,21 @@ function requireAdmin(req, res, next) {
 
 const router = Router();
 
-router.get('/', (req, res) => res.json(q.list.all().map(summary)));
+router.get('/', (req, res) => res.json(q.list.all(req.user.id).map((row) => summary(row, req.user.id))));
 
 router.get('/:id', (req, res) => {
   const row = q.get.get(req.params.id);
   if (!row) return res.status(404).json({ error: 'route not found' });
-  res.json({ ...summary(row), points: JSON.parse(row.points), video_points: JSON.parse(row.video_points) });
+  res.json({ ...summary(row, req.user.id), points: JSON.parse(row.points), video_points: JSON.parse(row.video_points) });
+});
+
+// Stars are each rider's own, like workout stars.
+router.patch('/:id/starred', (req, res) => {
+  const row = q.get.get(req.params.id);
+  if (!row) return res.status(404).json({ error: 'route not found' });
+  if (typeof req.body?.starred !== 'boolean') return res.status(400).json({ error: 'starred must be true or false' });
+  (req.body.starred ? q.star : q.unstar).run(req.user.id, row.id);
+  res.json(summary(row, req.user.id));
 });
 
 router.post('/', requireAdmin, (req, res) => {
@@ -101,14 +121,14 @@ router.post('/', requireAdmin, (req, res) => {
     created_by: req.user.id,
   }).lastInsertRowid;
   mkdirSync(path.dirname(videoPath(id)), { recursive: true });
-  res.status(201).json(summary(q.get.get(id)));
+  res.status(201).json(summary(q.get.get(id), req.user.id));
 });
 
 router.patch('/:id', requireAdmin, (req, res) => {
   const name = String(req.body?.name ?? '').trim();
   if (!name || name.length > 120) return res.status(400).json({ error: 'name must be 1-120 characters' });
   if (!q.rename.run(name, req.params.id).changes) return res.status(404).json({ error: 'route not found' });
-  res.json(summary(q.get.get(req.params.id)));
+  res.json(summary(q.get.get(req.params.id), req.user.id));
 });
 
 // One piece of the video, written at ?offset=, which must be where the
@@ -131,7 +151,7 @@ router.put('/:id/video', requireAdmin, raw({ type: '*/*', limit: CHUNK_MAX + 102
     closeSync(fd);
   }
   q.received.run(offset + chunk.length, row.id);
-  res.json(summary(q.get.get(row.id)));
+  res.json(summary(q.get.get(row.id), req.user.id));
 });
 
 // The video, for the player: sendFile answers range requests (206), so it
@@ -147,6 +167,7 @@ router.get('/:id/video', (req, res) => {
 
 // Rides on the route keep their route_id and name; only the route goes.
 router.delete('/:id', requireAdmin, (req, res) => {
+  q.removeStars.run(req.params.id);
   if (!q.remove.run(req.params.id).changes) return res.status(404).json({ error: 'route not found' });
   rmSync(path.join(routesDir(), String(Number(req.params.id))), { recursive: true, force: true });
   res.status(204).end();

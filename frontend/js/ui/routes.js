@@ -5,24 +5,18 @@
 // that stopped resumes from where the server says it got to, once the same
 // file is picked again.
 
-import { listRoutes, createRoute, deleteRoute } from '../api/client.js';
+import { listRoutes, createRoute, deleteRoute, setRouteStarred } from '../api/client.js';
 import { t, tp, num } from '../i18n.js';
+import { card, routeProfileSvg } from './cards.js';
 
 const CHUNK = 32 * 1024 * 1024;
 
 const km = (m) => `${num(m / 1000, 1)} km`;
 const minutes = (s) => (s < 60 ? `${Math.round(s)} s` : `${Math.round(s / 60)} min`);
 
-// The elevation preview as a filled SVG line.
-function profileSvg(altitudes) {
-  const w = 300;
-  const h = 48;
-  const min = Math.min(...altitudes);
-  const range = Math.max(10, Math.max(...altitudes) - min); // flat roads stay flat-looking
-  const pts = altitudes.map((a, i) => `${((i / (altitudes.length - 1)) * w).toFixed(1)},${(h - 2 - ((a - min) / range) * (h - 6)).toFixed(1)}`);
-  return `<svg class="route-profile" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true">
-    <polygon points="0,${h} ${pts.join(' ')} ${w},${h}" /><polyline points="${pts.join(' ')}" /></svg>`;
-}
+// "10.1 km · ↑ 45 m · video 11 min", shared with the Home picker.
+export const routeMeta = (route) =>
+  [km(route.distance_m), t('routes.ascent', { m: num(route.ascent_m) }), t('routes.video', { time: minutes(route.duration_s) })].join(' · ');
 
 // Sends file from offset on, in pieces; onProgress(bytesDone).
 async function uploadVideo(routeId, file, offset, onProgress) {
@@ -100,22 +94,18 @@ export function initRoutes({ isAdmin, onStartRoute }) {
     picker.click();
   }
 
-  function card(route) {
-    const li = document.createElement('li');
-    li.className = 'route-card';
-    const info = document.createElement('div');
-    info.className = 'route-info';
-    const name = document.createElement('span');
-    name.className = 'workout-name';
-    name.textContent = route.name;
-    const meta = document.createElement('span');
-    meta.className = 'workout-meta';
-    meta.textContent = [km(route.distance_m), t('routes.ascent', { m: num(route.ascent_m) }), t('routes.video', { time: minutes(route.duration_s) })].join(' · ');
-    info.append(name, meta);
-    info.insertAdjacentHTML('beforeend', profileSvg(route.profile));
-
-    const actions = document.createElement('div');
-    actions.className = 'row-actions';
+  function routeCard(route) {
+    const { li, actions } = card({
+      graph: routeProfileSvg(route.profile),
+      title: route.name,
+      meta: routeMeta(route),
+      starred: route.starred,
+      onToggleStar: async () => {
+        await setRouteStarred(route.id, !route.starred);
+        refresh();
+      },
+    });
+    li.classList.add('route-card');
     if (route.ready) {
       const start = document.createElement('button');
       start.type = 'button';
@@ -148,7 +138,6 @@ export function initRoutes({ isAdmin, onStartRoute }) {
       });
       actions.append(del);
     }
-    li.append(info, actions);
     return li;
   }
 
@@ -168,7 +157,7 @@ export function initRoutes({ isAdmin, onStartRoute }) {
       empty.textContent = t(isAdmin ? 'routes.emptyAdmin' : 'routes.empty');
       listEl.append(empty);
     }
-    for (const route of routes) listEl.append(card(route));
+    for (const route of routes) listEl.append(routeCard(route));
   }
 
   form.addEventListener('submit', async (event) => {

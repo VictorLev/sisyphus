@@ -97,6 +97,16 @@ describe('routes API', () => {
     assert.deepEqual(Buffer.from(await part.arrayBuffer()), video.subarray(100, 200));
   });
 
+  test('each rider stars routes for themselves', async () => {
+    assert.equal((await (await rider.get('/api/routes')).json())[0].starred, false);
+    const starred = await (await rider.patch(`/api/routes/${routeId}/starred`, { starred: true })).json();
+    assert.equal(starred.starred, true);
+    assert.equal((await (await rider.get('/api/routes')).json())[0].starred, true);
+    assert.equal((await (await admin.get('/api/routes')).json())[0].starred, false, 'not starred for the admin');
+    assert.equal((await rider.patch(`/api/routes/${routeId}/starred`, { starred: 'yes' })).status, 400);
+    assert.equal((await rider.patch('/api/routes/9999/starred', { starred: true })).status, 404);
+  });
+
   test('only an admin imports, renames or deletes', async () => {
     assert.equal((await rider.post('/api/routes', { name: 'X', route: routeFile, video_size: 10 })).status, 403);
     assert.equal((await put(rider, routeId, 1000, Buffer.from([1]))).status, 403);

@@ -155,6 +155,13 @@ CREATE TABLE IF NOT EXISTS routes (
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+-- Each rider's starred routes, shown first in the Home route picker.
+CREATE TABLE IF NOT EXISTS route_stars (
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  route_id INTEGER NOT NULL REFERENCES routes(id),
+  PRIMARY KEY (user_id, route_id)
+);
+
 -- One-off migration steps that have run, so they are never repeated.
 CREATE TABLE IF NOT EXISTS migrations (
   name TEXT PRIMARY KEY,

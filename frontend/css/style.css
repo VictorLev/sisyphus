@@ -2808,29 +2808,10 @@ kbd {
 
 /* ---------------------------------------------------------------- routes */
 
-.route-card {
-  align-items: center;
-}
-
-.route-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.route-profile {
-  display: block;
-  width: 100%;
-  max-width: 28rem;
-  height: 3rem;
-  margin-top: 0.5rem;
-}
-
-.route-profile polygon,
 .route-progress-live .route-area {
   fill: var(--color-well-deep);
 }
 
-.route-profile polyline,
 .route-progress-live .route-line {
   fill: none;
   stroke: var(--color-bronze);
