@@ -163,6 +163,18 @@ video (MP4).
                            /route.json
                            /picture.jpg   (optional: .jpg, .png or .webp, up to 5 MB)
   ```
+  `route.json` may carry a `metadata` block, which names the route and
+  gives its card details (any key may be left out):
+  ```json
+  "metadata": { "title_en": "Mount Royal Climb", "title_fr": "Montée du mont Royal",
+                "city": "Montreal", "country": "Canada", "continent": "North America",
+                "eta_min": 34, "distance_km": 12.4, "elevation_gain_m": 230 }
+  ```
+  With a title, the route takes it instead of the folder's name. A folder
+  whose route is already in the library (same title or folder name) only
+  needs `route.json`: the scan updates that route's name and details and
+  leaves its video alone.
+
   Then press **Scan for new routes** in the Admin Panel, or run
   `docker exec sisyphus npm run import-routes` (`-- --list` only shows what's
   there). The folder's name becomes the route's name. The video is moved,

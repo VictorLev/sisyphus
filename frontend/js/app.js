@@ -5,7 +5,7 @@ import { applyTheme } from './theme.js';
 import { setStravaExport, askToPostRide } from './ui/strava-export.js';
 import { TRAINER_MODES } from './ui/trainer-settings.js';
 import { initRemoteLink } from './ui/remote-link.js';
-import { initRoutes } from './ui/routes.js';
+import { initRoutes, routeName } from './ui/routes.js';
 import { initRidePicker } from './ui/ride-picker.js';
 import { initTrainerGate } from './ui/trainer-gate.js';
 import { initTutorial } from './ui/tutorial.js';
@@ -650,7 +650,7 @@ function startRide(workout, { route = null, erg = ergWorkouts } = {}) {
   rideMode = erg && workout && !isTest ? 'erg' : preferredMode;
   updateModeUi();
 
-  liveScreen.buildTimeline(workout ? workout.structure : null, workout ? workoutName(workout) : route?.name ?? null);
+  liveScreen.buildTimeline(workout ? workout.structure : null, workout ? workoutName(workout) : route ? routeName(route) : null);
   // A free ride has no steps or graph: the scenery gets their room.
   document.querySelector('[data-view="live"]').classList.toggle('is-free-ride', !workout && !route);
   // A route's video fills the screen, under see-through panels.

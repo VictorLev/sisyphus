@@ -96,7 +96,7 @@ router.put('/scenery', (req, res) => {
 // The route inbox: what's waiting, then a scan that imports it.
 const inboxView = () => ({
   dir: inboxDir(),
-  folders: listInbox().map(({ folder, size, reason }) => ({ folder, size, reason })),
+  folders: listInbox().map(({ folder, name, size, action, reason }) => ({ folder, name, size, action, reason })),
 });
 
 router.get('/inbox', (req, res) => res.json(inboxView()));

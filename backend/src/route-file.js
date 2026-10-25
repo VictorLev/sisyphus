@@ -33,8 +33,29 @@ function firstJsonValue(text) {
 
 const finite = (n) => typeof n === 'number' && Number.isFinite(n);
 
+// The optional "metadata" block: names in both languages, where it is, and
+// the author's own distance, climbing and riding time. Unknown keys are
+// dropped, text is trimmed to 120 characters, and a missing or empty value
+// is null. No block at all: null.
+const META_TEXT = ['title_en', 'title_fr', 'city', 'country', 'continent'];
+const META_NUMBERS = ['eta_min', 'distance_km', 'elevation_gain_m'];
+
+function parseMetadata(meta) {
+  if (!meta || typeof meta !== 'object' || Array.isArray(meta)) return null;
+  const out = {};
+  for (const key of META_TEXT) {
+    const value = typeof meta[key] === 'string' ? meta[key].trim().slice(0, 120) : '';
+    out[key] = value || null;
+  }
+  for (const key of META_NUMBERS) {
+    const value = Number(meta[key]);
+    out[key] = meta[key] != null && meta[key] !== '' && Number.isFinite(value) && value >= 0 ? value : null;
+  }
+  return Object.values(out).some((v) => v != null) ? out : null;
+}
+
 // Parses and checks a route file (text or an already-parsed object).
-// Returns { points, videoPoints, distanceM, ascentM, durationS }.
+// Returns { points, videoPoints, distanceM, ascentM, durationS, metadata }.
 export function parseRouteFile(input) {
   let data;
   try {
@@ -74,5 +95,6 @@ export function parseRouteFile(input) {
     distanceM: points.at(-1).d,
     ascentM: Math.round(ascentM),
     durationS: videoPoints.at(-1).t,
+    metadata: parseMetadata(data.metadata),
   };
 }

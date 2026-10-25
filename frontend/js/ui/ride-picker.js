@@ -5,11 +5,11 @@
 // Cards start and star; starting closes the picker and hands the choice on.
 
 import { listWorkouts, listRoutes, setWorkoutStarred, setRouteStarred } from '../api/client.js';
-import { t, tp } from '../i18n.js';
+import { t, tp, tOr } from '../i18n.js';
 import { workoutName } from '../workout/names.js';
 import { renderWorkoutRow } from './workouts.js';
 import { card, routeProfileSvg, iconButton } from './cards.js';
-import { routeMeta } from './routes.js';
+import { routeMeta, routeName } from './routes.js';
 
 const minutesOf = (w) => w.structure.reduce((s, seg) => s + seg.duration_sec, 0) / 60;
 
@@ -25,6 +25,10 @@ const FILTERS = {
       test: (r, v) => { const km = r.distance_m / 1000; return v === 'any' || (v === 'short' ? km < 10 : v === 'medium' ? km >= 10 && km <= 30 : km > 30); } },
     climbing: { label: 'picker.climbing', options: { any: 'picker.any', flat: 'picker.flat', hilly: 'picker.hilly', mountain: 'picker.mountain' },
       test: (r, v) => { const perKm = r.ascent_m / Math.max(0.1, r.distance_m / 1000); return v === 'any' || (v === 'flat' ? perKm < 5 : v === 'hilly' ? perKm >= 5 && perKm <= 15 : perKm > 15); } },
+    // Only the continents the routes are on (from their route files).
+    continent: { label: 'picker.continent', options: (items) => Object.fromEntries([['any', 'picker.anywhere'],
+      ...[...new Set(items.map((r) => r.meta?.continent).filter(Boolean))].sort().map((c) => [c, `continent.${c}`])]),
+      test: (r, v) => v === 'any' || r.meta?.continent === v },
   },
 };
 
@@ -60,15 +64,17 @@ export function initRidePicker({ onPick, ergDefault = () => false }) {
     filter = {};
     for (const [key, spec] of Object.entries(FILTERS[kind])) {
       filter[key] = 'any';
+      const options = typeof spec.options === 'function' ? spec.options(items) : spec.options;
+      if (Object.keys(options).length < 3) continue; // "any" and one other: nothing to choose
       const group = document.createElement('div');
       group.className = 'segmented segmented-small';
       group.setAttribute('role', 'group');
       group.setAttribute('aria-label', t(spec.label));
-      for (const [value, label] of Object.entries(spec.options)) {
+      for (const [value, label] of Object.entries(options)) {
         const b = document.createElement('button');
         b.type = 'button';
         b.dataset.value = value;
-        b.textContent = t(label);
+        b.textContent = tOr(label, value); // a continent without a translation shows as is
         b.setAttribute('aria-pressed', String(value === 'any'));
         b.addEventListener('click', () => {
           filter[key] = value;
@@ -82,7 +88,15 @@ export function initRidePicker({ onPick, ergDefault = () => false }) {
   }
 
   function nameOf(item) {
-    return kind === 'workouts' ? workoutName(item) : item.name;
+    return kind === 'workouts' ? workoutName(item) : routeName(item);
+  }
+
+  // What the search box matches: the name, and for a route both titles and
+  // where it is.
+  function searchText(item) {
+    if (kind === 'workouts') return nameOf(item);
+    const m = item.meta ?? {};
+    return [item.name, m.title_fr, m.city, m.country, m.continent].filter(Boolean).join(' ');
   }
 
   async function toggleStar(item) {
@@ -110,7 +124,7 @@ export function initRidePicker({ onPick, ergDefault = () => false }) {
       shown = items.filter((i) => i.starred);
     } else {
       const q = searchEl.value.trim().toLowerCase();
-      shown = items.filter((i) => (!q || nameOf(i).toLowerCase().includes(q))
+      shown = items.filter((i) => (!q || searchText(i).toLowerCase().includes(q))
         && Object.entries(FILTERS[kind]).every(([key, spec]) => spec.test(i, filter[key])));
     }
     listEl.innerHTML = '';
@@ -128,7 +142,7 @@ export function initRidePicker({ onPick, ergDefault = () => false }) {
         const { li, actions } = card({
           graph: routeProfileSvg(item.profile),
           image: item.thumbnail,
-          title: item.name,
+          title: routeName(item),
           meta: routeMeta(item),
           starred: item.starred,
           onToggleStar: () => toggleStar(item),
@@ -160,6 +174,7 @@ export function initRidePicker({ onPick, ergDefault = () => false }) {
         listEl.firstChild.textContent = err.message;
         return;
       }
+      buildChips(); // again, now that the routes' continents are known
       tabs.querySelector('[data-tab="starred"]').textContent = `${t('picker.starred')} (${items.filter((i) => i.starred).length})`;
       tabs.querySelector('[data-tab="all"]').textContent = `${t('picker.all')} (${items.length})`;
       setTab(items.some((i) => i.starred) ? 'starred' : 'all');

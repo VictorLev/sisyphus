@@ -57,7 +57,8 @@ describe('route inbox', () => {
     drop('Half done', { 'route.json': JSON.stringify(routeFile) });
     drop('Fresh Road', { 'video.mp4': Buffer.alloc(500, 7), 'route.json': JSON.stringify(routeFile) });
     const { folders } = await (await admin.get('/api/admin/inbox')).json();
-    assert.deepEqual(folders.map((f) => [f.folder, f.reason]), [['Fresh Road', 'copying'], ['Half done', 'no-video']]);
+    assert.deepEqual(folders.map((f) => [f.folder, f.reason]), [['Fresh Road', 'copying'], ['Half done', 'copying']]);
+    assert.deepEqual(listInbox(later()).map((f) => [f.folder, f.reason]), [['Fresh Road', null], ['Half done', 'no-video']], 'a minute later');
     const result = await (await admin.post('/api/admin/inbox/scan', {})).json();
     assert.equal(result.imported.length, 0, 'nothing written in the last minute is taken');
   });
@@ -92,5 +93,30 @@ describe('route inbox', () => {
     assert.equal(imported.length, 0);
     assert.ok(skipped.some((s) => s.folder === 'col du test - france' && s.reason === 'exists'));
     assert.equal((await (await rider.get('/api/routes')).json()).length, 2);
+  });
+
+  const meta = { title_en: 'Mount Royal Climb', title_fr: 'Montée du mont Royal', city: 'Montreal', country: 'Canada', continent: 'North America', eta_min: 34, distance_km: 12.4, elevation_gain_m: 230 };
+
+  test('a route file with metadata names the route and gives its details', async () => {
+    drop('mont-royal-raw', { 'video.mp4': Buffer.alloc(100, 1), 'route.json': JSON.stringify({ ...routeFile, metadata: meta }) });
+    assert.equal(listInbox(later()).find((f) => f.folder === 'mont-royal-raw').name, 'Mount Royal Climb');
+    const { imported } = await scanInbox({ now: later() });
+    assert.deepEqual(imported.map((r) => r.name), ['Mount Royal Climb']);
+    const route = (await (await rider.get('/api/routes')).json()).find((r) => r.name === 'Mount Royal Climb');
+    assert.deepEqual(route.meta, meta);
+  });
+
+  test('a route already in the library takes its name and details from a newer route file', async () => {
+    // "Fresh Road" was imported earlier with no metadata; only its route file comes back.
+    drop('Fresh Road', { 'route.json': JSON.stringify({ ...routeFile, metadata: { ...meta, title_en: 'Fresh Road Revisited', city: 'Quebec' } }) });
+    assert.equal(listInbox(later()).find((f) => f.folder === 'Fresh Road').action, 'update');
+    const { updated, imported } = await scanInbox({ now: later() });
+    assert.equal(imported.length, 0);
+    assert.deepEqual(updated.map((r) => r.name), ['Fresh Road Revisited']);
+    const routes = await (await rider.get('/api/routes')).json();
+    const road = routes.find((r) => r.name === 'Fresh Road Revisited');
+    assert.equal(road.meta.city, 'Quebec');
+    assert.equal(road.ready, true, 'its video stays');
+    assert.equal(existsSync(path.join(inboxDir(), 'Fresh Road')), false);
   });
 });
