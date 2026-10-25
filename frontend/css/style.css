@@ -1871,7 +1871,8 @@ button.secondary:hover:not(:disabled) {
    graph (or the road's profile) takes the rest of the bottom row. */
 @media (min-width: 1101px) {
   .ride-grid {
-    grid-template-columns: minmax(210px, 280px) minmax(0, 1fr) minmax(220px, 260px);
+    /* The two side columns match, so the scenery sits in the middle. */
+    grid-template-columns: minmax(220px, 260px) minmax(0, 1fr) minmax(220px, 260px);
     grid-template-areas:
       "steps    metrics  zone"
       "steps    hero     zone"
