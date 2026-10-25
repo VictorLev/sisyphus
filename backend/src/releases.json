@@ -4,7 +4,7 @@
     "date": null,
     "commit": null,
     "notes": [
-      "Route picker: distance filter in < 30, 30–60 and > 60 km"
+      "Routes: distance filter in < 30, 30–60 and > 60 km; the Routes page has the picker's search and filters too"
     ]
   },
   {

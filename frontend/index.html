@@ -134,6 +134,11 @@
         <p class="hint" data-i18n="routes.hint">The video plays at your speed, and the road's climbs
           set the resistance, the way your trainer mode handles a workout's
           climbs. Routes always ride on your gears, never in ERG.</p>
+        <!-- The same search and filters as the Home route picker (ui/filters.js). -->
+        <div class="picker-filters" id="routes-filters">
+          <input id="routes-search" type="search" placeholder="Search by name" data-i18n-attr="placeholder:picker.search" />
+          <div class="picker-chips" id="routes-chips"></div>
+        </div>
         <ul id="route-list" class="card-grid route-list"></ul>
       </div>
 
