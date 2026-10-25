@@ -31,6 +31,13 @@ describe('route file', () => {
     assert.equal(r.distanceM, 2000);
   });
 
+  test('metadata: kept and tidied, unknown keys dropped; none at all is null', () => {
+    const r = parseRouteFile({ ...routeFile, metadata: { title_en: '  Mount Royal Climb ', title_fr: 'Montée du mont Royal', city: '', country: 'Canada', eta_min: '34', distance_km: 12.4, elevation_gain_m: -5, secret: 'x' } });
+    assert.deepEqual(r.metadata, { title_en: 'Mount Royal Climb', title_fr: 'Montée du mont Royal', city: null, country: 'Canada', continent: null, eta_min: 34, distance_km: 12.4, elevation_gain_m: null });
+    assert.equal(parseRouteFile(routeFile).metadata, null);
+    assert.equal(parseRouteFile({ ...routeFile, metadata: { city: '' } }).metadata, null);
+  });
+
   test('refuses what it can\'t ride', () => {
     assert.throws(() => parseRouteFile('nope'), RouteFileError);
     assert.throws(() => parseRouteFile({ geometry: [], video_points: [] }), /at least 2/);
@@ -134,6 +141,13 @@ describe('routes API', () => {
     assert.equal((await rider.patch(`/api/routes/${routeId}`, { name: 'Mine' })).status, 403);
     assert.equal((await rider.del(`/api/routes/${routeId}`)).status, 403);
     assert.equal((await admin.post('/api/routes', { name: 'Bad', route: { geometry: [] }, video_size: 10 })).status, 400);
+    assert.equal((await admin.post('/api/routes', { route: routeFile, video_size: 10 })).status, 400, 'no name and no title in the file');
+    const titled = await admin.post('/api/routes', { route: { ...routeFile, metadata: { title_en: 'From The File', country: 'Canada' } }, video_size: 10 });
+    assert.equal(titled.status, 201);
+    const made = await titled.json();
+    assert.equal(made.name, 'From The File');
+    assert.equal(made.meta.country, 'Canada');
+    await admin.del(`/api/routes/${made.id}`);
   });
 
   test('a ride on a route is named after it and keeps it after the route is deleted', async () => {

@@ -6,7 +6,7 @@
 // file is picked again.
 
 import { listRoutes, createRoute, deleteRoute, setRouteStarred } from '../api/client.js';
-import { t, tp, num } from '../i18n.js';
+import { t, tp, num, language } from '../i18n.js';
 import { card, routeProfileSvg, iconButton } from './cards.js';
 import { shrinkImage } from './image-resize.js';
 
@@ -22,11 +22,32 @@ export async function uploadThumbnail(routeId, file) {
 const CHUNK = 32 * 1024 * 1024;
 
 const km = (m) => `${num(m / 1000, 1)} km`;
-const minutes = (s) => (s < 60 ? `${Math.round(s)} s` : `${Math.round(s / 60)} min`);
+// "45 s", "11 min", "1 h 54".
+const minutes = (s) => {
+  if (s < 60) return `${Math.round(s)} s`;
+  const m = Math.round(s / 60);
+  return m < 60 ? `${m} min` : `${Math.floor(m / 60)} h ${String(m % 60).padStart(2, '0')}`;
+};
 
-// "10.1 km · ↑ 45 m · video 11 min", shared with the Home picker.
-export const routeMeta = (route) =>
-  [km(route.distance_m), t('routes.ascent', { m: num(route.ascent_m) }), t('routes.video', { time: minutes(route.duration_s) })].join(' · ');
+// The route's name in the rider's language, from its route file's metadata
+// when it has one.
+export const routeName = (route) => (language() === 'fr' && route.meta?.title_fr) || route.name;
+
+// Where it is: "Moab, USA" (or just the country), '' if not known.
+export const routePlace = (route) => [route.meta?.city, route.meta?.country].filter(Boolean).join(', ');
+
+// "Moab, USA · 35.9 km · ↑ 812 m · ≈ 1 h 54", shared with the Home picker.
+// The route file's own distance, climbing and riding time win over what
+// the app works out from the road and the video.
+export const routeMeta = (route) => {
+  const meta = route.meta ?? {};
+  return [
+    routePlace(route),
+    meta.distance_km != null ? `${num(meta.distance_km, 1)} km` : km(route.distance_m),
+    t('routes.ascent', { m: num(meta.elevation_gain_m ?? route.ascent_m) }),
+    meta.eta_min != null ? t('routes.eta', { time: minutes(meta.eta_min * 60) }) : t('routes.video', { time: minutes(route.duration_s) }),
+  ].filter(Boolean).join(' · ');
+};
 
 // Sends file from offset on, in pieces; onProgress(bytesDone).
 async function uploadVideo(routeId, file, offset, onProgress) {
@@ -76,7 +97,7 @@ export function initRoutes({ isAdmin, onStartRoute }) {
     try {
       showProgress(route.video_received, route.video_size);
       await uploadVideo(route.id, file, route.video_received, (done) => showProgress(done, route.video_size));
-      setStatus(t('routes.imported', { name: route.name }));
+      setStatus(t('routes.imported', { name: routeName(route) }));
       form.reset();
     } catch (err) {
       setStatus(t('routes.uploadStopped', { error: err.message }), true);
@@ -108,7 +129,7 @@ export function initRoutes({ isAdmin, onStartRoute }) {
     const { li, actions } = card({
       graph: routeProfileSvg(route.profile),
       image: route.thumbnail,
-      title: route.name,
+      title: routeName(route),
       meta: routeMeta(route),
       starred: route.starred,
       onToggleStar: async () => {
@@ -152,7 +173,7 @@ export function initRoutes({ isAdmin, onStartRoute }) {
       });
       actions.append(pic);
       const del = iconButton('delete', t('workouts.delete'), async () => {
-        if (!confirm(t('routes.confirmDelete', { name: route.name }))) return;
+        if (!confirm(t('routes.confirmDelete', { name: routeName(route) }))) return;
         await deleteRoute(route.id);
         refresh();
       });
@@ -187,7 +208,7 @@ export function initRoutes({ isAdmin, onStartRoute }) {
     const video = document.getElementById('route-import-video').files[0];
     const picture = document.getElementById('route-import-picture').files[0];
     const name = document.getElementById('route-import-name').value.trim();
-    if (!routeFile || !video || !name) return;
+    if (!routeFile || !video) return; // the name may come from the route file
     let route;
     try {
       route = await createRoute({ name, route: await routeFile.text(), video_size: video.size });

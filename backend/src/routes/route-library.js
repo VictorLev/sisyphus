@@ -24,7 +24,7 @@ const videoPath = (id) => path.join(routesDir(), String(id), 'video.mp4');
 const q = {
   list: db.prepare(
     `SELECT r.id, r.name, r.distance_m, r.ascent_m, r.duration_s, r.points, r.video_size, r.video_received, r.created_at,
-            r.thumb_type, r.thumb_at,
+            r.thumb_type, r.thumb_at, r.meta,
             (s.user_id IS NOT NULL) AS starred
      FROM routes r LEFT JOIN route_stars s ON s.route_id = r.id AND s.user_id = ?
      ORDER BY r.name COLLATE NOCASE`
@@ -35,8 +35,8 @@ const q = {
   unstar: db.prepare('DELETE FROM route_stars WHERE user_id = ? AND route_id = ?'),
   removeStars: db.prepare('DELETE FROM route_stars WHERE route_id = ?'),
   insert: db.prepare(
-    `INSERT INTO routes (name, distance_m, ascent_m, duration_s, points, video_points, video_size, created_by)
-     VALUES (@name, @distance_m, @ascent_m, @duration_s, @points, @video_points, @video_size, @created_by)`
+    `INSERT INTO routes (name, distance_m, ascent_m, duration_s, points, video_points, video_size, created_by, meta)
+     VALUES (@name, @distance_m, @ascent_m, @duration_s, @points, @video_points, @video_size, @created_by, @meta)`
   ),
   received: db.prepare('UPDATE routes SET video_received = ? WHERE id = ?'),
   remove: db.prepare('DELETE FROM routes WHERE id = ?'),
@@ -73,6 +73,8 @@ function summary(row, userId) {
     video_size: row.video_size,
     video_received: row.video_received,
     profile: preview(JSON.parse(row.points)),
+    // From the route file: titles, place, the author's distance/climbing/time.
+    meta: row.meta ? JSON.parse(row.meta) : null,
     // The card's picture, if one was uploaded (?v= changes with it).
     thumbnail: row.thumb_type ? `/api/routes/${row.id}/thumbnail?v=${encodeURIComponent(row.thumb_at)}` : null,
   };
@@ -113,15 +115,15 @@ export function addRoute({ name, parsed, videoSize, createdBy }) {
     video_points: JSON.stringify(parsed.videoPoints),
     video_size: videoSize,
     created_by: createdBy,
+    meta: parsed.metadata ? JSON.stringify(parsed.metadata) : null,
   }).lastInsertRowid;
   mkdirSync(path.dirname(videoPath(id)), { recursive: true });
   return id;
 }
 
+// The name may be left out when the route file's metadata has a title.
 router.post('/', requireAdmin, (req, res) => {
-  const name = String(req.body?.name ?? '').trim();
   const size = Number(req.body?.video_size);
-  if (!name || name.length > 120) return res.status(400).json({ error: 'name must be 1-120 characters' });
   if (!Number.isInteger(size) || size <= 0) return res.status(400).json({ error: 'video_size must be the video file size in bytes' });
   let parsed;
   try {
@@ -130,6 +132,8 @@ router.post('/', requireAdmin, (req, res) => {
     if (err instanceof RouteFileError) return res.status(400).json({ error: err.message });
     throw err;
   }
+  const name = String(req.body?.name ?? '').trim() || parsed.metadata?.title_en || '';
+  if (!name || name.length > 120) return res.status(400).json({ error: 'name must be 1-120 characters' });
   const id = addRoute({ name, parsed, videoSize: size, createdBy: req.user.id });
   res.status(201).json(summary(q.get.get(id), req.user.id));
 });

@@ -169,10 +169,11 @@ export function initAdmin({ onSceneryChange, onWalletChange }) {
     for (const f of folders) {
       const li = document.createElement('li');
       const name = document.createElement('span');
-      name.textContent = f.folder;
+      // The route's title from its file, when it isn't the folder's name.
+      name.textContent = f.name && f.name !== f.folder.trim() ? `${f.folder} → ${f.name}` : f.folder;
       const state = document.createElement('span');
       state.className = f.reason ? 'admin-meta' : 'admin-inbox-ready';
-      state.textContent = [f.size != null ? `${num(f.size / 1e9, 1)} GB` : null, f.reason ? t(`admin.inbox.${f.reason}`) : t('admin.inboxReady')]
+      state.textContent = [f.size != null ? `${num(f.size / 1e9, 1)} GB` : null, f.reason ? t(`admin.inbox.${f.reason}`) : f.action === 'update' ? t('admin.inboxUpdate') : t('admin.inboxReady')]
         .filter(Boolean).join(' · ');
       li.append(name, state);
       list.append(li);
@@ -198,9 +199,9 @@ export function initAdmin({ onSceneryChange, onWalletChange }) {
     try {
       const result = await adminScanInbox();
       showInbox(result);
-      const left = result.imported.filter((r) => r.left).map((r) => r.name);
+      const left = [...result.imported, ...result.updated].filter((r) => r.left).map((r) => r.name);
       say(inboxStatus, [
-        t('admin.scanned', { imported: num(result.imported.length), skipped: num(result.skipped.length) }),
+        t('admin.scanned', { imported: num(result.imported.length), updated: num(result.updated.length), skipped: num(result.skipped.length) }),
         left.length ? t('admin.scanLeft', { names: left.join(', ') }) : '',
       ].filter(Boolean).join(' '), left.length > 0);
     } catch (err) {
