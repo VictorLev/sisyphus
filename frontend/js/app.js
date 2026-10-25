@@ -16,6 +16,7 @@ import { initProfileTabs } from './ui/profile-tabs.js';
 import { setEquipped } from './shop/cosmetics.js';
 import { avatarSvg } from './shop/avatar.js';
 import { createRoutePlayer } from './ui/route-player.js';
+import { createRouteSections } from './ui/route-sections.js';
 import { RouteTrack } from './workout/route-track.js';
 import { TrainerConnection } from './ble/connection.js';
 import { TrainerControl } from './ble/trainer-control.js';
@@ -199,8 +200,14 @@ initHome({
 const routePlayer = createRoutePlayer({
   frameEl: document.getElementById('scenery-frame'),
   progressEl: document.getElementById('route-progress'),
-  format: ({ doneM, totalM, grade }) =>
-    `${num(doneM / 1000, 2)} / ${num(totalM / 1000, 1)} km · ${grade > 0 ? '+' : ''}${num(grade, 1)}%`,
+  format: ({ doneM, totalM, grade, altM }) =>
+    `${num(doneM / 1000, 2)} / ${num(totalM / 1000, 1)} km · ${grade > 0 ? '+' : ''}${num(grade, 1)}% · ${num(Math.round(altM))} m`,
+});
+// ...and its climbs, flats and descents in the steps column.
+const routeSections = createRouteSections({
+  listEl: document.getElementById('steps-list'),
+  progressEl: document.getElementById('steps-progress'),
+  targetEl: document.getElementById('route-target'),
 });
 initRoutes({
   isAdmin: Boolean(currentUser?.is_admin),
@@ -644,6 +651,10 @@ function startRide(workout, { route = null, erg = ergWorkouts } = {}) {
   updateModeUi();
 
   liveScreen.buildTimeline(workout ? workout.structure : null, workout ? workoutName(workout) : route?.name ?? null);
+  // A free ride has no steps or graph: the scenery gets their room.
+  document.querySelector('[data-view="live"]').classList.toggle('is-free-ride', !workout && !route);
+  // A route's video fills the screen, under see-through panels.
+  document.querySelector('[data-view="live"]').classList.toggle('is-route-ride', Boolean(route));
   liveScreen.updateWorkoutInfo(runner ? runner.state : null);
   liveScreen.setElapsed(0);
   updateTotals();
@@ -653,7 +664,10 @@ function startRide(workout, { route = null, erg = ergWorkouts } = {}) {
   if (isTest) {
     flashRideNote(t('note.ftpTest'), 12000);
   }
-  if (activeRoute) routePlayer.start(route, activeRoute.track);
+  if (activeRoute) {
+    routePlayer.start(route, activeRoute.track);
+    routeSections.start(activeRoute.track);
+  }
   else scenery.start();
   startLoop();
   applyRideMode();
@@ -671,6 +685,7 @@ function startLoop() {
   function frame(now) {
     if (activeRoute) {
       routePlayer.update({ distanceM: distanceTracker.currentTotalM, speedKmh: liveSpeedKmh, paused: pausedAtMs != null });
+      routeSections.update(distanceTracker.currentTotalM);
       followRouteGrade(now);
       if (!routeFinished && distanceTracker.currentTotalM >= activeRoute.track.distanceM) {
         routeFinished = true;
@@ -761,6 +776,7 @@ async function discardRide() {
   stopLoop();
   scenery.stop();
   routePlayer.stop();
+  routeSections.stop();
   activeRoute = null;
   pausedAtMs = null;
   recorder.reset();
@@ -774,6 +790,7 @@ async function endRide() {
   stopLoop();
   scenery.stop();
   routePlayer.stop();
+  routeSections.stop();
   const routeId = activeRoute?.route.id ?? null;
   activeRoute = null;
   // A ride ended from the pause pop-up ends where the riding stopped.

@@ -5,7 +5,7 @@
 // frame (that stutters), eased toward where it should be, and it jumps
 // there if it drifts by more than 2 s (a sprint, a stall, a slow network).
 // Stopped or paused: the video stops. Below the video, the elevation
-// profile shows how far along the rider is.
+// profile shows how far along the rider is, against an altitude scale.
 //
 // Slowed down, a 30 fps video shows only ~16 new frames a second at 0.55x
 // and steps. Below 0.9x the video is drawn on a canvas instead, each new
@@ -132,6 +132,9 @@ export function createRoutePlayer({ frameEl, progressEl, format }) {
     progressEl.querySelector('.route-line').setAttribute('points', pts);
     progressEl.querySelector('.route-area').setAttribute('points', `0,100 ${pts} 1000,100`);
     done.setAttribute('points', `0,100 ${pts} 1000,100`);
+    // The scale's ends line up with the profile's: min at 98%, min + range at 8%.
+    progressEl.querySelector('.route-axis-max').textContent = `${Math.round(min + range)} m`;
+    progressEl.querySelector('.route-axis-min').textContent = `${Math.round(min)} m`;
   }
 
   return {
@@ -186,7 +189,7 @@ export function createRoutePlayer({ frameEl, progressEl, format }) {
       marker.setAttribute('x1', pct * 10);
       marker.setAttribute('x2', pct * 10);
       progressEl.style.setProperty('--route-done', `${pct}%`);
-      textEl.textContent = format({ doneM: d, totalM: track.distanceM, grade: track.gradeAt(d) });
+      textEl.textContent = format({ doneM: d, totalM: track.distanceM, grade: track.gradeAt(d), altM: track.altitudeAt(d) });
     },
 
     // For the ride screen's checks and tests.

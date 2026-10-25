@@ -1729,7 +1729,9 @@ button.secondary:hover:not(:disabled) {
 
 .scenery-picker {
   position: absolute;
-  top: 0.75rem;
+  /* Under YouTube's top bar, so its sound, subtitles and settings buttons
+     stay clickable. */
+  top: 4.5rem;
   right: 0.75rem;
   z-index: 2;
   max-width: 45%;
@@ -1788,6 +1790,7 @@ button.secondary:hover:not(:disabled) {
 }
 
 .ride-target em {
+  white-space: nowrap; /* "to go" stays one label */
   font-style: normal;
   font-size: 0.65rem;
   text-transform: uppercase;
@@ -1841,7 +1844,7 @@ button.secondary:hover:not(:disabled) {
 .ride-timeline .segment-timeline {
   position: relative; /* the "now" line is placed against it */
   margin: 0;
-  height: 72px;
+  height: 110px;
   align-items: flex-end;
 }
 
@@ -1863,6 +1866,107 @@ button.secondary:hover:not(:disabled) {
 .ride-footer .ride-actions button {
   padding: 0.7rem 1.8rem;
   font-size: 0.95rem;
+}
+
+/* Wide screens: gear and Pause/End sit under the zone column, and the
+   graph (or the road's profile) takes the rest of the bottom row. */
+@media (min-width: 1101px) {
+  .ride-grid {
+    /* The two side columns match, so the scenery sits in the middle. */
+    grid-template-columns: minmax(220px, 260px) minmax(0, 1fr) minmax(220px, 260px);
+    grid-template-areas:
+      "steps    metrics  zone"
+      "steps    hero     zone"
+      "timeline timeline controls";
+  }
+
+  /* The wrapper steps aside so its two panels become grid cells. */
+  .ride-grid > .ride-bottom {
+    display: contents;
+  }
+
+  .ride-timeline {
+    grid-area: timeline;
+  }
+
+  .ride-footer {
+    grid-area: controls;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-content: center;
+    gap: 0.6rem;
+    padding: 0.75rem;
+  }
+
+  .ride-actions {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .ride-footer .ride-actions button {
+    flex: 1;
+    padding: 0.7rem 0.5rem;
+  }
+
+  /* A free ride has no steps or graph: the scenery takes their room. */
+  .is-free-ride .ride-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(220px, 260px);
+    grid-template-areas:
+      "metrics zone"
+      "hero    zone"
+      "hero    controls";
+  }
+}
+
+.is-free-ride .ride-steps,
+.is-free-ride .ride-timeline {
+  display: none;
+}
+
+/* A route ride: the video fills the whole screen, cropped like a cover, and
+   the panels float over it, see-through. No scenery drop-down. */
+.is-route-ride .ride-grid > .ride-hero {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  border: none;
+  background: #000;
+}
+
+.is-route-ride .ride-grid > :not(.ride-hero),
+.is-route-ride .ride-bottom > * {
+  position: relative;
+  z-index: 1;
+  background: color-mix(in srgb, var(--color-surface) 50%, transparent);
+  border-color: color-mix(in srgb, var(--color-stone-light) 50%, transparent);
+  backdrop-filter: blur(6px);
+  text-shadow: var(--shadow-text);
+}
+
+.is-route-ride .steps-list li:not(.is-current),
+.is-route-ride .ride-totals > div {
+  background: color-mix(in srgb, var(--color-well) 55%, transparent);
+}
+
+.is-route-ride .ride-grid > .ride-bottom {
+  background: none;
+  backdrop-filter: none;
+}
+
+.is-route-ride .route-progress-live .route-area {
+  fill-opacity: 0.55;
+}
+
+.is-route-ride .scenery-picker,
+.is-route-ride .scenery-empty {
+  display: none;
+}
+
+/* Notes float in the middle, clear of the panels. */
+.is-route-ride .ride-note {
+  top: 9rem;
+  left: 50%;
+  transform: translateX(-50%);
 }
 
 /* Pause pop-up: a panel floating over the dimmed ride screen. */
@@ -2911,6 +3015,34 @@ kbd {
   position: relative;
   height: 100%;
   min-height: 4rem;
+  padding-left: 3.4rem; /* room for the altitude scale */
+}
+
+/* The altitude scale: the profile's top and bottom, in metres. Its labels
+   sit where route-player.js draws them (8% and 98% of the height). */
+.route-axis {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 3.4rem;
+  border-right: 1px solid var(--color-stone-light);
+  font-size: 0.7rem;
+  color: var(--color-text-dim);
+}
+
+.route-axis span {
+  position: absolute;
+  right: 0.4rem;
+  transform: translateY(-50%);
+}
+
+.route-axis-max {
+  top: 8%;
+}
+
+.route-axis-min {
+  top: 98%;
 }
 
 .route-progress-live[hidden] {
@@ -2936,7 +3068,7 @@ kbd {
 .route-progress-text {
   position: absolute;
   top: 0.4rem;
-  left: 0.6rem;
+  left: 4rem;
   font-size: 0.8rem;
   font-weight: 700;
   color: var(--color-text);
