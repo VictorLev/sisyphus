@@ -1,13 +1,15 @@
 // A search box and filter chips over a list of workouts or routes, shared
 // by the Home pickers and the Routes page:
 //   workouts: name, duration, mine or library
-//   routes:   name or place, distance (< 30, 30–60, > 60 km), climbing
+//   routes:   name or place, riding time (≤ 30, 30–60, > 60 min), climbing
 //             (metres up per km), continent
 
 import { t, tOr } from '../i18n.js';
 import { workoutName } from '../workout/names.js';
 
 const minutesOf = (w) => w.structure.reduce((s, seg) => s + seg.duration_sec, 0) / 60;
+// A route's riding time: the route file's ETA, else the video's length.
+const routeMinutes = (r) => r.meta?.eta_min ?? r.duration_s / 60;
 
 const FILTERS = {
   workouts: {
@@ -17,9 +19,8 @@ const FILTERS = {
       test: (w, v) => v === 'any' || (v === 'library') === Boolean(w.library) },
   },
   routes: {
-    // The distance the card shows: the route file's own, if it gives one.
-    distance: { label: 'picker.distance', options: { any: 'picker.any', short: 'picker.under30km', medium: 'picker.30to60km', long: 'picker.over60km' },
-      test: (r, v) => { const km = r.meta?.distance_km ?? r.distance_m / 1000; return v === 'any' || (v === 'short' ? km < 30 : v === 'medium' ? km >= 30 && km <= 60 : km > 60); } },
+    length: { label: 'picker.duration', options: { any: 'picker.any', short: 'picker.upTo30', medium: 'picker.30to60', long: 'picker.over60' },
+      test: (r, v) => v === 'any' || (v === 'short' ? routeMinutes(r) <= 30 : v === 'medium' ? routeMinutes(r) > 30 && routeMinutes(r) <= 60 : routeMinutes(r) > 60) },
     climbing: { label: 'picker.climbing', options: { any: 'picker.any', flat: 'picker.flat', hilly: 'picker.hilly', mountain: 'picker.mountain' },
       test: (r, v) => { const perKm = r.ascent_m / Math.max(0.1, r.distance_m / 1000); return v === 'any' || (v === 'flat' ? perKm < 5 : v === 'hilly' ? perKm >= 5 && perKm <= 15 : perKm > 15); } },
     // Only the continents the routes are on (from their route files).

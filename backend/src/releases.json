@@ -4,7 +4,7 @@
     "date": null,
     "commit": null,
     "notes": [
-      "Routes: distance filter in < 30, 30–60 and > 60 km; the Routes page has the picker's search and filters too"
+      "Routes: a riding-time filter (≤ 30, 30–60, > 60 min, from the route file's ETA) instead of distance; the Routes page has the picker's search and filters too"
     ]
   },
   {
