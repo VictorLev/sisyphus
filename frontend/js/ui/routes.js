@@ -1,5 +1,6 @@
 // The Routes page: filmed roads to ride. Each card has the distance, the
-// climbing, the video's length and a small elevation profile, and Start.
+// climbing, the video's length and a small elevation profile, and Start;
+// above them the Home picker's search and filters.
 // An admin also imports routes (a route file and its video) and deletes
 // them. The video goes up in 32 MB pieces with a progress bar; an upload
 // that stopped resumes from where the server says it got to, once the same
@@ -9,6 +10,7 @@ import { listRoutes, createRoute, deleteRoute, setRouteStarred } from '../api/cl
 import { t, tp, num, language } from '../i18n.js';
 import { card, routeProfileSvg, iconButton } from './cards.js';
 import { shrinkImage } from './image-resize.js';
+import { createFilterBar } from './filters.js';
 
 // A route's card picture: shrunk, then sent. Resolves to the updated route.
 export async function uploadThumbnail(routeId, file) {
@@ -79,6 +81,12 @@ export function initRoutes({ isAdmin, onStartRoute }) {
   const bar = document.getElementById('route-import-progress');
   importPanel.hidden = !isAdmin;
   let busy = false;
+  let routes = [];
+  const filters = createFilterBar({
+    searchEl: document.getElementById('routes-search'),
+    chipsEl: document.getElementById('routes-chips'),
+    onChange: () => renderList(),
+  });
 
   function setStatus(text, isError = false) {
     statusEl.textContent = text;
@@ -182,8 +190,19 @@ export function initRoutes({ isAdmin, onStartRoute }) {
     return li;
   }
 
+  function renderList() {
+    const shown = filters.apply(routes);
+    listEl.innerHTML = '';
+    if (shown.length === 0) {
+      const empty = document.createElement('li');
+      empty.className = 'empty';
+      empty.textContent = routes.length ? t('picker.noMatch') : t(isAdmin ? 'routes.emptyAdmin' : 'routes.empty');
+      listEl.append(empty);
+    }
+    for (const route of shown) listEl.append(routeCard(route));
+  }
+
   async function refresh() {
-    let routes;
     try {
       routes = await listRoutes();
     } catch (err) {
@@ -191,14 +210,8 @@ export function initRoutes({ isAdmin, onStartRoute }) {
       return;
     }
     summaryEl.textContent = tp('routes.count', routes.length);
-    listEl.innerHTML = '';
-    if (routes.length === 0) {
-      const empty = document.createElement('li');
-      empty.className = 'empty';
-      empty.textContent = t(isAdmin ? 'routes.emptyAdmin' : 'routes.empty');
-      listEl.append(empty);
-    }
-    for (const route of routes) listEl.append(routeCard(route));
+    filters.build('routes', routes); // keeps the chips chosen, if still on offer
+    renderList();
   }
 
   form.addEventListener('submit', async (event) => {

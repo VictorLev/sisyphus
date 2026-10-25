@@ -3,7 +3,9 @@
     "version": "next",
     "date": null,
     "commit": null,
-    "notes": []
+    "notes": [
+      "Routes: a riding-time filter (≤ 30, 30–60, > 60 min, from the route file's ETA) instead of distance; the Routes page has the picker's search and filters too"
+    ]
   },
   {
     "version": "v2.1.1",
