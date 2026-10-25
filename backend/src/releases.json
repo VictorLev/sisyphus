@@ -3,6 +3,12 @@
     "version": "next",
     "date": null,
     "commit": null,
+    "notes": []
+  },
+  {
+    "version": "v2.1.0",
+    "date": "2026-10-24",
+    "commit": null,
     "notes": [
       "Free ride: no steps column or bottom bar; the scenery is bigger, with gear and Pause/End under the right column",
       "Workouts and routes: gear and Pause/End under the right column too, and a taller power graph",
