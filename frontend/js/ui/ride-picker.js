@@ -1,7 +1,8 @@
 // The Home pickers: choose a route or a workout to ride. Two tabs, the
 // rider's starred ones first, then all of them with filters:
 //   workouts: name, duration, mine or library
-//   routes:   name, distance, climbing (metres up per km)
+//   routes:   name or place, distance (< 30, 30–60, > 60 km), climbing
+//             (metres up per km), continent
 // Cards start and star; starting closes the picker and hands the choice on.
 
 import { listWorkouts, listRoutes, setWorkoutStarred, setRouteStarred } from '../api/client.js';
@@ -21,8 +22,9 @@ const FILTERS = {
       test: (w, v) => v === 'any' || (v === 'library') === Boolean(w.library) },
   },
   routes: {
-    distance: { label: 'picker.distance', options: { any: 'picker.any', short: 'picker.under10', medium: 'picker.10to30', long: 'picker.over30' },
-      test: (r, v) => { const km = r.distance_m / 1000; return v === 'any' || (v === 'short' ? km < 10 : v === 'medium' ? km >= 10 && km <= 30 : km > 30); } },
+    // The distance the card shows: the route file's own, if it gives one.
+    distance: { label: 'picker.distance', options: { any: 'picker.any', short: 'picker.under30km', medium: 'picker.30to60km', long: 'picker.over60km' },
+      test: (r, v) => { const km = r.meta?.distance_km ?? r.distance_m / 1000; return v === 'any' || (v === 'short' ? km < 30 : v === 'medium' ? km >= 30 && km <= 60 : km > 60); } },
     climbing: { label: 'picker.climbing', options: { any: 'picker.any', flat: 'picker.flat', hilly: 'picker.hilly', mountain: 'picker.mountain' },
       test: (r, v) => { const perKm = r.ascent_m / Math.max(0.1, r.distance_m / 1000); return v === 'any' || (v === 'flat' ? perKm < 5 : v === 'hilly' ? perKm >= 5 && perKm <= 15 : perKm > 15); } },
     // Only the continents the routes are on (from their route files).

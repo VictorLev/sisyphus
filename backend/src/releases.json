@@ -3,7 +3,9 @@
     "version": "next",
     "date": null,
     "commit": null,
-    "notes": []
+    "notes": [
+      "Route picker: distance filter in < 30, 30–60 and > 60 km"
+    ]
   },
   {
     "version": "v2.1.1",
