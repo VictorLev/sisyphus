@@ -3,6 +3,12 @@
     "version": "next",
     "date": null,
     "commit": null,
+    "notes": []
+  },
+  {
+    "version": "v2.1.1",
+    "date": "2026-10-25",
+    "commit": null,
     "notes": [
       "Routes read the route file's metadata: English and French titles, city, country and continent, distance, climbing and riding time; a continent filter in the route picker, and search by place. A scan updates routes already imported"
     ]
