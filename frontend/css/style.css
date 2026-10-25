@@ -1843,7 +1843,7 @@ button.secondary:hover:not(:disabled) {
 .ride-timeline .segment-timeline {
   position: relative; /* the "now" line is placed against it */
   margin: 0;
-  height: 72px;
+  height: 110px;
   align-items: flex-end;
 }
 
@@ -1867,14 +1867,46 @@ button.secondary:hover:not(:disabled) {
   font-size: 0.95rem;
 }
 
-/* A free ride: no steps column and no graph row. The scenery takes their
-   room, and gear and Pause/End sit under the zone column. */
-.is-free-ride .ride-steps,
-.is-free-ride .ride-timeline {
-  display: none;
-}
-
+/* Wide screens: gear and Pause/End sit under the zone column, and the
+   graph (or the road's profile) takes the rest of the bottom row. */
 @media (min-width: 1101px) {
+  .ride-grid {
+    grid-template-columns: minmax(210px, 280px) minmax(0, 1fr) minmax(220px, 260px);
+    grid-template-areas:
+      "steps    metrics  zone"
+      "steps    hero     zone"
+      "timeline timeline controls";
+  }
+
+  /* The wrapper steps aside so its two panels become grid cells. */
+  .ride-grid > .ride-bottom {
+    display: contents;
+  }
+
+  .ride-timeline {
+    grid-area: timeline;
+  }
+
+  .ride-footer {
+    grid-area: controls;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-content: center;
+    gap: 0.6rem;
+    padding: 0.75rem;
+  }
+
+  .ride-actions {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .ride-footer .ride-actions button {
+    flex: 1;
+    padding: 0.7rem 0.5rem;
+  }
+
+  /* A free ride has no steps or graph: the scenery takes their room. */
   .is-free-ride .ride-grid {
     grid-template-columns: minmax(0, 1fr) minmax(220px, 260px);
     grid-template-areas:
@@ -1882,29 +1914,11 @@ button.secondary:hover:not(:disabled) {
       "hero    zone"
       "hero    controls";
   }
+}
 
-  /* The wrapper steps aside so the controls become a grid cell. */
-  .is-free-ride .ride-grid > .ride-bottom {
-    display: contents;
-  }
-
-  .is-free-ride .ride-footer {
-    grid-area: controls;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 0.6rem;
-    padding: 0.75rem;
-  }
-
-  .is-free-ride .ride-actions {
-    width: 100%;
-    margin-left: 0;
-  }
-
-  .is-free-ride .ride-footer .ride-actions button {
-    flex: 1;
-    padding: 0.7rem 0.5rem;
-  }
+.is-free-ride .ride-steps,
+.is-free-ride .ride-timeline {
+  display: none;
 }
 
 /* Pause pop-up: a panel floating over the dimmed ride screen. */
