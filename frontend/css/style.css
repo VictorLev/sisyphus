@@ -1790,6 +1790,7 @@ button.secondary:hover:not(:disabled) {
 }
 
 .ride-target em {
+  white-space: nowrap; /* "to go" stays one label */
   font-style: normal;
   font-size: 0.65rem;
   text-transform: uppercase;
@@ -1920,6 +1921,52 @@ button.secondary:hover:not(:disabled) {
 .is-free-ride .ride-steps,
 .is-free-ride .ride-timeline {
   display: none;
+}
+
+/* A route ride: the video fills the whole screen, cropped like a cover, and
+   the panels float over it, see-through. No scenery drop-down. */
+.is-route-ride .ride-grid > .ride-hero {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  border: none;
+  background: #000;
+}
+
+.is-route-ride .ride-grid > :not(.ride-hero),
+.is-route-ride .ride-bottom > * {
+  position: relative;
+  z-index: 1;
+  background: color-mix(in srgb, var(--color-surface) 50%, transparent);
+  border-color: color-mix(in srgb, var(--color-stone-light) 50%, transparent);
+  backdrop-filter: blur(6px);
+  text-shadow: var(--shadow-text);
+}
+
+.is-route-ride .steps-list li:not(.is-current),
+.is-route-ride .ride-totals > div {
+  background: color-mix(in srgb, var(--color-well) 55%, transparent);
+}
+
+.is-route-ride .ride-grid > .ride-bottom {
+  background: none;
+  backdrop-filter: none;
+}
+
+.is-route-ride .route-progress-live .route-area {
+  fill-opacity: 0.55;
+}
+
+.is-route-ride .scenery-picker,
+.is-route-ride .scenery-empty {
+  display: none;
+}
+
+/* Notes float in the middle, clear of the panels. */
+.is-route-ride .ride-note {
+  top: 9rem;
+  left: 50%;
+  transform: translateX(-50%);
 }
 
 /* Pause pop-up: a panel floating over the dimmed ride screen. */
@@ -2968,6 +3015,34 @@ kbd {
   position: relative;
   height: 100%;
   min-height: 4rem;
+  padding-left: 3.4rem; /* room for the altitude scale */
+}
+
+/* The altitude scale: the profile's top and bottom, in metres. Its labels
+   sit where route-player.js draws them (8% and 98% of the height). */
+.route-axis {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 3.4rem;
+  border-right: 1px solid var(--color-stone-light);
+  font-size: 0.7rem;
+  color: var(--color-text-dim);
+}
+
+.route-axis span {
+  position: absolute;
+  right: 0.4rem;
+  transform: translateY(-50%);
+}
+
+.route-axis-max {
+  top: 8%;
+}
+
+.route-axis-min {
+  top: 98%;
 }
 
 .route-progress-live[hidden] {
@@ -2993,7 +3068,7 @@ kbd {
 .route-progress-text {
   position: absolute;
   top: 0.4rem;
-  left: 0.6rem;
+  left: 4rem;
   font-size: 0.8rem;
   font-weight: 700;
   color: var(--color-text);

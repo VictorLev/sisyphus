@@ -851,6 +851,12 @@
               <b id="segment-grade-value">--</b> <em id="segment-grade-label" data-i18n="live.grade">grade</em>
             </span>
           </div>
+          <!-- Route rides: the current section (ui/route-sections.js) -->
+          <div class="ride-target" id="route-target" hidden>
+            <strong data-route="label">--</strong>
+            <span><b data-route="grade">--</b> <em data-i18n="live.avgGrade">average</em></span>
+            <span><b data-route="left">--</b> <em data-i18n="live.toGo">to go</em></span>
+          </div>
         </aside>
 
         <!-- 2. Live numbers -->
@@ -903,6 +909,8 @@
             <div id="segment-timeline" class="segment-timeline" hidden></div>
             <!-- Route rides: the road's profile and how far along you are. -->
             <div id="route-progress" class="route-progress-live" hidden>
+              <!-- Altitude scale: the top and bottom of the profile, in m -->
+              <div class="route-axis" aria-hidden="true"><span class="route-axis-max"></span><span class="route-axis-min"></span></div>
               <svg viewBox="0 0 1000 100" preserveAspectRatio="none" aria-hidden="true">
                 <polygon class="route-area" points="" />
                 <polygon class="route-done" points="" />

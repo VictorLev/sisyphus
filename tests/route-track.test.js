@@ -35,3 +35,23 @@ test('a profile for drawing', () => {
   const p = track.profile(5);
   assert.deepEqual(p, [0, 25, 50, 50, 50]);
 });
+
+test('sections: climbs, flats and descents, like a workout\'s steps', () => {
+  assert.deepEqual(track.sections(), [
+    { from: 0, to: 1000, kind: 'climb', grade: 5 },
+    { from: 1000, to: 2000, kind: 'flat', grade: 0 },
+  ]);
+});
+
+test('a short dip doesn\'t split a climb, and long sections are cut up', () => {
+  // 3 km up at 6% with a 200 m flat in the middle, then 12 km flat.
+  const road = new RouteTrack({
+    points: [{ d: 0, alt: 0 }, { d: 1400, alt: 84 }, { d: 1600, alt: 84 }, { d: 3000, alt: 168 }, { d: 15000, alt: 168 }],
+    video_points: [{ d: 0, t: 0 }, { d: 15000, t: 1500 }],
+  });
+  const s = road.sections();
+  assert.deepEqual(s.map((x) => x.kind), ['climb', 'climb', 'climb', 'flat', 'flat', 'flat']);
+  assert.deepEqual(s.map((x) => x.to - x.from), [1000, 1000, 1000, 4000, 4000, 4000], 'a climb km by km, a flat at most 5 km at a time');
+  assert.deepEqual(s.map((x) => x.grade), [6, 4.8, 6, 0, 0, 0], 'each piece has its own grade');
+  assert.equal(s.at(-1).to, 15000);
+});
