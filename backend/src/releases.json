@@ -6,6 +6,14 @@
     "notes": []
   },
   {
+    "version": "v2.0.1",
+    "date": "2026-10-24",
+    "commit": null,
+    "notes": [
+      "The release notes list v2.0.0 (its image still said Next)"
+    ]
+  },
+  {
     "version": "v2.0.0",
     "date": "2026-10-24",
     "commit": "471f5a9",
