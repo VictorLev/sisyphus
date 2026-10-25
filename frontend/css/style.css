@@ -1729,7 +1729,9 @@ button.secondary:hover:not(:disabled) {
 
 .scenery-picker {
   position: absolute;
-  top: 0.75rem;
+  /* Under YouTube's top bar, so its sound, subtitles and settings buttons
+     stay clickable. */
+  top: 4.5rem;
   right: 0.75rem;
   z-index: 2;
   max-width: 45%;
