@@ -1865,6 +1865,46 @@ button.secondary:hover:not(:disabled) {
   font-size: 0.95rem;
 }
 
+/* A free ride: no steps column and no graph row. The scenery takes their
+   room, and gear and Pause/End sit under the zone column. */
+.is-free-ride .ride-steps,
+.is-free-ride .ride-timeline {
+  display: none;
+}
+
+@media (min-width: 1101px) {
+  .is-free-ride .ride-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(220px, 260px);
+    grid-template-areas:
+      "metrics zone"
+      "hero    zone"
+      "hero    controls";
+  }
+
+  /* The wrapper steps aside so the controls become a grid cell. */
+  .is-free-ride .ride-grid > .ride-bottom {
+    display: contents;
+  }
+
+  .is-free-ride .ride-footer {
+    grid-area: controls;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.6rem;
+    padding: 0.75rem;
+  }
+
+  .is-free-ride .ride-actions {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .is-free-ride .ride-footer .ride-actions button {
+    flex: 1;
+    padding: 0.7rem 0.5rem;
+  }
+}
+
 /* Pause pop-up: a panel floating over the dimmed ride screen. */
 .pause-dialog {
   width: min(32rem, calc(100vw - 2rem));

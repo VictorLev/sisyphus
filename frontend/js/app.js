@@ -644,6 +644,8 @@ function startRide(workout, { route = null, erg = ergWorkouts } = {}) {
   updateModeUi();
 
   liveScreen.buildTimeline(workout ? workout.structure : null, workout ? workoutName(workout) : route?.name ?? null);
+  // A free ride has no steps or graph: the scenery gets their room.
+  document.querySelector('[data-view="live"]').classList.toggle('is-free-ride', !workout && !route);
   liveScreen.updateWorkoutInfo(runner ? runner.state : null);
   liveScreen.setElapsed(0);
   updateTotals();
