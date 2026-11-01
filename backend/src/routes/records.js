@@ -45,9 +45,10 @@ function entry(key, label, unit, winner, format) {
   };
 }
 
-// Feats are each rider's own: only their rides are scanned.
-router.get('/', (req, res) => {
-  const sessions = selectSessions.all(req.user.id);
+// Feats are each rider's own: only their rides are scanned. Also shown on
+// their profile card.
+export function featsFor(userId) {
+  const sessions = selectSessions.all(userId);
 
   const totals = sessions.reduce(
     (acc, s) => ({
@@ -77,14 +78,16 @@ router.get('/', (req, res) => {
     records.push(entry(`best_${windowSec}s`, label, 'W', winner, (v) => `${Math.round(v)} W`));
   }
 
-  res.json({
+  return {
     totals: {
       pushes: totals.pushes,
       minutes: Math.round(totals.seconds / 60),
       distance_km: Number((totals.distance / 1000).toFixed(2)),
     },
     records,
-  });
-});
+  };
+}
+
+router.get('/', (req, res) => res.json(featsFor(req.user.id)));
 
 export default router;

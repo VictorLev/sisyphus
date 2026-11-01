@@ -14,8 +14,9 @@ const selectTotals = db.prepare(
    WHERE user_id = ? AND ended_at IS NOT NULL AND started_at IS NOT NULL`
 );
 
-router.get('/', (req, res) => {
-  const totals = selectTotals.get(req.user.id);
+// A rider's level, XP and all-time totals (also shown on their profile card).
+export function levelFor(userId) {
+  const totals = selectTotals.get(userId);
   const minutes = Math.max(0, totals.minutes ?? 0);
   const km = Math.max(0, (totals.distance_m ?? 0) / 1000);
   const pushes = totals.pushes ?? 0;
@@ -25,14 +26,16 @@ router.get('/', (req, res) => {
   const currentFloor = thresholdFor(level);
   const nextFloor = thresholdFor(level + 1);
 
-  res.json({
+  return {
     level,
     xp,
     into_level: xp - currentFloor,
     needed_for_next: nextFloor - currentFloor,
     progress: Number(((xp - currentFloor) / (nextFloor - currentFloor)).toFixed(4)),
     totals: { pushes, minutes: Math.round(minutes), distance_km: Number(km.toFixed(2)) },
-  });
-});
+  };
+}
+
+router.get('/', (req, res) => res.json(levelFor(req.user.id)));
 
 export default router;

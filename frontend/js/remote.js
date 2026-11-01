@@ -1,6 +1,7 @@
 // The phone remote (remote.html, served at /remote): big buttons that shift
 // the virtual gears of the ride running in the rider's browser beside the
-// bike, with its gear, power, cadence and speed. Shifts and state travel
+// bike, one that pauses and resumes it, and its gear, power, cadence and
+// speed. Shifts and state travel
 // through the server (backend/src/routes/remote.js).
 
 import { getMe, login } from './api/client.js';
@@ -13,12 +14,15 @@ const panel = $('remote-panel');
 const statusEl = $('remote-status');
 const upBtn = $('remote-up');
 const downBtn = $('remote-down');
+const pauseBtn = $('remote-pause');
 let state = { riding: false };
 let wakeLock = null;
 
 function render() {
   const canShift = state.riding && !state.paused && state.mode === 'gears';
   upBtn.disabled = downBtn.disabled = !canShift;
+  pauseBtn.disabled = !state.riding;
+  pauseBtn.textContent = state.paused ? t('remote.resume') : t('remote.pause');
   if (!state.riding) statusEl.textContent = t('remote.waiting');
   else if (state.paused) statusEl.textContent = t('remote.paused');
   else if (state.mode === 'erg') statusEl.textContent = t('remote.erg');
@@ -48,13 +52,13 @@ document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') keepAwake(state.riding);
 });
 
-async function shift(direction) {
+async function send(path, body) {
   navigator.vibrate?.(15);
   try {
-    const res = await fetch('/api/remote/shift', {
+    const res = await fetch(`/api/remote/${path}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ direction }),
+      body: JSON.stringify(body),
     });
     if (res.status === 401) return showLogin();
     const { delivered } = await res.json();
@@ -63,7 +67,11 @@ async function shift(direction) {
     statusEl.textContent = t('remote.offline');
   }
 }
+const shift = (direction) => send('shift', { direction });
 upBtn.addEventListener('click', () => shift('up'));
+
+// Pause or resume, whichever the ride isn't doing.
+pauseBtn.addEventListener('click', () => send('control', { action: state.paused ? 'resume' : 'pause' }));
 downBtn.addEventListener('click', () => shift('down'));
 
 function connect() {

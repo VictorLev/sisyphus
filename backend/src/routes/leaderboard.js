@@ -8,8 +8,8 @@ const router = Router();
 
 // Every rider who rode in the period, with their totals and their all-time
 // level. Riders with no rides in it aren't listed at all. Only the display
-// name and these numbers leave the server; never usernames or anything
-// from another rider's log.
+// name, the id (for their profile card) and these numbers leave the server;
+// never usernames.
 const selectPeriod = db.prepare(
   `SELECT u.id, u.display_name,
           COUNT(s.id) AS rides,
@@ -43,6 +43,7 @@ router.get('/', (req, res) => {
       ? xpFor({ minutes: total.minutes, km: total.distance_m / 1000, pushes: total.pushes })
       : 0);
     return {
+      id: r.id, // opens their profile card
       name: r.display_name,
       you: r.id === req.user.id,
       level,
@@ -50,7 +51,7 @@ router.get('/', (req, res) => {
       minutes: Math.max(0, Math.round(r.minutes)),
       distance_km: Number((Math.max(0, r.distance_m) / 1000).toFixed(1)),
       // The avatar they bought: background and emblem ids, or null.
-      avatar: (({ avatar_bg: bg, avatar_emblem: emblem }) => ({ bg, emblem }))(cosmeticsOf(r.id)),
+      avatar: (({ avatar_bg: bg, avatar_emblem: emblem, avatar_border: border }) => ({ bg, emblem, border }))(cosmeticsOf(r.id)),
     };
   });
   res.json({ period, from, to, riders });

@@ -200,6 +200,7 @@
       <div class="panel"><h2 data-i18n="shop.slot.boulder">Boulders</h2><ul class="card-grid shop-grid" data-slot="boulder"></ul></div>
       <div class="panel"><h2 data-i18n="shop.slot.avatar_bg">Avatar backgrounds</h2><ul class="card-grid shop-grid" data-slot="avatar_bg"></ul></div>
       <div class="panel"><h2 data-i18n="shop.slot.avatar_emblem">Avatar emblems</h2><ul class="card-grid shop-grid" data-slot="avatar_emblem"></ul></div>
+      <div class="panel"><h2 data-i18n="shop.slot.avatar_border">Avatar borders</h2><ul class="card-grid shop-grid" data-slot="avatar_border"></ul></div>
     </section>
 
     <!-- Admins only: Settings → Admin Panel (ui/admin.js). -->
@@ -1040,6 +1041,17 @@
         <span class="tutorial-step"></span>
         <h2 class="tutorial-title" id="tutorial-title"></h2>
         <p class="tutorial-text"></p>
+        <!-- The gears step: how rides drive the trainer. -->
+        <div class="tutorial-choice" role="radiogroup" aria-label="Trainer mode" data-i18n-attr="aria-label:trainer.title" hidden>
+          <button type="button" class="tutorial-choice-btn" role="radio" data-mode="rear">
+            <strong data-i18n="trainer.rear">Rear gears</strong>
+            <span data-i18n="tutorial.gears.rear">Shift with your bike's own gears. The trainer only adds resistance on climbs.</span>
+          </button>
+          <button type="button" class="tutorial-choice-btn" role="radio" data-mode="gears">
+            <strong data-i18n="trainer.gears">Virtual gears</strong>
+            <span data-i18n="tutorial.gears.virtual">Shift on screen, with + and −, or from your phone. The trainer sets the resistance.</span>
+          </button>
+        </div>
         <div class="row-actions">
           <button id="tutorial-back" type="button" class="secondary" data-i18n="tutorial.back">Back</button>
           <button id="tutorial-next" type="button" data-i18n="tutorial.next">Next</button>
@@ -1058,6 +1070,52 @@
       <div class="row-actions">
         <button id="trainer-gate-connect" type="button" data-i18n="trainer.connect">Connect trainer</button>
         <button id="trainer-gate-cancel" type="button" class="secondary" data-i18n="gate.cancel">Cancel</button>
+      </div>
+    </dialog>
+
+    <!-- A rider's profile card, from the Leaderboard (ui/rider-card.js). -->
+    <dialog id="rider-card" class="panel rider-card" aria-label="Rider" data-i18n-attr="aria-label:riderCard.title">
+      <button id="rider-card-close" type="button" class="secondary picker-close rider-card-close" aria-label="Close" data-i18n-attr="aria-label:picker.close">×</button>
+      <div id="rider-card-body"></div>
+    </dialog>
+
+    <!-- A route's details and best times (ui/route-info.js). -->
+    <dialog id="route-info" class="panel route-info" aria-labelledby="route-info-title">
+      <div class="ride-picker-head">
+        <h2 id="route-info-title"></h2>
+        <button id="route-info-close" type="button" class="secondary picker-close" aria-label="Close" data-i18n-attr="aria-label:picker.close">×</button>
+      </div>
+      <p id="route-info-meta" class="hint"></p>
+      <div class="route-info-body">
+        <!-- Left: the card's picture, if it has one, and the road's elevation. -->
+        <div class="route-info-media">
+          <img id="route-info-image" class="route-info-image" alt="" hidden />
+          <div class="route-info-profile">
+            <div class="route-axis" aria-hidden="true"><span class="route-axis-max"></span><span class="route-axis-min"></span></div>
+            <div id="route-info-graph"></div>
+            <div class="route-info-km" aria-hidden="true"><span>0 km</span><span id="route-info-km-end"></span></div>
+          </div>
+        </div>
+        <!-- Right: the best times. -->
+        <div class="route-info-times">
+          <h3 data-i18n="routeInfo.mine">Your best times</h3>
+          <table class="route-info-table">
+            <thead><tr>
+              <th>#</th><th data-i18n="routeInfo.time">Time</th><th data-i18n="routeInfo.date">Date</th>
+              <th data-i18n="routeInfo.power">Avg power</th><th data-i18n="routeInfo.speed">Avg speed</th>
+            </tr></thead>
+            <tbody id="route-info-mine"></tbody>
+          </table>
+          <h3 data-i18n="routeInfo.everyone">Best of everyone</h3>
+          <table class="route-info-table">
+            <thead><tr>
+              <th>#</th><th data-i18n="routeInfo.rider">Rider</th><th data-i18n="routeInfo.time">Time</th><th data-i18n="routeInfo.date">Date</th>
+              <th data-i18n="routeInfo.power">Avg power</th><th data-i18n="routeInfo.speed">Avg speed</th>
+            </tr></thead>
+            <tbody id="route-info-everyone"></tbody>
+          </table>
+          <p class="hint" data-i18n="routeInfo.hint">Times count when the ride reached the end of the route; pauses are left out.</p>
+        </div>
       </div>
     </dialog>
 

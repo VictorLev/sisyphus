@@ -41,7 +41,8 @@ function rangeText(board) {
   return `${from.toLocaleDateString(locale(), day)} – ${last.toLocaleDateString(locale(), day)}`;
 }
 
-export function initLeaderboard() {
+// onRider(id): a click on a rider's avatar or name (their profile card).
+export function initLeaderboard({ onRider = () => {} } = {}) {
   const listEl = document.getElementById('leaderboard-list');
   const rangeEl = document.getElementById('leaderboard-range');
   const periodGroup = document.getElementById('leaderboard-period');
@@ -86,11 +87,18 @@ export function initLeaderboard() {
 
       const who = document.createElement('span');
       who.className = 'leaderboard-who';
-      who.insertAdjacentHTML('beforeend', avatarSvg({ ...rider.avatar, name: rider.name }, { size: 22 }));
+      // Avatar and name open the rider's profile card.
+      const open = document.createElement('button');
+      open.type = 'button';
+      open.className = 'leaderboard-open';
+      open.title = t('riderCard.open', { name: rider.name });
+      open.insertAdjacentHTML('beforeend', avatarSvg({ ...rider.avatar, name: rider.name }, { size: 22 }));
       const name = document.createElement('span');
       name.className = 'leaderboard-name';
       name.textContent = rider.name;
-      who.append(name);
+      open.append(name);
+      open.addEventListener('click', () => onRider(rider.id));
+      who.append(open);
       if (rider.you) {
         const you = document.createElement('span');
         you.className = 'leaderboard-you';

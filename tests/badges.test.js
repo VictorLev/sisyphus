@@ -285,6 +285,107 @@ describe('the second fifty', () => {
   });
 });
 
+describe('travel badges, from the routes\' metadata', () => {
+  // A small world: two in Japan (one flat, one mountain), Las Vegas, Paris,
+  // and a hilly one in New Zealand.
+  const routes = [
+    { id: 1, name: 'Cape Tappi', distance_m: 10000, ascent_m: 20, city: 'Sotogahama', country: 'Japan', continent: 'Asia' },
+    { id: 2, name: 'Mount Fuji', distance_m: 10000, ascent_m: 1200, country: 'Japan', continent: 'Asia' },
+    { id: 3, name: 'Las Vegas at Night - USA', distance_m: 8000, ascent_m: 10, city: 'Las Vegas', country: 'United States', continent: 'North America' },
+    { id: 4, name: 'Paris - The City of Love', distance_m: 6000, ascent_m: 20, city: 'Paris', country: 'France', continent: 'Europe' },
+    { id: 5, name: 'Lake Wanaka', distance_m: 20000, ascent_m: 200, country: 'New Zealand', continent: 'Oceania' },
+  ];
+  const finish = (id, rest = {}) => ride({ route_id: id, km: routes.find((r) => r.id === id).distance_m / 1000, ...rest });
+
+  test('there are 150 badges', () => assert.equal(BADGES.length, 150));
+
+  test('every route of a country or continent, ridden to its end', () => {
+    let b = badges([finish(1)], { routes });
+    assert.equal(b['all-japan'].earned, false);
+    assert.deepEqual([b['all-japan'].progress.value, b['all-japan'].progress.target], [1, 2]);
+    b = badges([finish(1), finish(2, { date: '2026-03-03' })], { routes });
+    assert.deepEqual([b['all-japan'].earned, b['all-asia'].earned], [true, true]);
+    assert.equal(badges([finish(3)], { routes })['all-usa'].earned, true, '"United States" counts as the USA');
+    assert.equal(b['all-africa'].earned, false, 'no route in Africa: nothing to earn yet');
+  });
+
+  test('flat, hilly and mountain routes, as the picker sorts them', () => {
+    const b = badges([finish(2), finish(5, { date: '2026-03-03' })], { routes });
+    assert.deepEqual([b['all-mountains'].earned, b['all-hilly'].earned, b['all-flats'].earned], [true, true, false]);
+    assert.equal(b.sherpa.earned, true);
+  });
+
+  test('one ride on each continent, finished or not', () => {
+    const rides = [1, 3, 4, 5].map((id, i) => ride({ route_id: id, km: 1, date: `2026-03-0${i + 2}` }));
+    assert.equal(badges(rides.slice(0, 3), { routes })['one-of-each'].earned, false);
+    assert.equal(badges(rides, { routes })['one-of-each'].earned, true);
+  });
+
+  test('named places: Las Vegas, Paris, and Hanoi when there is one', () => {
+    const b = badges([finish(3), finish(4, { date: '2026-03-03' })], { routes });
+    assert.deepEqual([b.vegas.earned, b.paris.earned, b.hanoi.earned], [true, true, false]);
+  });
+
+  test('countries, continents in a day, the same road again', () => {
+    const sameDay = [1, 3, 4].map((id, i) => ride({ route_id: id, km: 1, time: `1${i}:00` }));
+    assert.equal(badges(sameDay, { routes })['jet-lag'].earned, true);
+    const again = [0, 1, 2].map((i) => finish(4, { date: `2026-03-0${i + 2}` }));
+    assert.equal(badges(again, { routes })['deja-vu'].earned, true);
+    assert.equal(badges(again.slice(0, 2), { routes })['deja-vu'].progress.value, 2);
+  });
+
+  test('the secrets: Japan at night, midnight in Paris, Vegas on a Friday night, keep left, half way', () => {
+    let b = badges([ride({ route_id: 1, km: 2, time: '23:10' })], { routes });
+    assert.equal(b['lost-in-translation'].earned, true);
+    b = badges([ride({ route_id: 4, km: 1, time: '23:30' })], { routes });
+    assert.equal(b['midnight-paris'].earned, true);
+    b = badges([ride({ route_id: 3, km: 1, date: '2026-03-06', time: '21:00' })], { routes }); // a Friday
+    assert.equal(b['viva-las-vegas'].earned, true);
+    b = badges([ride({ route_id: 3, km: 1, date: '2026-03-04', time: '21:00' })], { routes }); // a Wednesday
+    assert.equal(b['viva-las-vegas'].earned, false);
+    assert.equal(b['viva-las-vegas'].name, '???');
+    b = badges([1, 5].map((id, i) => ride({ route_id: id, km: 1, date: `2026-03-0${i + 2}` })), { routes });
+    assert.equal(b['keep-left'].earned, false, 'only two left-side countries (Japan, New Zealand) so far');
+    b = badges([ride({ route_id: 5, km: 10 })], { routes });
+    assert.equal(b['livin-on-a-prayer'].earned, true, '10 of 20 km');
+  });
+
+  test('a Sunday drive, and the same route five days running', () => {
+    assert.equal(badges([finish(5, { date: '2026-03-08', avg_speed: 18 })], { routes })['sunday-driver'].earned, true);
+    assert.equal(badges([finish(5, { date: '2026-03-08', avg_speed: 28 })], { routes })['sunday-driver'].earned, false);
+    const week = days(5).map((date) => ride({ route_id: 4, km: 1, date }));
+    assert.equal(badges(week, { routes })['groundhog-route'].earned, true);
+  });
+});
+
+describe('the 150: weeks, days, numbers, France', () => {
+  test('a full working week, a big week, three rides in a day', () => {
+    const week = days(5, '2026-03-02').map((date) => ride({ date, km: 41 })); // Monday to Friday
+    let b = badges(week);
+    assert.deepEqual([b['full-week'].earned, b['big-week'].earned], [true, true], '5 × 41 km = 205 km');
+    b = badges(week.slice(0, 4));
+    assert.deepEqual([b['full-week'].earned, b['big-week'].earned, b['big-week'].progress.value], [false, false, 164]);
+    const triple = ['08:00', '12:00', '18:00'].map((time) => ride({ time }));
+    assert.equal(badges(triple)['triple-threat'].earned, true);
+    assert.equal(badges(triple.slice(0, 2))['triple-threat'].earned, false);
+  });
+
+  test('palindromes and 13:13', () => {
+    assert.equal(badges([ride({ km: 12.21 })]).palindrome.earned, true);
+    assert.equal(badges([ride({ km: 12.2 })]).palindrome.earned, false);
+    assert.equal(badges([ride({ time: '13:13' })])['thirteen-thirteen'].earned, true);
+  });
+
+  test('France: every route, and Le Tour in July', () => {
+    const routes = [
+      { id: 1, name: 'Streets of Paris', distance_m: 6000, ascent_m: 20, country: 'France', continent: 'Europe' },
+      { id: 2, name: 'Galibier', distance_m: 90000, ascent_m: 2000, country: 'France', continent: 'Europe' },
+    ];
+    const b = badges([ride({ route_id: 1, km: 6 }), ride({ route_id: 2, km: 90, date: '2026-07-04' })], { routes });
+    assert.deepEqual([b['all-france'].earned, b['long-haul'].earned, b['tour-de-france'].earned], [true, true, true]);
+  });
+});
+
 describe('badges API', () => {
   let server;
   let alice;

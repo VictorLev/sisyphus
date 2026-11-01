@@ -1,5 +1,6 @@
 // The shop ("The Agora"): spend drachmas on a hat and a boulder for
-// Sisyphus and on an avatar. Each item is a card with a preview (Sisyphus
+// Sisyphus and on an avatar (background, emblem, border). Each card says
+// how rare its item is, from its price. Each item is a card with a preview (Sisyphus
 // wearing it, or the avatar with it), its name and price, and Buy, Wear or
 // Take off. Buying wears it at once. The balance in the header follows.
 
@@ -9,12 +10,28 @@ import { drawHat, drawBoulder, setEquipped } from '../shop/cosmetics.js';
 import { avatarSvg } from '../shop/avatar.js';
 import { createRideHero } from './ride-hero.js';
 
-const SLOT_ORDER = ['hat', 'boulder', 'avatar_bg', 'avatar_emblem'];
+const SLOT_ORDER = ['hat', 'boulder', 'avatar_bg', 'avatar_emblem', 'avatar_border'];
+const AVATAR_SLOTS = { avatar_bg: 'bg', avatar_emblem: 'emblem', avatar_border: 'border' };
+
+// Rarity by price: a drachma is about a minute ridden, so legendary is
+// a year and more of riding.
+const rarityOf = (price) => (price >= 15000 ? 'legendary' : price >= 3000 ? 'epic' : price >= 500 ? 'rare' : 'common');
+
+// The avatar as worn, with one item swapped in (for its card).
+const avatarLook = (equipped, item = null) => Object.fromEntries(Object.entries(AVATAR_SLOTS)
+  .map(([slot, key]) => [key, item?.slot === slot ? item.id : equipped[slot]]));
 const PUSHER = ['..XX..', '..XX..', '.XXXXX', 'XXXX..', '.XXX..', '.XXX..', '.X.X..', 'X...X.'];
 const BOULDER = ['..XXXX..', '.XXXXXX.', 'XXXXXXXX', 'XXXXXXXX', 'XXXXXXXX', 'XXXXXXXX', '.XXXXXX.', '..XXXX..'];
 
 // A still of Sisyphus wearing one item, for its card.
-function itemPreview(item, equipped) {
+const itemPreview = (item, equipped) => sisyphusStill({
+  hat: item.slot === 'hat' ? item.id : equipped.hat,
+  boulder: item.slot === 'boulder' ? item.id : equipped.boulder,
+});
+
+// A still of Sisyphus in a hat and with a boulder (ids or null): the shop's
+// cards and riders' profile cards.
+export function sisyphusStill({ hat = null, boulder = null } = {}) {
   const canvas = document.createElement('canvas');
   const PX = 6;
   canvas.width = 20 * PX;
@@ -28,8 +45,8 @@ function itemPreview(item, equipped) {
   const figure = getComputedStyle(document.documentElement).getPropertyValue('--color-bronze-bright').trim() || '#e0c088';
   for (let x = 0; x < 20; x++) px(x, 13, getComputedStyle(document.documentElement).getPropertyValue('--color-bronze-dim').trim() || '#7a6340');
   PUSHER.forEach((row, y) => [...row].forEach((c, x) => c === 'X' && px(3 + x, 5 + y, figure)));
-  drawHat(px, 5, 2, 5, item.slot === 'hat' ? item.id : equipped.hat);
-  drawBoulder(px, BOULDER, 10, 5, figure, item.slot === 'boulder' ? item.id : equipped.boulder);
+  drawHat(px, 5, 2, 5, hat);
+  drawBoulder(px, BOULDER, 10, 5, figure, boulder);
   return canvas;
 }
 
@@ -67,9 +84,7 @@ export function initShop({ onChange, getName }) {
     if (item.slot === 'hat' || item.slot === 'boulder') {
       look.append(itemPreview(item, state.equipped));
     } else {
-      const bg = item.slot === 'avatar_bg' ? item.id : state.equipped.avatar_bg;
-      const emblem = item.slot === 'avatar_emblem' ? item.id : state.equipped.avatar_emblem;
-      look.innerHTML = avatarSvg({ bg, emblem, name: getName() }, { size: 64 });
+      look.innerHTML = avatarSvg({ ...avatarLook(state.equipped, item), name: getName() }, { size: 64 });
     }
     const body = document.createElement('div');
     body.className = 'card-body';
@@ -79,7 +94,12 @@ export function initShop({ onChange, getName }) {
     const price = document.createElement('span');
     price.className = 'card-meta shop-price';
     price.textContent = item.owned ? t('shop.owned') : t('shop.price', { n: num(item.price) });
-    body.append(name, price);
+    const rarity = rarityOf(item.price);
+    const tag = document.createElement('span');
+    tag.className = `shop-rarity is-${rarity}`;
+    tag.textContent = t(`shop.rarity.${rarity}`);
+    body.append(name, tag, price);
+    li.classList.add(`is-${rarity}`);
     const actions = document.createElement('div');
     actions.className = 'card-actions';
     const worn = state.equipped[item.slot] === item.id;
@@ -110,7 +130,7 @@ export function initShop({ onChange, getName }) {
       riding: num(state.earned.riding), badges: num(state.earned.badges), count: state.earned.badge_count, spent: num(state.spent),
       gifts: num(state.earned.gifts ?? 0),
     });
-    avatarEl.innerHTML = avatarSvg({ bg: state.equipped.avatar_bg, emblem: state.equipped.avatar_emblem, name: getName() }, { size: 96 });
+    avatarEl.innerHTML = avatarSvg({ ...avatarLook(state.equipped), name: getName() }, { size: 96 });
     for (const slot of SLOT_ORDER) {
       const list = document.querySelector(`.shop-grid[data-slot="${slot}"]`);
       list.innerHTML = '';

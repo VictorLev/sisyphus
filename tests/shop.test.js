@@ -35,9 +35,12 @@ describe('shop', () => {
   test('a new rider has nothing, and the catalog has prices', async () => {
     const shop = await (await bob.get('/api/shop')).json();
     assert.equal(shop.balance, 0);
-    assert.equal(shop.items.length, 19);
+    for (const slot of ['hat', 'boulder', 'avatar_bg', 'avatar_emblem', 'avatar_border']) {
+      assert.ok(shop.items.filter((i) => i.slot === slot).length >= 20, `at least 20 ${slot}`);
+    }
+    assert.equal(Math.max(...shop.items.map((i) => i.price)), 60000, 'the diamond border is the dearest');
     assert.ok(shop.items.every((i) => i.price > 0 && !i.owned));
-    assert.deepEqual(shop.equipped, { hat: null, boulder: null, avatar_bg: null, avatar_emblem: null });
+    assert.deepEqual(shop.equipped, { hat: null, boulder: null, avatar_bg: null, avatar_emblem: null, avatar_border: null });
   });
 
   test('riding earns a drachma a minute, and badges add their reward', async () => {
@@ -73,7 +76,7 @@ describe('shop', () => {
     await alice.post('/api/shop/buy', { item_id: 'bg-bronze' });
     const board = await (await bob.get('/api/leaderboard?period=year')).json();
     const a = board.riders.find((r) => r.name === 'Alice');
-    assert.deepEqual(a.avatar, { bg: 'bg-bronze', emblem: null });
+    assert.deepEqual(a.avatar, { bg: 'bg-bronze', emblem: null, border: null });
     const me = await (await alice.get('/api/shop/me')).json();
     assert.equal(me.equipped.avatar_bg, 'bg-bronze');
   });

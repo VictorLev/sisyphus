@@ -17,6 +17,8 @@ import { setEquipped } from './shop/cosmetics.js';
 import { avatarSvg } from './shop/avatar.js';
 import { createRoutePlayer } from './ui/route-player.js';
 import { createRouteSections } from './ui/route-sections.js';
+import { initRouteInfo } from './ui/route-info.js';
+import { initRiderCard } from './ui/rider-card.js';
 import { RouteTrack } from './workout/route-track.js';
 import { TrainerConnection } from './ble/connection.js';
 import { TrainerControl } from './ble/trainer-control.js';
@@ -125,7 +127,7 @@ function showWallet({ balance, equipped }) {
   coins.hidden = false;
   document.getElementById('nav-coins-count').textContent = num(balance);
   document.getElementById('nav-avatar').innerHTML =
-    avatarSvg({ bg: equipped.avatar_bg, emblem: equipped.avatar_emblem, name: currentUser?.display_name ?? '' }, { size: 32, title: currentUser?.display_name ?? '' });
+    avatarSvg({ bg: equipped.avatar_bg, emblem: equipped.avatar_emblem, border: equipped.avatar_border, name: currentUser?.display_name ?? '' }, { size: 32, title: currentUser?.display_name ?? '' });
   setEquipped(equipped);
 }
 async function refreshWallet() {
@@ -168,6 +170,17 @@ if (currentUser?.is_admin) {
 let tutorialShown = false;
 const tutorial = initTutorial({
   onDone: () => saveSettings({ tutorial_done: true }).catch(() => {}),
+  // The gears step: saved at once, and the Settings page shows it.
+  onChoose: async (mode) => {
+    try {
+      applySettings(await saveSettings({ trainer_mode: mode }));
+      settingsForm.populate();
+    } catch (err) {
+      console.warn('[tutorial] saving the trainer mode failed:', err.message);
+    }
+  },
+  getMode: () => preferredMode,
+  onStep: (step) => { if (step.view === 'settings') settingsTabs.select('ride'); },
 });
 document.getElementById('replay-tutorial-btn').addEventListener('click', () => tutorial.start());
 
@@ -186,8 +199,11 @@ const startRouteRide = whenTrainerReady(async (summary) => {
   }
 });
 
+// A route's details and best times, from the ⓘ on its card.
+const routeInfo = initRouteInfo();
 const picker = initRidePicker({
   onPick: (kind, item, { erg }) => (kind === 'routes' ? startRouteRide(item) : startWorkoutRide(item, { erg })),
+  onRouteInfo: (route) => routeInfo.open(route),
   ergDefault: () => ergWorkouts,
 });
 initHome({
@@ -212,6 +228,7 @@ const routeSections = createRouteSections({
 initRoutes({
   isAdmin: Boolean(currentUser?.is_admin),
   onStartRoute: startRouteRide,
+  onInfo: (route) => routeInfo.open(route),
 });
 
 initWorkouts({
@@ -239,10 +256,12 @@ function editWorkout(workout) {
 initSisyphusLoop();
 const chronicle = initChronicle();
 initFeats({ onOpenRide: (id) => chronicle.openDetail(id) });
-initLeaderboard();
+// A rider's profile card, from their name or avatar on the Leaderboard.
+const riderCard = initRiderCard();
+initLeaderboard({ onRider: (id) => riderCard.open(id) });
 initBadges({ onOpenRide: (id) => chronicle.openDetail(id), onOpenBadges: () => showView('badges') });
 initProfile();
-initSettings({ onSaved: (saved) => applySettings(saved), getSharedScenery: () => sharedScenery });
+const settingsForm = initSettings({ onSaved: (saved) => applySettings(saved), getSharedScenery: () => sharedScenery });
 initAccount(currentUser);
 // Settings tabs. The Admin Panel link is for admins; the diagnostic log is
 // on the Admin Panel page (entries are still captured for everyone, in case
@@ -270,7 +289,7 @@ function applySettings(settings) {
   // A new rider (or one who hasn't seen it yet): the walkthrough, once.
   if (currentUser && settings.tutorial_done === false && !tutorialShown) {
     tutorialShown = true;
-    tutorial.start();
+    tutorial.start({ firstTime: true });
   }
   setStravaExport(settings.strava_export);
   // The videos are everyone's (Admin Panel); the order is the rider's.
@@ -436,12 +455,18 @@ document.addEventListener('keydown', (event) => {
   handleShift(direction);
 });
 
-// The phone remote (/remote): shifts from the rider's phone land here like
-// the on-screen buttons, and the phone is kept up to date with the ride.
+// The phone remote (/remote): shifts, pause and resume from the rider's
+// phone land here like the on-screen buttons, and the phone is kept up to
+// date with the ride.
 let liveSpeedKmh = null;
 const remote = currentUser ? initRemoteLink({
   onShift: (direction) => {
     if (!liveViewEl.hidden && pausedAtMs == null) handleShift(direction);
+  },
+  onControl: (action) => {
+    if (action === 'pause') pauseRide(); // opens the pop-up, as Pause does
+    else liveScreen.resumeFromOutside();
+    remote.update(); // the phone's button flips at once
   },
   getState: () => {
     const riding = !liveViewEl.hidden;

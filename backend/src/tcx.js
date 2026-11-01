@@ -1,7 +1,9 @@
 // A ride as a TCX file, for uploading to Strava by hand (strava.com/upload)
 // or any app that reads Garmin's format: one lap, one trackpoint per sample
 // with power (Garmin's TPX extension), cadence, speed, cumulative distance
-// and heart rate when there is one. No positions: it is an indoor ride.
+// and heart rate when there is one. No positions: it is an indoor ride. A
+// ride on a route also gets the road's altitude at each point, so Strava
+// shows its elevation.
 
 const escapeXml = (s) => String(s).replace(/[<>&'"]/g, (c) => `&#${c.charCodeAt(0)};`);
 const round = (n, digits = 0) => Number(n.toFixed(digits));
@@ -21,7 +23,26 @@ function cumulativeDistances(samples, totalM) {
   return out.map((v) => v * scale);
 }
 
-export function buildTcx(session, samples) {
+// The road's altitude at distance d, between its points ({ d, alt }).
+export function altitudeAlong(points) {
+  return (d) => {
+    if (d <= points[0].d) return points[0].alt;
+    let lo = 0;
+    let hi = points.length - 1;
+    if (d >= points[hi].d) return points[hi].alt;
+    while (hi - lo > 1) {
+      const mid = (lo + hi) >> 1;
+      if (points[mid].d <= d) lo = mid;
+      else hi = mid;
+    }
+    const a = points[lo];
+    const b = points[hi];
+    return b.d > a.d ? a.alt + ((b.alt - a.alt) * (d - a.d)) / (b.d - a.d) : a.alt;
+  };
+}
+
+// altitudeAt(metres): the route's altitude there, for a ride on a route.
+export function buildTcx(session, samples, { altitudeAt = null } = {}) {
   const start = Date.parse(session.started_at);
   const end = session.ended_at ? Date.parse(session.ended_at) : start;
   const totalSec = Math.max(0, (end - start) / 1000);
@@ -34,6 +55,7 @@ export function buildTcx(session, samples) {
 
   const points = samples.map((s, i) => {
     const parts = [`<Time>${iso(start + s.timestamp_offset_sec * 1000)}</Time>`];
+    if (altitudeAt) parts.push(`<AltitudeMeters>${round(altitudeAt(distances[i]), 1)}</AltitudeMeters>`);
     parts.push(`<DistanceMeters>${round(distances[i], 1)}</DistanceMeters>`);
     if (s.heart_rate > 0) parts.push(`<HeartRateBpm><Value>${Math.round(s.heart_rate)}</Value></HeartRateBpm>`);
     if (s.cadence != null) parts.push(`<Cadence>${Math.min(254, Math.max(0, Math.round(s.cadence)))}</Cadence>`);

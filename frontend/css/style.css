@@ -2807,6 +2807,26 @@ kbd {
   min-width: 0;
 }
 
+.leaderboard-open {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  padding: 0;
+  background: none;
+  border: none;
+  color: inherit;
+  font: inherit;
+  text-transform: none;
+  letter-spacing: 0;
+  cursor: pointer;
+}
+
+.leaderboard-open:hover:not(:disabled) {
+  background: none;
+  color: var(--color-bronze-bright);
+}
+
 .leaderboard-name {
   font-weight: 700;
   overflow: hidden;
@@ -2954,6 +2974,12 @@ kbd {
 .remote-btn:active:not(:disabled) {
   transform: scale(0.98);
   background: var(--color-bronze-bright);
+}
+
+.remote-pause {
+  padding: 1.1rem;
+  font-size: 1.3rem;
+  touch-action: manipulation;
 }
 
 .remote-numbers {
@@ -3258,6 +3284,287 @@ kbd {
   padding: 1.75rem 1.5rem;
 }
 
+/* A rider's profile card. */
+.rider-card {
+  position: relative;
+  width: min(40rem, calc(100vw - 2rem));
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+  color: var(--color-text);
+  padding: 1.5rem;
+}
+
+.rider-card-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+}
+
+.rider-head {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  padding-right: 3rem;
+}
+
+.rider-who {
+  display: grid;
+  gap: 0.3rem;
+  flex: 1;
+}
+
+.rider-who h2 {
+  margin: 0;
+  display: flex;
+  gap: 0.5rem;
+  align-items: baseline;
+}
+
+.rider-level {
+  font-family: var(--font-pixel);
+  color: var(--color-bronze-bright);
+}
+
+.rider-xp {
+  height: 6px;
+  background: var(--color-well-deep);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.rider-xp span {
+  display: block;
+  height: 100%;
+  background: var(--color-bronze);
+}
+
+.rider-middle {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 1rem;
+  align-items: center;
+  margin-top: 1.25rem;
+}
+
+.rider-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(7rem, 1fr));
+  gap: 0.5rem;
+}
+
+.rider-stat {
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.5rem 0.6rem;
+  background: var(--color-well);
+  border-radius: 2px;
+}
+
+.rider-stat-label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-bronze);
+}
+
+.rider-stat-value {
+  font-family: var(--font-pixel);
+  font-weight: 400;
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+
+.rider-costume {
+  background: var(--color-well-deep);
+  border-radius: 2px;
+  padding: 0.25rem;
+}
+
+.rider-section h3 {
+  margin: 1.25rem 0 0.5rem;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-bronze);
+}
+
+.rider-feats {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: 0.4rem 1rem;
+  margin: 0;
+}
+
+.rider-feats div {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  border-bottom: 1px solid var(--color-rule);
+  padding: 0.25rem 0;
+  font-size: 0.85rem;
+}
+
+.rider-feats dt {
+  color: var(--color-text-dim);
+}
+
+.rider-feats dd {
+  margin: 0;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.rider-recent {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.rider-recent li {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.1rem 1rem;
+  padding: 0.45rem 0;
+  border-top: 1px solid var(--color-rule);
+  font-size: 0.9rem;
+}
+
+.rider-recent-name {
+  font-weight: 700;
+}
+
+.rider-recent-date,
+.rider-recent-stats {
+  color: var(--color-text-dim);
+  font-size: 0.8rem;
+}
+
+.rider-recent-stats {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 560px) {
+  .rider-middle {
+    grid-template-columns: 1fr;
+  }
+}
+
+.route-info {
+  width: min(72rem, calc(100vw - 2rem));
+  max-height: calc(100vh - 2rem); /* with a picture it gets tall: it scrolls */
+  overflow-y: auto;
+  color: var(--color-text);
+  padding: 1.5rem;
+}
+
+/* Picture and profile on the left, the times on the right; stacked when
+   narrow. */
+.route-info-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  gap: 1.75rem;
+  align-items: start;
+}
+
+@media (max-width: 800px) {
+  .route-info-body {
+    grid-template-columns: 1fr;
+  }
+}
+
+.route-info-times h3:first-child {
+  margin-top: 0.75rem;
+}
+
+.route-info-image {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  margin: 0.75rem 0 0;
+  border-radius: 2px;
+}
+
+.route-info-image[hidden] {
+  display: none;
+}
+
+/* The elevation profile, with the ride screen's altitude scale on the left. */
+.route-info-profile {
+  position: relative;
+  padding-left: 3.4rem;
+  margin-top: 0.75rem;
+}
+
+.route-info-profile .card-graph {
+  height: 7rem;
+}
+
+.route-info-profile .route-axis {
+  bottom: 1.2rem; /* stops at the graph, above the km labels */
+}
+
+.route-info-profile .route-axis-max {
+  top: 9%;
+}
+
+.route-info-profile .route-axis-min {
+  top: 97%;
+}
+
+.route-info-km {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.7rem;
+  color: var(--color-text-dim);
+  padding-top: 0.2rem;
+}
+
+.route-info h3 {
+  margin: 1.25rem 0 0.4rem;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-bronze);
+}
+
+.route-info-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.route-info-table th {
+  text-align: left;
+  font-size: 0.7rem;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-dim);
+  padding: 0 0.5rem 0.3rem 0;
+}
+
+.route-info-table td {
+  padding: 0.45rem 0.5rem 0.45rem 0;
+  border-top: 1px solid var(--color-rule);
+}
+
+.route-info-table td.empty {
+  color: var(--color-text-dim);
+  font-style: italic;
+}
+
+.route-info-time {
+  font-family: var(--font-pixel);
+  color: var(--color-bronze-bright);
+}
+
+.route-info-table tr.is-you td {
+  background: color-mix(in srgb, var(--color-bronze) 15%, transparent);
+}
+
+.rider-card::backdrop,
+.route-info::backdrop,
 .trainer-gate::backdrop,
 .ride-picker::backdrop {
   background: rgba(10, 9, 7, 0.75);
@@ -3485,6 +3792,48 @@ kbd {
   margin-left: auto;
 }
 
+/* The gears step's two choices, one above the other. */
+.tutorial-choice {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0 0 1rem;
+}
+
+.tutorial-choice[hidden] {
+  display: none;
+}
+
+.tutorial-choice-btn {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.75rem 0.9rem;
+  text-align: left;
+  background: var(--color-well);
+  color: var(--color-text);
+  border: 2px solid var(--color-stone-light);
+}
+
+.tutorial-choice-btn span {
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: var(--color-text-dim);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.tutorial-choice-btn:hover:not(:disabled) {
+  background: var(--color-well);
+  color: var(--color-text);
+  border-color: var(--color-bronze);
+}
+
+.tutorial-choice-btn.is-active,
+.tutorial-choice-btn.is-active:hover:not(:disabled) {
+  border-color: var(--color-bronze-bright);
+  background: color-mix(in srgb, var(--color-bronze) 25%, var(--color-well));
+  color: var(--color-text);
+}
+
 /* ------------------------------------------------------------------ shop */
 
 .nav-coins {
@@ -3574,6 +3923,24 @@ kbd {
 
 .shop-price {
   color: var(--color-bronze-bright);
+}
+
+/* Rarity: a small label, and the dearest cards get a coloured edge. */
+.shop-rarity {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-text-dim);
+}
+
+.shop-rarity.is-rare { color: #6fa8dc; }
+.shop-rarity.is-epic { color: #b48ae0; }
+.shop-rarity.is-legendary { color: #f2c94c; }
+
+.shop-card.is-epic { border-color: color-mix(in srgb, #b48ae0 55%, transparent); }
+.shop-card.is-legendary {
+  border-color: #f2c94c;
+  box-shadow: 0 0 12px color-mix(in srgb, #f2c94c 35%, transparent);
 }
 
 @media (max-width: 800px) {

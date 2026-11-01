@@ -41,7 +41,9 @@ const selectMonthTotals = db.prepare(
    FROM sessions WHERE ended_at IS NOT NULL
    GROUP BY user_id, month`
 );
-const selectRoutes = db.prepare('SELECT id, distance_m, ascent_m FROM routes WHERE video_received >= video_size');
+const selectRoutes = db.prepare('SELECT id, name, distance_m, ascent_m, meta FROM routes WHERE video_received >= video_size');
+// A route with its route file's metadata (city, country, continent) flat on it.
+const routeForBadges = ({ meta, ...route }) => ({ ...(meta ? JSON.parse(meta) : {}), ...route });
 const selectFtpHistory = db.prepare(
   'SELECT ftp, previous_ftp, source, session_id, created_at FROM ftp_history WHERE user_id = ? ORDER BY id'
 );
@@ -89,7 +91,7 @@ export function badgesFor(userId) {
     currentFtp: readConfig(userId, 'profile').ftp,
     yearTotals: yearTotalsFor(userId),
     monthTotals: monthTotalsFor(userId),
-    routes: selectRoutes.all(),
+    routes: selectRoutes.all().map(routeForBadges),
   });
 }
 
