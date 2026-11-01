@@ -211,6 +211,11 @@ export function getRoute(id) {
   return request(`/api/routes/${id}`);
 }
 
+// { mine, everyone }: the best times on a route (ui/route-info.js).
+export function getRouteLeaderboard(id) {
+  return request(`/api/routes/${id}/leaderboard`);
+}
+
 export function createRoute(body) {
   return request('/api/routes', {
     method: 'POST',

@@ -17,6 +17,7 @@ import { setEquipped } from './shop/cosmetics.js';
 import { avatarSvg } from './shop/avatar.js';
 import { createRoutePlayer } from './ui/route-player.js';
 import { createRouteSections } from './ui/route-sections.js';
+import { initRouteInfo } from './ui/route-info.js';
 import { RouteTrack } from './workout/route-track.js';
 import { TrainerConnection } from './ble/connection.js';
 import { TrainerControl } from './ble/trainer-control.js';
@@ -197,8 +198,11 @@ const startRouteRide = whenTrainerReady(async (summary) => {
   }
 });
 
+// A route's details and best times, from the ⓘ on its card.
+const routeInfo = initRouteInfo();
 const picker = initRidePicker({
   onPick: (kind, item, { erg }) => (kind === 'routes' ? startRouteRide(item) : startWorkoutRide(item, { erg })),
+  onRouteInfo: (route) => routeInfo.open(route),
   ergDefault: () => ergWorkouts,
 });
 initHome({
@@ -223,6 +227,7 @@ const routeSections = createRouteSections({
 initRoutes({
   isAdmin: Boolean(currentUser?.is_admin),
   onStartRoute: startRouteRide,
+  onInfo: (route) => routeInfo.open(route),
 });
 
 initWorkouts({

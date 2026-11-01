@@ -3264,6 +3264,56 @@ kbd {
   padding: 1.75rem 1.5rem;
 }
 
+.route-info {
+  width: min(44rem, calc(100vw - 2rem));
+  color: var(--color-text);
+  padding: 1.5rem;
+}
+
+.route-info h3 {
+  margin: 1.25rem 0 0.4rem;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-bronze);
+}
+
+.route-info-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.route-info-table th {
+  text-align: left;
+  font-size: 0.7rem;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-dim);
+  padding: 0 0.5rem 0.3rem 0;
+}
+
+.route-info-table td {
+  padding: 0.45rem 0.5rem 0.45rem 0;
+  border-top: 1px solid var(--color-rule);
+}
+
+.route-info-table td.empty {
+  color: var(--color-text-dim);
+  font-style: italic;
+}
+
+.route-info-time {
+  font-family: var(--font-pixel);
+  color: var(--color-bronze-bright);
+}
+
+.route-info-table tr.is-you td {
+  background: color-mix(in srgb, var(--color-bronze) 15%, transparent);
+}
+
+.route-info::backdrop,
 .trainer-gate::backdrop,
 .ride-picker::backdrop {
   background: rgba(10, 9, 7, 0.75);

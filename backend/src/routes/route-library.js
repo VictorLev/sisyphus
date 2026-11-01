@@ -42,7 +42,20 @@ const q = {
   remove: db.prepare('DELETE FROM routes WHERE id = ?'),
   rename: db.prepare('UPDATE routes SET name = ? WHERE id = ?'),
   setThumb: db.prepare('UPDATE routes SET thumb_type = ?, thumb_at = ? WHERE id = ?'),
+  // Rides that reached the route's end, fastest first. Riding time is
+  // ended_at - started_at: the app saves it without the pauses.
+  finishes: db.prepare(
+    `SELECT s.id, s.user_id, u.display_name, s.started_at, s.avg_power, s.avg_speed,
+            ROUND((julianday(s.ended_at) - julianday(s.started_at)) * 86400) AS seconds
+     FROM sessions s JOIN users u ON u.id = s.user_id
+     WHERE s.route_id = ? AND s.ended_at IS NOT NULL AND s.distance_m >= ?
+     ORDER BY seconds, s.started_at`
+  ),
 };
+
+// A route ridden to its end: 98% of its distance, as the badges count it.
+export const FINISH_FRACTION = 0.98;
+const TOP = 5;
 
 // A few dozen altitudes for the list's little elevation profile.
 function preview(points, samples = 60) {
@@ -93,6 +106,33 @@ router.get('/:id', (req, res) => {
   const row = q.get.get(req.params.id);
   if (!row) return res.status(404).json({ error: 'route not found' });
   res.json({ ...summary(row, req.user.id), points: JSON.parse(row.points), video_points: JSON.parse(row.video_points) });
+});
+
+// The route's best times: the rider's own five fastest finishes, and the
+// five fastest riders (each rider's best once).
+router.get('/:id/leaderboard', (req, res) => {
+  const row = q.get.get(req.params.id);
+  if (!row) return res.status(404).json({ error: 'route not found' });
+  const entry = (s) => ({
+    name: s.display_name,
+    you: s.user_id === req.user.id,
+    seconds: s.seconds,
+    started_at: s.started_at,
+    avg_power: s.avg_power,
+    avg_speed: s.avg_speed,
+  });
+  const finishes = q.finishes.all(row.id, row.distance_m * FINISH_FRACTION);
+  const mine = finishes.filter((s) => s.user_id === req.user.id).slice(0, TOP)
+    .map((s) => ({ ...entry(s), session_id: s.id }));
+  const seen = new Set();
+  const everyone = [];
+  for (const s of finishes) {
+    if (seen.has(s.user_id)) continue;
+    seen.add(s.user_id);
+    everyone.push(entry(s));
+    if (everyone.length === TOP) break;
+  }
+  res.json({ mine, everyone });
 });
 
 // Stars are each rider's own, like workout stars.

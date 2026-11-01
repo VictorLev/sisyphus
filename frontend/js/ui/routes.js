@@ -72,7 +72,7 @@ async function uploadVideo(routeId, file, offset, onProgress) {
   }
 }
 
-export function initRoutes({ isAdmin, onStartRoute }) {
+export function initRoutes({ isAdmin, onStartRoute, onInfo }) {
   const listEl = document.getElementById('route-list');
   const summaryEl = document.getElementById('routes-summary');
   const importPanel = document.getElementById('route-import');
@@ -148,6 +148,7 @@ export function initRoutes({ isAdmin, onStartRoute }) {
     li.classList.add('route-card');
     if (route.ready) {
       actions.append(iconButton('start', t('workouts.start'), () => onStartRoute(route), { primary: true }));
+      actions.append(iconButton('info', t('routeInfo.open'), () => onInfo(route)));
     } else {
       const pending = document.createElement('span');
       pending.className = 'hint';

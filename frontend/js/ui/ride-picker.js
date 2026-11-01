@@ -10,7 +10,7 @@ import { card, routeProfileSvg, iconButton } from './cards.js';
 import { routeMeta, routeName } from './routes.js';
 import { createFilterBar } from './filters.js';
 
-export function initRidePicker({ onPick, ergDefault = () => false }) {
+export function initRidePicker({ onPick, onRouteInfo, ergDefault = () => false }) {
   const dialog = document.getElementById('ride-picker');
   const titleEl = document.getElementById('ride-picker-title');
   const tabs = document.getElementById('ride-picker-tabs');
@@ -83,6 +83,7 @@ export function initRidePicker({ onPick, ergDefault = () => false }) {
           onToggleStar: () => toggleStar(item),
         });
         actions.append(iconButton('start', t('workouts.start'), () => pick(item), { primary: true }));
+        actions.append(iconButton('info', t('routeInfo.open'), () => onRouteInfo(item)));
         listEl.append(li);
       }
     }

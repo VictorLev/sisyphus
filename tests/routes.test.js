@@ -150,6 +150,26 @@ describe('routes API', () => {
     await admin.del(`/api/routes/${made.id}`);
   });
 
+  test('best times: your five fastest finishes, and each rider\'s best once', async () => {
+    // The route is 2 km; 1.96 km (98%) or more is a finish.
+    const go = (who, minutes, km, day) => who.post('/api/sessions', {
+      route_id: routeId,
+      started_at: `2026-10-${day}T18:00:00.000Z`,
+      ended_at: new Date(Date.parse(`2026-10-${day}T18:00:00.000Z`) + minutes * 60_000).toISOString(),
+      distance_m: km * 1000,
+      samples: [{ timestamp_offset_sec: 0, power: 200, cadence: 85, speed: 30 }],
+    });
+    for (const [minutes, day] of [[9, 10], [7, 11], [8, 12], [6, 13], [10, 14], [11, 15]]) await go(rider, minutes, 2, day);
+    await go(rider, 3, 1.5, 16); // didn't finish: not a time
+    await go(admin, 6.5, 1.97, 17);
+    const board = await (await rider.get(`/api/routes/${routeId}/leaderboard`)).json();
+    assert.deepEqual(board.mine.map((r) => r.seconds / 60), [6, 7, 8, 9, 10], 'five, fastest first');
+    assert.ok(board.mine.every((r) => r.you && r.session_id));
+    assert.deepEqual(board.everyone.map((r) => [r.name, r.seconds / 60]), [['rider', 6], ['boss', 6.5]], 'each rider once');
+    assert.equal(board.everyone[0].session_id, undefined, 'other riders\' ride ids stay private');
+    assert.equal((await rider.get('/api/routes/9999/leaderboard')).status, 404);
+  });
+
   test('a ride on a route is named after it and keeps it after the route is deleted', async () => {
     const saved = await (await rider.post('/api/sessions', {
       route_id: routeId,

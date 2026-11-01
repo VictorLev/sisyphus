@@ -1072,6 +1072,32 @@
       </div>
     </dialog>
 
+    <!-- A route's details and best times (ui/route-info.js). -->
+    <dialog id="route-info" class="panel route-info" aria-labelledby="route-info-title">
+      <div class="ride-picker-head">
+        <h2 id="route-info-title"></h2>
+        <button id="route-info-close" type="button" class="secondary picker-close" aria-label="Close" data-i18n-attr="aria-label:picker.close">×</button>
+      </div>
+      <p id="route-info-meta" class="hint"></p>
+      <h3 data-i18n="routeInfo.mine">Your best times</h3>
+      <table class="route-info-table">
+        <thead><tr>
+          <th>#</th><th data-i18n="routeInfo.time">Time</th><th data-i18n="routeInfo.date">Date</th>
+          <th data-i18n="routeInfo.power">Avg power</th><th data-i18n="routeInfo.speed">Avg speed</th>
+        </tr></thead>
+        <tbody id="route-info-mine"></tbody>
+      </table>
+      <h3 data-i18n="routeInfo.everyone">Best of everyone</h3>
+      <table class="route-info-table">
+        <thead><tr>
+          <th>#</th><th data-i18n="routeInfo.rider">Rider</th><th data-i18n="routeInfo.time">Time</th><th data-i18n="routeInfo.date">Date</th>
+          <th data-i18n="routeInfo.power">Avg power</th><th data-i18n="routeInfo.speed">Avg speed</th>
+        </tr></thead>
+        <tbody id="route-info-everyone"></tbody>
+      </table>
+      <p class="hint" data-i18n="routeInfo.hint">Times count when the ride reached the end of the route; pauses are left out.</p>
+    </dialog>
+
     <!-- Home → Routes / Workouts (ui/ride-picker.js). -->
     <dialog id="ride-picker" class="panel ride-picker" aria-labelledby="ride-picker-title">
       <div class="ride-picker-head">
