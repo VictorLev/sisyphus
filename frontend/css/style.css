@@ -3739,6 +3739,24 @@ kbd {
   color: var(--color-bronze-bright);
 }
 
+/* Rarity: a small label, and the dearest cards get a coloured edge. */
+.shop-rarity {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-text-dim);
+}
+
+.shop-rarity.is-rare { color: #6fa8dc; }
+.shop-rarity.is-epic { color: #b48ae0; }
+.shop-rarity.is-legendary { color: #f2c94c; }
+
+.shop-card.is-epic { border-color: color-mix(in srgb, #b48ae0 55%, transparent); }
+.shop-card.is-legendary {
+  border-color: #f2c94c;
+  box-shadow: 0 0 12px color-mix(in srgb, #f2c94c 35%, transparent);
+}
+
 @media (max-width: 800px) {
   .shop-top {
     grid-template-columns: 1fr;

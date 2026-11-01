@@ -27,7 +27,7 @@ const q = {
 
 const byId = new Map(ITEMS.map((i) => [i.id, i]));
 
-// What a rider wears: { hat, boulder, avatar_bg, avatar_emblem }, ids or null.
+// What a rider wears: { hat, boulder, avatar_bg, avatar_emblem, avatar_border }, ids or null.
 export function cosmeticsOf(userId) {
   let stored = {};
   try {

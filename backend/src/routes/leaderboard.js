@@ -50,7 +50,7 @@ router.get('/', (req, res) => {
       minutes: Math.max(0, Math.round(r.minutes)),
       distance_km: Number((Math.max(0, r.distance_m) / 1000).toFixed(1)),
       // The avatar they bought: background and emblem ids, or null.
-      avatar: (({ avatar_bg: bg, avatar_emblem: emblem }) => ({ bg, emblem }))(cosmeticsOf(r.id)),
+      avatar: (({ avatar_bg: bg, avatar_emblem: emblem, avatar_border: border }) => ({ bg, emblem, border }))(cosmeticsOf(r.id)),
     };
   });
   res.json({ period, from, to, riders });
