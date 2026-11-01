@@ -3265,17 +3265,36 @@ kbd {
 }
 
 .route-info {
-  width: min(44rem, calc(100vw - 2rem));
+  width: min(72rem, calc(100vw - 2rem));
   max-height: calc(100vh - 2rem); /* with a picture it gets tall: it scrolls */
   overflow-y: auto;
   color: var(--color-text);
   padding: 1.5rem;
 }
 
+/* Picture and profile on the left, the times on the right; stacked when
+   narrow. */
+.route-info-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  gap: 1.75rem;
+  align-items: start;
+}
+
+@media (max-width: 800px) {
+  .route-info-body {
+    grid-template-columns: 1fr;
+  }
+}
+
+.route-info-times h3:first-child {
+  margin-top: 0.75rem;
+}
+
 .route-info-image {
   display: block;
   width: 100%;
-  max-height: 16rem;
+  aspect-ratio: 16 / 9;
   object-fit: cover;
   margin: 0.75rem 0 0;
   border-radius: 2px;
