@@ -1,13 +1,14 @@
 import { Router } from 'express';
 
 // The phone remote: a rider's phone (remote.html) shifts the virtual gears
-// of the ride running in their browser beside the bike, and shows its gear
-// and numbers. The server is only a relay, per rider, over Server-Sent
+// of the ride running in their browser beside the bike, pauses and resumes
+// it, and shows its gear and numbers. The server is only a relay, per rider, over Server-Sent
 // Events (a GET that stays open; browsers reconnect on their own):
 //
-//   ride page  --GET  /events?role=ride--->  receives  shift, remotes
+//   ride page  --GET  /events?role=ride--->  receives  shift, control, remotes
 //   phone      --GET  /events?role=remote->  receives  state
 //   phone      --POST /shift {direction}-->  sent to that rider's ride pages
+//   phone      --POST /control {action}--->  pause or resume, to the same
 //   ride page  --POST /state {...}-------->  kept, and sent to their phones
 //
 // Nothing is stored: a restart forgets the last state until the ride page
@@ -60,6 +61,14 @@ export function createRemoteRouter() {
     if (direction !== 'up' && direction !== 'down') return res.status(400).json({ error: "direction must be 'up' or 'down'" });
     const r = rider(req.user.id);
     for (const ride of r.rides) send(ride, 'shift', { direction });
+    res.json({ delivered: r.rides.size });
+  });
+
+  router.post('/control', (req, res) => {
+    const action = req.body?.action;
+    if (action !== 'pause' && action !== 'resume') return res.status(400).json({ error: "action must be 'pause' or 'resume'" });
+    const r = rider(req.user.id);
+    for (const ride of r.rides) send(ride, 'control', { action });
     res.json({ delivered: r.rides.size });
   });
 

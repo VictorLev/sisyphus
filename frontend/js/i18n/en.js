@@ -646,6 +646,8 @@ export const EN = {
   "continent.South America": "South America",
   "continent.Oceania": "Oceania",
   "continent.Antarctica": "Antarctica",
+  "remote.pause": "❚❚ Pause",
+  "remote.resume": "▶ Resume",
   "live.section.climb": "Climb",
   "live.section.flat": "Flat",
   "live.section.descent": "Descent",

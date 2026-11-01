@@ -2956,6 +2956,12 @@ kbd {
   background: var(--color-bronze-bright);
 }
 
+.remote-pause {
+  padding: 1.1rem;
+  font-size: 1.3rem;
+  touch-action: manipulation;
+}
+
 .remote-numbers {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

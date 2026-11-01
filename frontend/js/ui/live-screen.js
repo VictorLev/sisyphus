@@ -373,5 +373,10 @@ export function initLiveScreen({ onPause, onResume, onEndRide, onDiscardRide }) 
   updateWorkoutInfo(null);
   updateZone(null);
 
-  return { updateRawNumbers, updateWorkoutInfo, buildTimeline, setFtp, setElapsed, setTotals, showPauseDialog };
+  // Resuming from elsewhere (the phone remote): closes the pop-up too.
+  function resumeFromOutside() {
+    if (pauseDialog.open) resume();
+  }
+
+  return { updateRawNumbers, updateWorkoutInfo, buildTimeline, setFtp, setElapsed, setTotals, showPauseDialog, resumeFromOutside };
 }

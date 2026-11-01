@@ -1,12 +1,13 @@
 // The ride page's side of the phone remote (see js/remote.js and
-// backend/src/routes/remote.js): shifts from the rider's phone arrive here,
+// backend/src/routes/remote.js): shifts, pause and resume from the rider's
+// phone arrive here,
 // and while a phone is connected the ride's state (riding, mode, gear,
 // numbers) is sent to it: at once when something changes on a shift, and
 // otherwise checked once a second and sent only if it changed.
 
 const CHECK_MS = 1000;
 
-export function initRemoteLink({ onShift, getState, onPhones = () => {} }) {
+export function initRemoteLink({ onShift, onControl = () => {}, getState, onPhones = () => {} }) {
   if (typeof EventSource === 'undefined') return { update() {} };
   let phones = 0;
   let lastSent = null;
@@ -24,6 +25,7 @@ export function initRemoteLink({ onShift, getState, onPhones = () => {} }) {
 
   const events = new EventSource('/api/remote/events?role=ride');
   events.addEventListener('shift', (event) => onShift(JSON.parse(event.data).direction));
+  events.addEventListener('control', (event) => onControl(JSON.parse(event.data).action));
   events.addEventListener('remotes', (event) => {
     const before = phones;
     phones = JSON.parse(event.data).count;

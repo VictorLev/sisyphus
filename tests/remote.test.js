@@ -68,6 +68,19 @@ describe('phone remote', () => {
     await mine.close(); await theirs.close();
   });
 
+  test('pause and resume from your phone reach your ride page', async () => {
+    const mine = listen(base, alice.cookie, 'ride');
+    const theirs = listen(base, bob.cookie, 'ride');
+    await mine.ready; await theirs.ready; await settle();
+    assert.equal((await (await alice.post('/api/remote/control', { action: 'pause' })).json()).delivered, 1);
+    await alice.post('/api/remote/control', { action: 'resume' });
+    await settle();
+    assert.deepEqual(mine.events.filter((e) => e.event === 'control').map((e) => e.data.action), ['pause', 'resume']);
+    assert.equal(theirs.events.filter((e) => e.event === 'control').length, 0);
+    assert.equal((await alice.post('/api/remote/control', { action: 'stop' })).status, 400);
+    await mine.close(); await theirs.close();
+  });
+
   test('your phone gets the ride\'s state, the last one first; the ride page hears a phone arrive', async () => {
     const ride = listen(base, alice.cookie, 'ride');
     await ride.ready; await settle();

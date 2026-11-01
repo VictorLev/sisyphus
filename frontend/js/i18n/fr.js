@@ -894,6 +894,8 @@ export const FR = {
   "continent.South America": "Amérique du Sud",
   "continent.Oceania": "Océanie",
   "continent.Antarctica": "Antarctique",
+  "remote.pause": "❚❚ Pause",
+  "remote.resume": "▶ Reprendre",
   "live.section.climb": "Montée",
   "live.section.flat": "Plat",
   "live.section.descent": "Descente",

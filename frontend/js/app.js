@@ -436,12 +436,18 @@ document.addEventListener('keydown', (event) => {
   handleShift(direction);
 });
 
-// The phone remote (/remote): shifts from the rider's phone land here like
-// the on-screen buttons, and the phone is kept up to date with the ride.
+// The phone remote (/remote): shifts, pause and resume from the rider's
+// phone land here like the on-screen buttons, and the phone is kept up to
+// date with the ride.
 let liveSpeedKmh = null;
 const remote = currentUser ? initRemoteLink({
   onShift: (direction) => {
     if (!liveViewEl.hidden && pausedAtMs == null) handleShift(direction);
+  },
+  onControl: (action) => {
+    if (action === 'pause') pauseRide(); // opens the pop-up, as Pause does
+    else liveScreen.resumeFromOutside();
+    remote.update(); // the phone's button flips at once
   },
   getState: () => {
     const riding = !liveViewEl.hidden;

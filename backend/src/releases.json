@@ -3,7 +3,9 @@
     "version": "next",
     "date": null,
     "commit": null,
-    "notes": []
+    "notes": [
+      "Phone remote: a Pause / Resume button"
+    ]
   },
   {
     "version": "v2.2.0",

@@ -51,13 +51,15 @@ describe('leaderboard API', () => {
     alice = await login(base, 'alice', 'a');
     bob = await login(base, 'bob', 'b');
 
-    // Pinned inside the current UTC week (not "an hour ago", which on a
-    // Monday just after midnight would fall in the week before).
-    const weekStart = Date.parse(periodRange('week', 0).from);
-    const inWeek = (h) => new Date(weekStart + h * 3600_000).toISOString();
-    await alice.post('/api/sessions', ride(inWeek(10), 60, 30));
-    await alice.post('/api/sessions', ride(inWeek(30), 30, 12));
-    await bob.post('/api/sessions', ride(inWeek(20), 45, 20));
+    // Pinned inside both the current UTC week and month (not "an hour ago",
+    // which on a Monday just after midnight would fall in the week before):
+    // a few hours after whichever of the two started last, since a week can
+    // begin in the month before.
+    const start = Math.max(Date.parse(periodRange('week', 0).from), Date.parse(periodRange('month', 0).from));
+    const inWeek = (h) => new Date(start + h * 3600_000).toISOString();
+    await alice.post('/api/sessions', ride(inWeek(1), 60, 30));
+    await alice.post('/api/sessions', ride(inWeek(3), 30, 12));
+    await bob.post('/api/sessions', ride(inWeek(2), 45, 20));
     // Long ago: counts for the level, never for this week or month.
     await bob.post('/api/sessions', ride('2020-01-06T18:00:00.000Z', 600, 300));
   });
@@ -87,7 +89,7 @@ describe('leaderboard API', () => {
   });
 
   test('marks who is asking, and levels come from all-time riding', async () => {
-    const board = await (await bob.get('/api/leaderboard?period=month')).json();
+    const board = await (await bob.get('/api/leaderboard?period=month&tz=0')).json();
     const by = Object.fromEntries(board.riders.map((r) => [r.name, r]));
     assert.equal(by.Bob.you, true);
     assert.equal(by.Alice.you, false);
