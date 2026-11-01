@@ -3266,8 +3266,54 @@ kbd {
 
 .route-info {
   width: min(44rem, calc(100vw - 2rem));
+  max-height: calc(100vh - 2rem); /* with a picture it gets tall: it scrolls */
+  overflow-y: auto;
   color: var(--color-text);
   padding: 1.5rem;
+}
+
+.route-info-image {
+  display: block;
+  width: 100%;
+  max-height: 16rem;
+  object-fit: cover;
+  margin: 0.75rem 0 0;
+  border-radius: 2px;
+}
+
+.route-info-image[hidden] {
+  display: none;
+}
+
+/* The elevation profile, with the ride screen's altitude scale on the left. */
+.route-info-profile {
+  position: relative;
+  padding-left: 3.4rem;
+  margin-top: 0.75rem;
+}
+
+.route-info-profile .card-graph {
+  height: 7rem;
+}
+
+.route-info-profile .route-axis {
+  bottom: 1.2rem; /* stops at the graph, above the km labels */
+}
+
+.route-info-profile .route-axis-max {
+  top: 9%;
+}
+
+.route-info-profile .route-axis-min {
+  top: 97%;
+}
+
+.route-info-km {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.7rem;
+  color: var(--color-text-dim);
+  padding-top: 0.2rem;
 }
 
 .route-info h3 {

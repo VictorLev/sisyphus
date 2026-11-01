@@ -1079,6 +1079,13 @@
         <button id="route-info-close" type="button" class="secondary picker-close" aria-label="Close" data-i18n-attr="aria-label:picker.close">×</button>
       </div>
       <p id="route-info-meta" class="hint"></p>
+      <!-- The card's picture, if it has one, and the road's elevation. -->
+      <img id="route-info-image" class="route-info-image" alt="" hidden />
+      <div class="route-info-profile">
+        <div class="route-axis" aria-hidden="true"><span class="route-axis-max"></span><span class="route-axis-min"></span></div>
+        <div id="route-info-graph"></div>
+        <div class="route-info-km" aria-hidden="true"><span>0 km</span><span id="route-info-km-end"></span></div>
+      </div>
       <h3 data-i18n="routeInfo.mine">Your best times</h3>
       <table class="route-info-table">
         <thead><tr>

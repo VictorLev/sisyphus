@@ -1,11 +1,13 @@
 // A route's details pop-up, from the ⓘ on its card (Routes page and the
-// Home picker): its name, place and numbers, then the best times on it,
+// Home picker): its name, place and numbers, its picture and elevation
+// profile (with an altitude scale), then the best times on it,
 // the rider's own five and the five fastest riders. A time counts when
 // the ride reached the route's end; it's riding time, pauses left out.
 
 import { getRouteLeaderboard } from '../api/client.js';
 import { t, num, date } from '../i18n.js';
 import { routeMeta, routeName } from './routes.js';
+import { routeProfileSvg } from './cards.js';
 
 // "34:12" or "1:05:09".
 function clock(seconds) {
@@ -22,6 +24,8 @@ export function initRouteInfo() {
   const metaEl = document.getElementById('route-info-meta');
   const mineEl = document.getElementById('route-info-mine');
   const everyoneEl = document.getElementById('route-info-everyone');
+  const imageEl = document.getElementById('route-info-image');
+  const profileEl = dialog.querySelector('.route-info-profile');
   document.getElementById('route-info-close').addEventListener('click', () => dialog.close());
   // A click on the dimmed backdrop closes it too.
   dialog.addEventListener('click', (event) => { if (event.target === dialog) dialog.close(); });
@@ -64,6 +68,16 @@ export function initRouteInfo() {
     async open(route) {
       titleEl.textContent = routeName(route);
       metaEl.textContent = routeMeta(route);
+      imageEl.hidden = !route.thumbnail;
+      if (route.thumbnail) imageEl.src = route.thumbnail;
+      // The card's profile, bigger, with its lowest and highest points; the
+      // card drawing puts them at about 97% and 9% of its height.
+      document.getElementById('route-info-graph').innerHTML = routeProfileSvg(route.profile);
+      const low = Math.min(...route.profile);
+      const high = low + Math.max(10, Math.max(...route.profile) - low);
+      profileEl.querySelector('.route-axis-max').textContent = `${Math.round(high)} m`;
+      profileEl.querySelector('.route-axis-min').textContent = `${Math.round(low)} m`;
+      document.getElementById('route-info-km-end').textContent = `${num(route.distance_m / 1000, 1)} km`;
       for (const el of [mineEl, everyoneEl]) el.innerHTML = `<tr><td class="empty" colspan="6">${t('common.loading')}</td></tr>`;
       dialog.showModal();
       try {
