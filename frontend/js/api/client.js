@@ -211,6 +211,11 @@ export function getRoute(id) {
   return request(`/api/routes/${id}`);
 }
 
+// Another rider's profile card, from the Leaderboard (ui/rider-card.js).
+export function getRider(id) {
+  return request(`/api/riders/${id}`);
+}
+
 // { mine, everyone }: the best times on a route (ui/route-info.js).
 export function getRouteLeaderboard(id) {
   return request(`/api/routes/${id}/leaderboard`);

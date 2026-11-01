@@ -2807,6 +2807,26 @@ kbd {
   min-width: 0;
 }
 
+.leaderboard-open {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  padding: 0;
+  background: none;
+  border: none;
+  color: inherit;
+  font: inherit;
+  text-transform: none;
+  letter-spacing: 0;
+  cursor: pointer;
+}
+
+.leaderboard-open:hover:not(:disabled) {
+  background: none;
+  color: var(--color-bronze-bright);
+}
+
 .leaderboard-name {
   font-weight: 700;
   overflow: hidden;
@@ -3264,6 +3284,171 @@ kbd {
   padding: 1.75rem 1.5rem;
 }
 
+/* A rider's profile card. */
+.rider-card {
+  position: relative;
+  width: min(40rem, calc(100vw - 2rem));
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+  color: var(--color-text);
+  padding: 1.5rem;
+}
+
+.rider-card-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+}
+
+.rider-head {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  padding-right: 3rem;
+}
+
+.rider-who {
+  display: grid;
+  gap: 0.3rem;
+  flex: 1;
+}
+
+.rider-who h2 {
+  margin: 0;
+  display: flex;
+  gap: 0.5rem;
+  align-items: baseline;
+}
+
+.rider-level {
+  font-family: var(--font-pixel);
+  color: var(--color-bronze-bright);
+}
+
+.rider-xp {
+  height: 6px;
+  background: var(--color-well-deep);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.rider-xp span {
+  display: block;
+  height: 100%;
+  background: var(--color-bronze);
+}
+
+.rider-middle {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 1rem;
+  align-items: center;
+  margin-top: 1.25rem;
+}
+
+.rider-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(7rem, 1fr));
+  gap: 0.5rem;
+}
+
+.rider-stat {
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.5rem 0.6rem;
+  background: var(--color-well);
+  border-radius: 2px;
+}
+
+.rider-stat-label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-bronze);
+}
+
+.rider-stat-value {
+  font-family: var(--font-pixel);
+  font-weight: 400;
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+
+.rider-costume {
+  background: var(--color-well-deep);
+  border-radius: 2px;
+  padding: 0.25rem;
+}
+
+.rider-section h3 {
+  margin: 1.25rem 0 0.5rem;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-bronze);
+}
+
+.rider-feats {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: 0.4rem 1rem;
+  margin: 0;
+}
+
+.rider-feats div {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  border-bottom: 1px solid var(--color-rule);
+  padding: 0.25rem 0;
+  font-size: 0.85rem;
+}
+
+.rider-feats dt {
+  color: var(--color-text-dim);
+}
+
+.rider-feats dd {
+  margin: 0;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.rider-recent {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.rider-recent li {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.1rem 1rem;
+  padding: 0.45rem 0;
+  border-top: 1px solid var(--color-rule);
+  font-size: 0.9rem;
+}
+
+.rider-recent-name {
+  font-weight: 700;
+}
+
+.rider-recent-date,
+.rider-recent-stats {
+  color: var(--color-text-dim);
+  font-size: 0.8rem;
+}
+
+.rider-recent-stats {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 560px) {
+  .rider-middle {
+    grid-template-columns: 1fr;
+  }
+}
+
 .route-info {
   width: min(72rem, calc(100vw - 2rem));
   max-height: calc(100vh - 2rem); /* with a picture it gets tall: it scrolls */
@@ -3378,6 +3563,7 @@ kbd {
   background: color-mix(in srgb, var(--color-bronze) 15%, transparent);
 }
 
+.rider-card::backdrop,
 .route-info::backdrop,
 .trainer-gate::backdrop,
 .ride-picker::backdrop {

@@ -4,7 +4,7 @@ import { rideName } from '../workout/names.js';
 
 // Records are labelled and formatted here, from their key and raw value, so
 // they read in the rider's language.
-function recordValue(record) {
+export function recordValue(record) {
   if (record.value == null) return '—';
   if (record.unit === 'time') {
     const m = Math.round(record.value / 60);

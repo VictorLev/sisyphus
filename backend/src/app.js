@@ -10,6 +10,7 @@ import levelRouter from './routes/level.js';
 import ftpRouter from './routes/ftp.js';
 import badgesRouter from './routes/badges.js';
 import leaderboardRouter from './routes/leaderboard.js';
+import ridersRouter from './routes/riders.js';
 import routeLibraryRouter from './routes/route-library.js';
 import shopRouter from './routes/shop.js';
 import adminRouter from './routes/admin.js';
@@ -79,6 +80,7 @@ export function createApp({ loginLimits, trustProxy = trustProxyFromEnv(process.
   app.use('/api/ftp', ftpRouter);
   app.use('/api/badges', badgesRouter);
   app.use('/api/leaderboard', leaderboardRouter);
+  app.use('/api/riders', ridersRouter);
   app.use('/api/remote', createRemoteRouter());
   app.use('/api/routes', routeLibraryRouter);
   app.use('/api/shop', shopRouter);

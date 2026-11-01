@@ -24,7 +24,14 @@ const PUSHER = ['..XX..', '..XX..', '.XXXXX', 'XXXX..', '.XXX..', '.XXX..', '.X.
 const BOULDER = ['..XXXX..', '.XXXXXX.', 'XXXXXXXX', 'XXXXXXXX', 'XXXXXXXX', 'XXXXXXXX', '.XXXXXX.', '..XXXX..'];
 
 // A still of Sisyphus wearing one item, for its card.
-function itemPreview(item, equipped) {
+const itemPreview = (item, equipped) => sisyphusStill({
+  hat: item.slot === 'hat' ? item.id : equipped.hat,
+  boulder: item.slot === 'boulder' ? item.id : equipped.boulder,
+});
+
+// A still of Sisyphus in a hat and with a boulder (ids or null): the shop's
+// cards and riders' profile cards.
+export function sisyphusStill({ hat = null, boulder = null } = {}) {
   const canvas = document.createElement('canvas');
   const PX = 6;
   canvas.width = 20 * PX;
@@ -38,8 +45,8 @@ function itemPreview(item, equipped) {
   const figure = getComputedStyle(document.documentElement).getPropertyValue('--color-bronze-bright').trim() || '#e0c088';
   for (let x = 0; x < 20; x++) px(x, 13, getComputedStyle(document.documentElement).getPropertyValue('--color-bronze-dim').trim() || '#7a6340');
   PUSHER.forEach((row, y) => [...row].forEach((c, x) => c === 'X' && px(3 + x, 5 + y, figure)));
-  drawHat(px, 5, 2, 5, item.slot === 'hat' ? item.id : equipped.hat);
-  drawBoulder(px, BOULDER, 10, 5, figure, item.slot === 'boulder' ? item.id : equipped.boulder);
+  drawHat(px, 5, 2, 5, hat);
+  drawBoulder(px, BOULDER, 10, 5, figure, boulder);
   return canvas;
 }
 

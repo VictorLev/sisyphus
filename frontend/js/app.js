@@ -18,6 +18,7 @@ import { avatarSvg } from './shop/avatar.js';
 import { createRoutePlayer } from './ui/route-player.js';
 import { createRouteSections } from './ui/route-sections.js';
 import { initRouteInfo } from './ui/route-info.js';
+import { initRiderCard } from './ui/rider-card.js';
 import { RouteTrack } from './workout/route-track.js';
 import { TrainerConnection } from './ble/connection.js';
 import { TrainerControl } from './ble/trainer-control.js';
@@ -255,7 +256,9 @@ function editWorkout(workout) {
 initSisyphusLoop();
 const chronicle = initChronicle();
 initFeats({ onOpenRide: (id) => chronicle.openDetail(id) });
-initLeaderboard();
+// A rider's profile card, from their name or avatar on the Leaderboard.
+const riderCard = initRiderCard();
+initLeaderboard({ onRider: (id) => riderCard.open(id) });
 initBadges({ onOpenRide: (id) => chronicle.openDetail(id), onOpenBadges: () => showView('badges') });
 initProfile();
 const settingsForm = initSettings({ onSaved: (saved) => applySettings(saved), getSharedScenery: () => sharedScenery });
