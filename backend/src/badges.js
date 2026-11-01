@@ -433,6 +433,56 @@ function sameRouteDaysInARow(n) {
   };
 }
 
+// Monday-based calendar weeks: 1 January 1970 was a Thursday.
+const weekOf = (ride) => Math.floor((ride.dayNumber + 3) / 7);
+
+// `target` km within one calendar week.
+function weekKm(target) {
+  return ({ rides }) => {
+    const totals = new Map();
+    let best = 0;
+    for (const ride of rides) {
+      const total = (totals.get(weekOf(ride)) ?? 0) + ride.km;
+      totals.set(weekOf(ride), total);
+      best = Math.max(best, total);
+      if (total >= target) return { earned: earnedOnRide(ride) };
+    }
+    return { progress: { value: Math.floor(best), target } };
+  };
+}
+
+// Monday to Friday, every one, in the same week.
+function fullWorkWeek({ rides }) {
+  const days = new Map();
+  for (const ride of rides) {
+    if (ride.weekday < 1 || ride.weekday > 5) continue;
+    const set = days.get(weekOf(ride)) ?? new Set();
+    set.add(ride.weekday);
+    days.set(weekOf(ride), set);
+    if (set.size === 5) return { earned: earnedOnRide(ride) };
+  }
+  return {};
+}
+
+// `n` rides on one calendar day.
+function ridesInADay(n) {
+  return ({ rides }) => {
+    const perDay = new Map();
+    for (const ride of rides) {
+      const count = (perDay.get(ride.dayNumber) ?? 0) + 1;
+      perDay.set(ride.dayNumber, count);
+      if (count >= n) return { earned: earnedOnRide(ride) };
+    }
+    return {};
+  };
+}
+
+// A distance that reads the same both ways, to the hundredth of a km.
+const palindromeKm = (km) => {
+  const digits = String(Math.round(km * 100));
+  return km >= 1 && digits === [...digits].reverse().join('');
+};
+
 // A ride on a route that passes routeTest and rideTest(ride, route).
 const routeRide = (routeTest, rideTest = () => true) => (ctx) => {
   const hit = routeRides(ctx, routeTest).find(({ ride, route }) => rideTest(ride, route));
@@ -562,11 +612,19 @@ export const BADGES = [
   { id: 'all-north-america', group: 'Travel', tier: 'silver', name: 'Coast to Coast', description: 'Ride every route in North America to its end.', unit: 'routes', evaluate: everyRouteWhere(onContinent('North America')) },
   { id: 'all-oceania', group: 'Travel', tier: 'silver', name: 'Down Under', description: 'Ride every route in Oceania to its end.', unit: 'routes', evaluate: everyRouteWhere(onContinent('Oceania')) },
   { id: 'all-south-america', group: 'Travel', tier: 'silver', name: 'Motorcycle Diaries', description: 'Ride every route in South America to its end.', unit: 'routes', evaluate: everyRouteWhere(onContinent('South America')) },
-  { id: 'all-japan', group: 'Travel', tier: 'silver', name: 'I’m Turning Japanese', description: 'Ride every route in Japan to its end.', unit: 'routes', evaluate: everyRouteWhere(inCountry('japan')) },
+  { id: 'all-japan', group: 'Travel', tier: 'silver', name: 'I\'m Turning Japanese', description: 'Ride every route in Japan to its end.', unit: 'routes', evaluate: everyRouteWhere(inCountry('japan')) },
   { id: 'all-usa', group: 'Travel', tier: 'silver', name: 'Born in the USA', description: 'Ride every route in the USA to its end.', unit: 'routes', evaluate: everyRouteWhere(inCountry('usa')) },
   { id: 'vegas', group: 'Travel', tier: 'bronze', name: 'What Happens in Vegas', description: 'Ride the Las Vegas route to its end.', evaluate: routeFinishWhere(routeAt('las vegas')) },
   { id: 'paris', group: 'Travel', tier: 'bronze', name: 'Paris, Je T’aime', description: 'Ride the Paris route to its end.', evaluate: routeFinishWhere(routeAt('paris')) },
   { id: 'hanoi', group: 'Travel', tier: 'bronze', name: 'Good Morning, Vietnam', description: 'Ride the Hanoi route to its end.', evaluate: routeFinishWhere(routeAt('hanoi')) },
+  { id: 'all-france', group: 'Travel', tier: 'silver', name: 'Vive le Vélo', description: 'Ride every route in France to its end.', unit: 'routes', evaluate: everyRouteWhere(inCountry('france')) },
+  { id: 'all-south-africa', group: 'Travel', tier: 'silver', name: 'Rainbow Nation', description: 'Ride every route in South Africa to its end.', unit: 'routes', evaluate: everyRouteWhere(inCountry('south africa')) },
+  { id: 'all-new-zealand', group: 'Travel', tier: 'silver', name: 'Middle-earth', description: 'Ride every route in New Zealand to its end.', unit: 'routes', evaluate: everyRouteWhere(inCountry('new zealand')) },
+  { id: 'all-canada', group: 'Travel', tier: 'silver', name: 'O Canada', description: 'Ride every route in Canada to its end.', unit: 'routes', evaluate: everyRouteWhere(inCountry('canada')) },
+  { id: 'all-vietnam', group: 'Travel', tier: 'silver', name: 'Pho Real', description: 'Ride every route in Vietnam to its end.', unit: 'routes', evaluate: everyRouteWhere(inCountry('vietnam')) },
+  { id: 'long-haul', group: 'Travel', tier: 'gold', name: 'Long Haul', description: 'Ride a route of 80 km or more to its end.', evaluate: routeFinishWhere((r) => r.distance_m >= 80000) },
+  { id: 'route-50', group: 'Travel', tier: 'gold', name: 'Seen It All', description: 'Ride routes 50 times.', unit: 'rides', evaluate: countWhere((r) => r.route_id != null, 50) },
+  { id: 'armchair', group: 'Travel', tier: 'silver', name: 'Armchair Traveller', description: 'Ride routes for 24 hours in total.', unit: 'h', evaluate: cumulative((r) => (r.route_id != null ? r.durationSec / H : 0), 24) },
   { id: 'frequent-flyer', group: 'Travel', tier: 'silver', name: 'Frequent Flyer', description: 'Ride routes in 10 different countries.', unit: 'countries', evaluate: distinctRouteValues(countryOf, 10) },
   { id: 'postcards', group: 'Travel', tier: 'bronze', name: 'Postcard Collector', description: 'Ride 5 different routes to their end.', unit: 'routes', evaluate: differentRoutesFinished(5) },
   { id: 'tour-guide', group: 'Travel', tier: 'gold', name: 'Tour Guide', description: 'Ride 25 different routes to their end.', unit: 'routes', evaluate: differentRoutesFinished(25) },
@@ -583,6 +641,8 @@ export const BADGES = [
   { id: 'weekend-warrior', group: 'Workplace', tier: 'bronze', name: 'Weekend Warrior', description: 'Ride on both Saturday and Sunday of the same weekend, four weekends.', unit: 'weekends', evaluate: fullWeekends(4) },
   { id: 'night-shift', group: 'Workplace', tier: 'fun', name: 'Night Shift', description: 'Start 5 rides after 10 pm.', unit: 'rides', evaluate: countWhere((r) => r.hour >= 22, 5) },
   { id: 'lunch-break', group: 'Workplace', tier: 'fun', name: 'Lunch Break Hero', description: 'Start 10 rides on weekdays between 11:30 and 1:30.', unit: 'rides', evaluate: countWhere((r) => r.weekday >= 1 && r.weekday <= 5 && r.minuteOfDay >= 690 && r.minuteOfDay < 810, 10) },
+  { id: 'full-week', group: 'Workplace', tier: 'silver', name: 'Full-Time Job', description: 'Ride every weekday, Monday to Friday, in the same week.', evaluate: fullWorkWeek },
+  { id: 'big-week', group: 'Workplace', tier: 'silver', name: 'Big Week', description: 'Ride 200 km in one calendar week.', unit: 'km', evaluate: weekKm(200) },
   { id: 'rush-hour', group: 'Workplace', tier: 'fun', name: 'Rush Hour', description: 'Start 5 rides on weekdays between 7 and 9 am. No traffic in here.', unit: 'rides', evaluate: countWhere((r) => r.weekday >= 1 && r.weekday <= 5 && r.hour >= 7 && r.hour < 9, 5) },
   { id: 'mondays', group: 'Workplace', tier: 'fun', name: 'Case of the Mondays', description: 'Ride on 4 different Mondays.', unit: 'days', evaluate: distinctDays((r) => r.weekday === 1, 4) },
 
@@ -591,6 +651,8 @@ export const BADGES = [
   { id: 'freewheeler', group: 'Oddities', tier: 'fun', name: 'Freewheeler', description: '10 minutes of coasting in one ride.', evaluate: oneRide((r) => r.coastSec >= 600) },
   { id: 'spin-doctor', group: 'Oddities', tier: 'fun', name: 'Spin Doctor', description: 'Average 100+ rpm over a ride of 20 minutes or more.', evaluate: oneRide((r) => r.durationSec >= 1200 && r.avg_cadence >= 100) },
   { id: 'grinder', group: 'Oddities', tier: 'fun', name: 'The Grinder', description: 'Average 60 rpm or less over a ride of 20 minutes or more.', evaluate: oneRide((r) => r.durationSec >= 1200 && r.avg_cadence > 0 && r.avg_cadence <= 60) },
+  { id: 'triple-threat', group: 'Oddities', tier: 'fun', name: 'Triple Threat', description: 'Ride three times in one day.', evaluate: ridesInADay(3) },
+  { id: 'metronome', group: 'Oddities', tier: 'fun', name: 'Metronome', description: 'Average between 88 and 92 rpm over a ride of an hour or more.', evaluate: oneRide((r) => r.durationSec >= H && r.avg_cadence >= 88 && r.avg_cadence <= 92) },
   { id: 'night-owl', group: 'Oddities', tier: 'fun', name: 'Night Owl', description: 'Start a ride between midnight and 4 am.', evaluate: oneRide((r) => r.hour < 4) },
   { id: 'early-bird', group: 'Oddities', tier: 'fun', name: 'Early Bird', description: 'Start a ride between 4 and 6 am.', evaluate: oneRide((r) => r.hour >= 4 && r.hour < 6) },
 
@@ -615,6 +677,11 @@ export const BADGES = [
   { id: 'leet', group: 'Secrets', tier: 'secret', hidden: true, name: '1337', description: 'A ride of 13.37 km.', hint: 'Only elite riders can read this one.', evaluate: oneRide((r) => r.km >= 13.37 && r.km < 13.38) },
   { id: 'pi-day', group: 'Secrets', tier: 'secret', hidden: true, name: 'Pi Day', description: 'Ride on 14 March.', hint: '3/14, and a slice of something.', evaluate: oneRide((r) => r.month === 3 && r.day === 14) },
   { id: 'may-the-fourth', group: 'Secrets', tier: 'secret', hidden: true, name: 'May the Fourth Be With You', description: 'Ride on 4 May.', hint: 'Use the force, pedal.', evaluate: oneRide((r) => r.month === 5 && r.day === 4) },
+  { id: 'palindrome', group: 'Secrets', tier: 'secret', hidden: true, name: 'Palindrome', description: 'A ride whose distance reads the same both ways, like 12.21 km.', hint: 'Ride it backwards: same thing.', evaluate: oneRide((r) => palindromeKm(r.km)) },
+  { id: 'thirteen-thirteen', group: 'Secrets', tier: 'secret', hidden: true, name: '13:13', description: 'Start a ride at 13:13.', hint: 'An unlucky minute, twice over.', evaluate: oneRide((r) => r.minuteOfDay === 13 * 60 + 13) },
+  { id: 'tour-de-france', group: 'Secrets', tier: 'secret', hidden: true, name: 'Le Tour', description: 'Ride a route in France in July.', hint: 'Yellow jersey season.', evaluate: routeRide(inCountry('france'), (ride) => ride.month === 7) },
+  { id: 'boxing-day', group: 'Secrets', tier: 'secret', hidden: true, name: 'Boxing Day', description: 'Ride on 26 December.', hint: 'Leftover turkey power.', evaluate: oneRide((r) => r.month === 12 && r.day === 26) },
+  { id: 'st-patrick', group: 'Secrets', tier: 'secret', hidden: true, name: 'Luck of the Irish', description: 'Ride on Saint Patrick’s Day, 17 March.', hint: 'Green beer, green bike.', evaluate: oneRide((r) => r.month === 3 && r.day === 17) },
   { id: 'lost-in-translation', group: 'Secrets', tier: 'secret', hidden: true, name: 'Lost in Translation', description: 'Ride a route in Japan at night, between 10 pm and 4 am.', hint: 'Tokyo after dark, but you never left home.', evaluate: routeRide(inCountry('japan'), (ride) => ride.hour >= 22 || ride.hour < 4) },
   { id: 'midnight-paris', group: 'Secrets', tier: 'secret', hidden: true, name: 'Midnight in Paris', description: 'Start the Paris route between 11 pm and 1 am.', hint: 'When the clock strikes twelve, an old car stops for you.', evaluate: routeRide(routeAt('paris'), (ride) => ride.hour === 23 || ride.hour === 0) },
   { id: 'viva-las-vegas', group: 'Secrets', tier: 'secret', hidden: true, name: 'Viva Las Vegas', description: 'Ride the Las Vegas route on a Friday or Saturday night, after 8 pm.', hint: 'Bright light city gonna set my soul on fire.', evaluate: routeRide(routeAt('las vegas'), (ride) => (ride.weekday === 5 || ride.weekday === 6) && ride.hour >= 20) },

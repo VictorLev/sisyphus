@@ -297,6 +297,8 @@ describe('travel badges, from the routes\' metadata', () => {
   ];
   const finish = (id, rest = {}) => ride({ route_id: id, km: routes.find((r) => r.id === id).distance_m / 1000, ...rest });
 
+  test('there are 150 badges', () => assert.equal(BADGES.length, 150));
+
   test('every route of a country or continent, ridden to its end', () => {
     let b = badges([finish(1)], { routes });
     assert.equal(b['all-japan'].earned, false);
@@ -353,6 +355,34 @@ describe('travel badges, from the routes\' metadata', () => {
     assert.equal(badges([finish(5, { date: '2026-03-08', avg_speed: 28 })], { routes })['sunday-driver'].earned, false);
     const week = days(5).map((date) => ride({ route_id: 4, km: 1, date }));
     assert.equal(badges(week, { routes })['groundhog-route'].earned, true);
+  });
+});
+
+describe('the 150: weeks, days, numbers, France', () => {
+  test('a full working week, a big week, three rides in a day', () => {
+    const week = days(5, '2026-03-02').map((date) => ride({ date, km: 41 })); // Monday to Friday
+    let b = badges(week);
+    assert.deepEqual([b['full-week'].earned, b['big-week'].earned], [true, true], '5 × 41 km = 205 km');
+    b = badges(week.slice(0, 4));
+    assert.deepEqual([b['full-week'].earned, b['big-week'].earned, b['big-week'].progress.value], [false, false, 164]);
+    const triple = ['08:00', '12:00', '18:00'].map((time) => ride({ time }));
+    assert.equal(badges(triple)['triple-threat'].earned, true);
+    assert.equal(badges(triple.slice(0, 2))['triple-threat'].earned, false);
+  });
+
+  test('palindromes and 13:13', () => {
+    assert.equal(badges([ride({ km: 12.21 })]).palindrome.earned, true);
+    assert.equal(badges([ride({ km: 12.2 })]).palindrome.earned, false);
+    assert.equal(badges([ride({ time: '13:13' })])['thirteen-thirteen'].earned, true);
+  });
+
+  test('France: every route, and Le Tour in July', () => {
+    const routes = [
+      { id: 1, name: 'Streets of Paris', distance_m: 6000, ascent_m: 20, country: 'France', continent: 'Europe' },
+      { id: 2, name: 'Galibier', distance_m: 90000, ascent_m: 2000, country: 'France', continent: 'Europe' },
+    ];
+    const b = badges([ride({ route_id: 1, km: 6 }), ride({ route_id: 2, km: 90, date: '2026-07-04' })], { routes });
+    assert.deepEqual([b['all-france'].earned, b['long-haul'].earned, b['tour-de-france'].earned], [true, true, true]);
   });
 });
 
