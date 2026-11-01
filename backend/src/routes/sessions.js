@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import db from '../db/index.js';
-import { buildTcx } from '../tcx.js';
+import { buildTcx, altitudeAlong } from '../tcx.js';
 
 const router = Router();
 
@@ -10,6 +10,7 @@ const insertSession = db.prepare(
 );
 // Only a workout the rider can see: their own, or the shared library.
 const selectRoute = db.prepare('SELECT id, name FROM routes WHERE id = ?');
+const selectRoutePoints = db.prepare('SELECT points FROM routes WHERE id = ?');
 const selectVisibleWorkout = db.prepare(
   'SELECT id, name FROM workouts WHERE id = ? AND (user_id = ? OR library_key IS NOT NULL)'
 );
@@ -145,6 +146,8 @@ router.get('/:id', (req, res) => {
 
 // The ride as a .tcx download, to upload to Strava by hand. The file name
 // carries the date and the workout, so a folder of them stays readable.
+// Element order inside a Trackpoint follows Garmin's schema: Time,
+// AltitudeMeters, DistanceMeters, HeartRateBpm, Cadence, Extensions.
 router.get('/:id/tcx', (req, res) => {
   const session = selectSessionById.get(req.params.id, req.user.id);
   if (!session) return res.status(404).json({ error: 'session not found' });
@@ -154,7 +157,10 @@ router.get('/:id/tcx', (req, res) => {
   // attachment() sets a type from the extension; ours goes after it.
   res.attachment(`sisyphus-${local}-${slug}.tcx`);
   res.type('application/vnd.garmin.tcx+xml');
-  res.send(buildTcx(session, selectSamples.all(session.id)));
+  // A ride on a route carries the road's elevation (if the route still exists).
+  const route = session.route_id ? selectRoutePoints.get(session.route_id) : null;
+  const altitudeAt = route ? altitudeAlong(JSON.parse(route.points)) : null;
+  res.send(buildTcx(session, selectSamples.all(session.id), { altitudeAt }));
 });
 
 // The rider's title and description of the ride (asked for when it ends,

@@ -177,6 +177,9 @@ describe('routes API', () => {
       samples: [{ timestamp_offset_sec: 0, power: 200, cadence: 85, speed: 30 }],
     })).json();
     assert.deepEqual([saved.workout_name, saved.route_id], ['Test Road', routeId]);
+    // For Strava: the road climbs 20 m over its first km (10 m to 30 m).
+    const tcx = await (await rider.get(`/api/sessions/${saved.id}/tcx`)).text();
+    assert.match(tcx, /<AltitudeMeters>10<\/AltitudeMeters><DistanceMeters>0<\/DistanceMeters>/, 'the road\'s altitude in the .tcx');
     assert.equal((await admin.patch(`/api/routes/${routeId}`, { name: 'Test Road 2' })).status, 200);
     assert.equal((await admin.del(`/api/routes/${routeId}`)).status, 204);
     assert.ok(!existsSync(path.join(process.env.ROUTES_DIR, String(routeId))), 'video files removed');

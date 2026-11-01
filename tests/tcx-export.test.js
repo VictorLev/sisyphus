@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { useTempDb, startServer, addUser, login } from './helpers.js';
 
 const tmp = useTempDb();
-const { buildTcx } = await import('../backend/src/tcx.js');
+const { buildTcx, altitudeAlong } = await import('../backend/src/tcx.js');
 
 const samples = [0, 20, 40].map((t) => ({ timestamp_offset_sec: t, power: 200 + t, cadence: 90, speed: 30, heart_rate: t ? 140 : null }));
 
@@ -24,6 +24,17 @@ describe('TCX', () => {
     assert.equal((tcx.match(/<HeartRateBpm>/g) ?? []).length, 2, 'no heart rate where there was none');
     assert.match(tcx, /<DistanceMeters>500<\/DistanceMeters><HeartRateBpm>/, 'the last point reaches the ride\'s distance');
     assert.match(tcx, /<TotalTimeSeconds>60<\/TotalTimeSeconds>/);
+  });
+});
+
+describe('TCX on a route', () => {
+  test('each point gets the road\'s altitude at its distance; other rides get none', () => {
+    const ride = { started_at: '2026-10-18T22:00:00.000Z', ended_at: '2026-10-18T22:01:00.000Z', distance_m: 500 };
+    const road = altitudeAlong([{ d: 0, alt: 100 }, { d: 1000, alt: 150 }]);
+    const tcx = buildTcx(ride, samples, { altitudeAt: road });
+    assert.deepEqual([...tcx.matchAll(/<AltitudeMeters>([\d.]+)<\/AltitudeMeters>/g)].map((m) => Number(m[1])), [100, 112.5, 125], '0, 250 and 500 m along');
+    assert.match(tcx, /<Time>[^<]+<\/Time><AltitudeMeters>[^<]+<\/AltitudeMeters><DistanceMeters>/, 'in the schema\'s order');
+    assert.doesNotMatch(buildTcx(ride, samples), /AltitudeMeters/);
   });
 });
 
