@@ -1040,6 +1040,17 @@
         <span class="tutorial-step"></span>
         <h2 class="tutorial-title" id="tutorial-title"></h2>
         <p class="tutorial-text"></p>
+        <!-- The gears step: how rides drive the trainer. -->
+        <div class="tutorial-choice" role="radiogroup" aria-label="Trainer mode" data-i18n-attr="aria-label:trainer.title" hidden>
+          <button type="button" class="tutorial-choice-btn" role="radio" data-mode="rear">
+            <strong data-i18n="trainer.rear">Rear gears</strong>
+            <span data-i18n="tutorial.gears.rear">Shift with your bike's own gears. The trainer only adds resistance on climbs.</span>
+          </button>
+          <button type="button" class="tutorial-choice-btn" role="radio" data-mode="gears">
+            <strong data-i18n="trainer.gears">Virtual gears</strong>
+            <span data-i18n="tutorial.gears.virtual">Shift on screen, with + and −, or from your phone. The trainer sets the resistance.</span>
+          </button>
+        </div>
         <div class="row-actions">
           <button id="tutorial-back" type="button" class="secondary" data-i18n="tutorial.back">Back</button>
           <button id="tutorial-next" type="button" data-i18n="tutorial.next">Next</button>

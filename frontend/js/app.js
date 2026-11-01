@@ -168,6 +168,17 @@ if (currentUser?.is_admin) {
 let tutorialShown = false;
 const tutorial = initTutorial({
   onDone: () => saveSettings({ tutorial_done: true }).catch(() => {}),
+  // The gears step: saved at once, and the Settings page shows it.
+  onChoose: async (mode) => {
+    try {
+      applySettings(await saveSettings({ trainer_mode: mode }));
+      settingsForm.populate();
+    } catch (err) {
+      console.warn('[tutorial] saving the trainer mode failed:', err.message);
+    }
+  },
+  getMode: () => preferredMode,
+  onStep: (step) => { if (step.view === 'settings') settingsTabs.select('ride'); },
 });
 document.getElementById('replay-tutorial-btn').addEventListener('click', () => tutorial.start());
 
@@ -242,7 +253,7 @@ initFeats({ onOpenRide: (id) => chronicle.openDetail(id) });
 initLeaderboard();
 initBadges({ onOpenRide: (id) => chronicle.openDetail(id), onOpenBadges: () => showView('badges') });
 initProfile();
-initSettings({ onSaved: (saved) => applySettings(saved), getSharedScenery: () => sharedScenery });
+const settingsForm = initSettings({ onSaved: (saved) => applySettings(saved), getSharedScenery: () => sharedScenery });
 initAccount(currentUser);
 // Settings tabs. The Admin Panel link is for admins; the diagnostic log is
 // on the Admin Panel page (entries are still captured for everyone, in case
@@ -270,7 +281,7 @@ function applySettings(settings) {
   // A new rider (or one who hasn't seen it yet): the walkthrough, once.
   if (currentUser && settings.tutorial_done === false && !tutorialShown) {
     tutorialShown = true;
-    tutorial.start();
+    tutorial.start({ firstTime: true });
   }
   setStravaExport(settings.strava_export);
   // The videos are everyone's (Admin Panel); the order is the rider's.
