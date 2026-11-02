@@ -5,8 +5,15 @@
 //
 // Every command must be preceded by Request Control (0x00), and the trainer
 // answers each write with an indication [0x80, requestOpCode, resultCode].
+//
+// Not every trainer takes a resistance level: smart bikes like the Ascend
+// S2 answer 0x04 with "op code not supported" and only accept simulation
+// (grade). The Fitness Machine Feature characteristic says which, and a
+// refused 0x04 says it too; either way resistance is then written as the
+// grade it stands for (resistanceToGrade).
 
 const CHAR_CONTROL_POINT = 'fitness_machine_control_point'; // 0x2AD9
+const CHAR_FEATURE = 'fitness_machine_feature'; // 0x2ACC
 
 const OP_REQUEST_CONTROL = 0x00;
 const OP_RESET = 0x01;
@@ -14,6 +21,12 @@ const OP_SET_TARGET_RESISTANCE = 0x04;
 const OP_SET_TARGET_POWER = 0x05; // ERG
 const OP_SET_SIMULATION = 0x11; // grade
 const OP_RESPONSE = 0x80;
+
+const RESULT_NOT_SUPPORTED = 2;
+
+// Target Setting Features bits (second UINT32 of 0x2ACC).
+const TARGET_RESISTANCE = 1 << 2;
+const TARGET_SIMULATION = 1 << 13;
 
 const RESULT = {
   1: 'success',
@@ -27,10 +40,34 @@ const RESULT = {
 const RESISTANCE_MAX = 20.0;
 const RESISTANCE_RAW_MAX = 200;
 
+// Simulation grades are kept to what a road can be.
+const GRADE_MIN = -10;
+const GRADE_MAX = 20;
+
+// Without the rider's settings: level 5 is the flat, 0.4 a percent.
+const defaultResistanceToGrade = (level) => (level - 5) / 0.4;
+
+// From the Fitness Machine Feature value: false when the trainer says it
+// can't take a resistance level but can simulate grade, true otherwise
+// (including when it doesn't say).
+export function takesResistance(dataView) {
+  if (!dataView || dataView.byteLength < 8) return true;
+  const targets = dataView.getUint32(4, true);
+  return !(!(targets & TARGET_RESISTANCE) && (targets & TARGET_SIMULATION));
+}
+
+// Simulation parameters: wind 0, grade in 0.01 %, Crr 0.004, Cw 0.51 kg/m.
+export function simulationBytes(gradePercent) {
+  const g = Math.round(Math.max(GRADE_MIN, Math.min(GRADE_MAX, gradePercent)) * 100);
+  return [OP_SET_SIMULATION, 0, 0, g & 0xff, (g >> 8) & 0xff, 40, 51];
+}
+
 export class TrainerControl extends EventTarget {
-  constructor(service) {
+  constructor(service, { resistanceToGrade = defaultResistanceToGrade } = {}) {
     super();
     this.service = service;
+    this.resistanceToGrade = resistanceToGrade;
+    this.useSimulation = false;
     this.controlPoint = null;
     this._pending = null; // { op, resolve, reject, timer }
     this._onIndication = this._onIndication.bind(this);
@@ -40,6 +77,12 @@ export class TrainerControl extends EventTarget {
     this.controlPoint = await this.service.getCharacteristic(CHAR_CONTROL_POINT);
     await this.controlPoint.startNotifications();
     this.controlPoint.addEventListener('characteristicvaluechanged', this._onIndication);
+    try {
+      const feature = await this.service.getCharacteristic(CHAR_FEATURE);
+      this.useSimulation = !takesResistance(await feature.readValue());
+    } catch {
+      // Optional to read; a refused 0x04 switches over anyway.
+    }
   }
 
   requestControl() {
@@ -51,10 +94,23 @@ export class TrainerControl extends EventTarget {
   }
 
   // level: 0.0–20.0 (clamped). Written as UINT8 raw = level / 0.1.
-  setResistance(level) {
+  // On a simulation-only trainer, the grade the level stands for.
+  async setResistance(level) {
     const clamped = Math.max(0, Math.min(RESISTANCE_MAX, level));
+    if (this.useSimulation) return this.setGrade(this.resistanceToGrade(clamped));
     const raw = Math.max(0, Math.min(RESISTANCE_RAW_MAX, Math.round(clamped / 0.1)));
-    return this._command([OP_SET_TARGET_RESISTANCE, raw]);
+    try {
+      await this._command([OP_SET_TARGET_RESISTANCE, raw]);
+    } catch (err) {
+      if (err.result !== RESULT_NOT_SUPPORTED) throw err;
+      this.useSimulation = true;
+      return this.setGrade(this.resistanceToGrade(clamped));
+    }
+  }
+
+  // Indoor Bike Simulation: the trainer makes the grade feel like a road.
+  setGrade(gradePercent) {
+    return this._command(simulationBytes(gradePercent));
   }
 
   // ERG target, SINT16 little-endian watts.
@@ -78,7 +134,8 @@ export class TrainerControl extends EventTarget {
       const { resolve, reject, timer } = this._pending;
       clearTimeout(timer);
       this._pending = null;
-      ok ? resolve() : reject(new Error(`opcode 0x${reqOp.toString(16).padStart(2, '0')}: ${RESULT[result] ?? result}`));
+      if (ok) resolve();
+      else reject(Object.assign(new Error(`opcode 0x${reqOp.toString(16).padStart(2, '0')}: ${RESULT[result] ?? result}`), { result }));
     }
   }
 
@@ -106,4 +163,4 @@ export class TrainerControl extends EventTarget {
   }
 }
 
-export const TRAINER_CONTROL_INTERNALS = { OP_SET_TARGET_RESISTANCE, RESISTANCE_MAX, RESISTANCE_RAW_MAX };
+export const TRAINER_CONTROL_INTERNALS = { OP_SET_TARGET_RESISTANCE, OP_SET_SIMULATION, RESISTANCE_MAX, RESISTANCE_RAW_MAX };

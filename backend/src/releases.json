@@ -3,7 +3,9 @@
     "version": "next",
     "date": null,
     "commit": null,
-    "notes": []
+    "notes": [
+      "Trainers that only simulate grade (Ascend S2 and other smart bikes) now work: resistance is sent as a grade when the trainer refuses a resistance level"
+    ]
   },
   {
     "version": "v2.3.0",
