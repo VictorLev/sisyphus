@@ -400,7 +400,11 @@ async function ensureTrainerControl() {
   if (trainerControl) return true;
   if (!trainerConnection.service) return false; // trainer not connected
   try {
-    const control = new TrainerControl(trainerConnection.service);
+    // A trainer that only simulates grade gets the grade the level stands
+    // for: the flat level is 0 %, each resistancePerGrade one percent.
+    const control = new TrainerControl(trainerConnection.service, {
+      resistanceToGrade: (level) => (level - rearResistance) / resistancePerGrade,
+    });
     await control.init();
     await control.requestControl();
     trainerControl = control;
