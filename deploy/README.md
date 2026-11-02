@@ -71,6 +71,7 @@ They live only in `/mnt/storage/docker/sisyphus/.env`:
 | `TUNNEL_TOKEN` | The Cloudflare Tunnel token |
 | `COMPOSE_PROFILES=tunnel` | Not a secret, but it is the switch that exposes the app |
 | `IMAGE_TAG` | Unset = `stable`; a version or commit SHA pins it (rollback) |
+| `LOGS_TOKEN` | Optional: reads `GET /api/admin/logs` (riders' browser logs) with `Authorization: Bearer <token>`, nothing else; 32+ characters (`openssl rand -hex 32`) |
 
 The folder is on the NFS share, which Samba also exports, so keep `.env` at
 `chmod 600`. There is no session secret: login tokens are random, and only

@@ -31,6 +31,9 @@ services:
       TRUST_PROXY: "1"
       BACKUP_DIR: /backups
       ROUTES_DIR: /routes
+      # Lets a script read the riders' logs (GET /api/admin/logs with
+      # "Authorization: Bearer <token>"); 32+ characters, empty = off.
+      LOGS_TOKEN: ${LOGS_TOKEN:-}
     ports:
       # Localhost only: reachable through Caddy, not directly from the LAN.
       # (3000 on the VM is Homepage's.)

@@ -14,7 +14,7 @@ import ridersRouter from './routes/riders.js';
 import routeLibraryRouter from './routes/route-library.js';
 import shopRouter from './routes/shop.js';
 import adminRouter from './routes/admin.js';
-import logsRouter from './routes/logs.js';
+import logsRouter, { logsWithToken } from './routes/logs.js';
 import { getScenery } from './scenery.js';
 import { createAuthRouter } from './routes/auth.js';
 import { createRemoteRouter } from './routes/remote.js';
@@ -41,7 +41,7 @@ function trustProxyFromEnv(value) {
 //
 // Options exist for tests: a fresh limiter per app so rate-limit tests do not
 // lock each other out, and trust-proxy without touching the environment.
-export function createApp({ loginLimits, trustProxy = trustProxyFromEnv(process.env.TRUST_PROXY) } = {}) {
+export function createApp({ loginLimits, trustProxy = trustProxyFromEnv(process.env.TRUST_PROXY), logsToken = process.env.LOGS_TOKEN } = {}) {
   const app = express();
   app.set('trust proxy', trustProxy);
   app.disable('x-powered-by');
@@ -64,6 +64,9 @@ export function createApp({ loginLimits, trustProxy = trustProxyFromEnv(process.
   // Everything below needs a logged-in rider. The static shell above stays
   // public: the code is open source anyway, and the login screen is part of
   // it. Health is public so Docker's healthcheck can call it.
+  // Riders' logs for a script holding LOGS_TOKEN (routes/logs.js); without
+  // the token's header, the admin login below applies as usual.
+  app.get('/api/admin/logs', logsWithToken(logsToken));
   app.use('/api', loadUser);
   app.use('/api/auth', express.json({ limit: '10kb' }), createAuthRouter(new LoginLimiter(loginLimits)));
   // Express defaults to a 100kb JSON body. A sample serialises to ~86 bytes,

@@ -4,16 +4,18 @@ import assert from 'node:assert/strict';
 import { useTempDb, startServer, addUser, login } from './helpers.js';
 import { unsent } from '../frontend/js/log.js';
 
+const TOKEN = 'a'.repeat(20) + 'b'.repeat(20);
+
 const tmp = useTempDb();
 
 describe('client logs', () => {
   let server;
+  let base;
   let admin;
   let max;
 
   before(async () => {
-    let base;
-    ({ server, base } = await startServer());
+    ({ server, base } = await startServer({ logsToken: TOKEN }));
     await addUser('boss', 'b', { displayName: 'Boss', isAdmin: true });
     await addUser('max', 'm', { displayName: 'Max' });
     admin = await login(base, 'boss', 'b');
@@ -58,6 +60,28 @@ describe('client logs', () => {
 
   test('riders can\'t read anyone\'s logs', async () => {
     assert.equal((await max.get('/api/admin/logs')).status, 403);
+  });
+
+  test('a script reads them with the token, and only this route', async () => {
+    const bearer = (token) => ({ headers: { Authorization: `Bearer ${token}` } });
+    const res = await fetch(`${base}/api/admin/logs?level=error`, bearer(TOKEN));
+    assert.equal(res.status, 200);
+    assert.equal(res.headers.get('cache-control'), 'no-store');
+    assert.deepEqual((await res.json()).map((r) => r.username), ['max']);
+    assert.equal((await fetch(`${base}/api/admin/logs`, bearer(`${TOKEN}x`))).status, 401);
+    assert.equal((await fetch(`${base}/api/admin/logs`)).status, 401);
+    assert.equal((await fetch(`${base}/api/admin/users`, bearer(TOKEN))).status, 401);
+    assert.equal((await fetch(`${base}/api/admin/logs?since=soon`, bearer(TOKEN))).status, 400);
+  });
+
+  test('a short token leaves the route off', async () => {
+    const { server: other, base: otherBase } = await startServer({ logsToken: 'short' });
+    try {
+      const res = await fetch(`${otherBase}/api/admin/logs`, { headers: { Authorization: 'Bearer short' } });
+      assert.equal(res.status, 401);
+    } finally {
+      other.close();
+    }
   });
 
   test('the browser sends only what it hasn\'t sent', () => {
