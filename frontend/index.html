@@ -305,10 +305,39 @@
             </div>
             <ol id="log-list" class="log-list"></ol>
             <p class="hint" data-i18n="log.hint">Errors, warnings and trainer events from this
-              browser, newest first: the last 200, kept on this device only.
-              When something goes wrong, press Copy and paste it into your
-              message.</p>
+              browser, newest first: the last 200 on this device. They are also
+              sent to the server, so the admins can see what went wrong.</p>
             <p id="log-status" class="status"></p>
+          </div>
+
+          <!-- Every rider's browser log, as sent to the server (30 days). -->
+          <div class="panel">
+            <div class="calendar-header">
+              <h2 data-i18n="admin.logs">Riders' logs</h2>
+              <div class="row-actions">
+                <button id="admin-logs-copy" type="button" class="secondary" data-i18n="log.copy">Copy</button>
+                <button id="admin-logs-refresh" type="button" class="secondary" data-i18n="admin.refresh">Refresh</button>
+              </div>
+            </div>
+            <div class="form-row">
+              <label class="field">
+                <span data-i18n="admin.col.rider">Rider</span>
+                <select id="admin-logs-rider"><option value="" data-i18n="admin.logsEveryone">Everyone</option></select>
+              </label>
+              <label class="field">
+                <span data-i18n="admin.logsLevel">Show</span>
+                <select id="admin-logs-level">
+                  <option value="info" data-i18n="admin.logsAll">Everything</option>
+                  <option value="warn" data-i18n="admin.logsWarn">Warnings and errors</option>
+                  <option value="error" data-i18n="admin.logsError">Errors only</option>
+                </select>
+              </label>
+            </div>
+            <ol id="admin-logs" class="log-list admin-logs"></ol>
+            <p class="hint" data-i18n="admin.logsHint">What each rider's browser logged (trainer
+              connections, Bluetooth errors, crashes), newest first, kept 30 days.
+              Also on the server: npm run logs.</p>
+            <p id="admin-logs-status" class="status" role="status"></p>
           </div>
         </div>
       </div>

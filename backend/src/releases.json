@@ -3,7 +3,10 @@
     "version": "next",
     "date": null,
     "commit": null,
-    "notes": []
+    "notes": [
+      "Riders' logs: each browser sends its log (trainer connections, Bluetooth errors, crashes) to the server; the Admin Panel shows them by rider and level, kept 30 days (also npm run logs, or GET /api/admin/logs with LOGS_TOKEN from a script)",
+      "Trainer: the log notes which FTMS targets the trainer accepts, and when it switches to grade simulation"
+    ]
   },
   {
     "version": "v2.3.1",

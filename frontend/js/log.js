@@ -94,3 +94,54 @@ export function installLogCapture(target = globalThis) {
     logEvent('error', 'Unhandled rejection:', event.reason);
   });
 }
+
+// Sends the log to the server (POST /api/logs) so an admin can read what
+// went wrong on a rider's machine: new lines every 15 s, sooner after an
+// error, and whatever is left when the page closes. The last line sent is
+// remembered, so a reload doesn't send twice; the first run sends what the
+// browser already had. A failed send (logged out, offline) waits for the
+// next one and logs nothing, or it would feed itself.
+const SENT_KEY = 'sisyphus.log.sent';
+const UPLOAD_EVERY_MS = 15000;
+
+export function unsent(entries, sentAt) {
+  return sentAt ? entries.filter((e) => e.at > sentAt) : entries;
+}
+
+export function startLogUpload({ url = '/api/logs', fetchImpl = (...a) => globalThis.fetch(...a) } = {}) {
+  let sending = false;
+  let soon = null;
+  const sentAt = () => { try { return localStorage.getItem(SENT_KEY); } catch { return null; } };
+  const markSent = (at) => { try { localStorage.setItem(SENT_KEY, at); } catch { /* next send repeats them */ } };
+
+  async function send() {
+    const batch = unsent(read(), sentAt());
+    if (sending || batch.length === 0) return;
+    sending = true;
+    try {
+      const res = await fetchImpl(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ entries: batch }),
+      });
+      if (res.ok) markSent(batch.at(-1).at);
+    } catch {
+      // Offline or the server is down: try again on the next round.
+    } finally {
+      sending = false;
+    }
+  }
+
+  setInterval(send, UPLOAD_EVERY_MS);
+  onLog((entry) => {
+    if (entry?.level === 'error' && !soon) soon = setTimeout(() => { soon = null; send(); }, 2000);
+  });
+  globalThis.addEventListener?.('pagehide', () => {
+    const batch = unsent(read(), sentAt());
+    if (batch.length && navigator.sendBeacon?.(url, new Blob([JSON.stringify({ entries: batch })], { type: 'application/json' }))) {
+      markSent(batch.at(-1).at);
+    }
+  });
+  send();
+  return { send };
+}

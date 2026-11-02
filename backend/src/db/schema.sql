@@ -200,3 +200,17 @@ CREATE TABLE IF NOT EXISTS migrations (
   name TEXT PRIMARY KEY,
   applied_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+-- What riders' browsers logged (Bluetooth, trainer errors, crashes), sent
+-- up so an admin can read them without the rider's DevTools. Kept 30 days.
+CREATE TABLE IF NOT EXISTS client_logs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  at TEXT NOT NULL, -- when the browser logged it
+  level TEXT NOT NULL,
+  message TEXT NOT NULL,
+  user_agent TEXT,
+  received_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS client_logs_at ON client_logs (at);
+CREATE INDEX IF NOT EXISTS client_logs_user ON client_logs (user_id, at);
