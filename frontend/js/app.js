@@ -397,8 +397,16 @@ trainerConnection.addEventListener('connected', () => {
 
 // Creates and initialises the control point + takes control, once. Returns
 // true if control is ready. Any failure is surfaced via the ride note.
-async function ensureTrainerControl() {
-  if (trainerControl) return true;
+// Callers at the same moment (connect, the ride starting, a shift) share one
+// setup: two would each open the control point and collide on GATT.
+let trainerControlSetup = null;
+function ensureTrainerControl() {
+  if (trainerControl) return Promise.resolve(true);
+  trainerControlSetup ??= setUpTrainerControl().finally(() => { trainerControlSetup = null; });
+  return trainerControlSetup;
+}
+
+async function setUpTrainerControl() {
   if (!trainerConnection.service) return false; // trainer not connected
   try {
     // A trainer that only simulates grade gets the grade the level stands

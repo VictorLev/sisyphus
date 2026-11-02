@@ -3,7 +3,10 @@
     "version": "next",
     "date": null,
     "commit": null,
-    "notes": []
+    "notes": [
+      "Trainer: no more \"GATT operation already in progress\": commands to the trainer go one at a time, and quick shifts send only the latest resistance",
+      "Log: a server that can't be reached is logged once (and when it answers again), not every minute; a hidden tab no longer checks the session"
+    ]
   },
   {
     "version": "v2.4.0",
