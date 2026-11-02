@@ -2300,6 +2300,20 @@ button.secondary:hover:not(:disabled) {
   overflow-wrap: anywhere;
 }
 
+.admin-logs {
+  max-height: 28rem;
+}
+
+.admin-logs .log-entry {
+  grid-template-columns: auto 6rem 3.2rem 1fr;
+}
+
+.log-rider {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .log-empty {
   color: var(--color-text-dim);
   padding: 0.3rem 0;

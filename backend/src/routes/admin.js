@@ -9,10 +9,11 @@ import { getScenery, setScenery, sceneryEntries, MAX_SCENERY } from '../scenery.
 import { giveDrachmas } from './shop.js';
 import { GIFT_MAX } from '../shop-catalog.js';
 import { inboxDir, listInbox, scanInbox } from '../route-inbox.js';
+import { queryClientLogs } from '../client-logs.js';
 
 // /api/admin: the Admin Panel, admins only. Riders (list, create, delete,
-// reset a password), the shared scenery, the route inbox, and the release
-// history.
+// reset a password), the shared scenery, the route inbox, the release
+// history, and the riders' browser logs.
 // Passwords handed out here are random and shown once, like the CLI's.
 
 const releases = JSON.parse(readFileSync(new URL('../releases.json', import.meta.url), 'utf8'));
@@ -26,6 +27,13 @@ const selectRiders = db.prepare(
 
 const router = Router();
 router.use(requireAdmin);
+
+// Riders' browser logs, newest first: ?user=<id or username>&level=warn&since=<ISO>&limit=.
+router.get('/logs', (req, res) => {
+  const { user, level, since, limit } = req.query;
+  if (since && Number.isNaN(Date.parse(since))) return res.status(400).json({ error: 'since must be a date' });
+  res.json(queryClientLogs({ user, level, since, limit }));
+});
 
 router.get('/users', (req, res) => {
   res.json(selectRiders.all().map((u) => ({ ...u, is_admin: Boolean(u.is_admin), you: u.id === req.user.id })));

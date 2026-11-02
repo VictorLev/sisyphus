@@ -1,5 +1,5 @@
 // First, so everything after it, including a failed login, is logged.
-import { installLogCapture, logEvent } from './log.js';
+import { installLogCapture, logEvent, startLogUpload } from './log.js';
 import { initLanguage, rememberSetting, resolveLanguage, language, t, tp, num } from './i18n.js';
 import { applyTheme } from './theme.js';
 import { setStravaExport, askToPostRide } from './ui/strava-export.js';
@@ -48,6 +48,7 @@ import { initTrainerButton } from './ui/trainer-button.js';
 import { initLogPanel } from './ui/log-panel.js';
 
 installLogCapture();
+startLogUpload();
 // Before anything renders: the language this browser last used, so even the
 // login screen is in it. The account's setting confirms it after login.
 initLanguage();

@@ -14,6 +14,7 @@ import ridersRouter from './routes/riders.js';
 import routeLibraryRouter from './routes/route-library.js';
 import shopRouter from './routes/shop.js';
 import adminRouter from './routes/admin.js';
+import logsRouter from './routes/logs.js';
 import { getScenery } from './scenery.js';
 import { createAuthRouter } from './routes/auth.js';
 import { createRemoteRouter } from './routes/remote.js';
@@ -84,6 +85,7 @@ export function createApp({ loginLimits, trustProxy = trustProxyFromEnv(process.
   app.use('/api/remote', createRemoteRouter());
   app.use('/api/routes', routeLibraryRouter);
   app.use('/api/shop', shopRouter);
+  app.use('/api/logs', logsRouter);
   app.use('/api/admin', adminRouter);
   // The shared scenery, for every rider's ride screen (set in the Admin Panel).
   app.get('/api/scenery', (req, res) => res.json({ videos: getScenery() }));

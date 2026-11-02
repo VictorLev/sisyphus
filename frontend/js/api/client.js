@@ -279,4 +279,5 @@ export const adminSetScenery = (videos) => request('/api/admin/scenery', json('P
 export const adminReleases = () => request('/api/admin/releases');
 export const adminInbox = () => request('/api/admin/inbox');
 export const adminScanInbox = () => request('/api/admin/inbox/scan', { method: 'POST' });
+export const adminLogs = (params) => request(`/api/admin/logs?${new URLSearchParams(params)}`);
 export const adminGiveDrachmas = (id, amount) => request(`/api/admin/users/${id}/drachmas`, json('POST', { amount }));

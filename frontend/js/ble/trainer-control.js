@@ -79,7 +79,11 @@ export class TrainerControl extends EventTarget {
     this.controlPoint.addEventListener('characteristicvaluechanged', this._onIndication);
     try {
       const feature = await this.service.getCharacteristic(CHAR_FEATURE);
-      this.useSimulation = !takesResistance(await feature.readValue());
+      const value = await feature.readValue();
+      this.useSimulation = !takesResistance(value);
+      if (value.byteLength >= 8) {
+        console.info(`[trainer] FTMS target settings 0x${value.getUint32(4, true).toString(16)}${this.useSimulation ? ', simulation only: resistance sent as grade' : ''}`);
+      }
     } catch {
       // Optional to read; a refused 0x04 switches over anyway.
     }
@@ -104,6 +108,7 @@ export class TrainerControl extends EventTarget {
     } catch (err) {
       if (err.result !== RESULT_NOT_SUPPORTED) throw err;
       this.useSimulation = true;
+      console.info('[trainer] resistance level refused (0x04); sending grade from now on');
       return this.setGrade(this.resistanceToGrade(clamped));
     }
   }

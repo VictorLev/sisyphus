@@ -1,13 +1,13 @@
 // The Admin Panel (admins only, from Settings): riders (create, delete,
-// reset a password), the shared scenery, the route inbox, and the release
-// notes. A new or
+// reset a password), the shared scenery, the route inbox, the release
+// notes, and the riders' browser logs. A new or
 // reset password is shown once, with a Copy button, to pass on.
 
 import {
   adminListUsers, adminCreateUser, adminResetPassword, adminUserData, adminDeleteUser,
-  adminGetScenery, adminSetScenery, adminReleases, adminGiveDrachmas, adminInbox, adminScanInbox,
+  adminGetScenery, adminSetScenery, adminReleases, adminGiveDrachmas, adminInbox, adminScanInbox, adminLogs,
 } from '../api/client.js';
-import { t, num, date } from '../i18n.js';
+import { t, num, date, locale } from '../i18n.js';
 import { initSceneryEditor } from './scenery-editor.js';
 
 export function initAdmin({ onSceneryChange, onWalletChange }) {
@@ -51,6 +51,7 @@ export function initAdmin({ onSceneryChange, onWalletChange }) {
       say(ridersStatus, err.message, true);
       return;
     }
+    fillLogRiders(users);
     ridersEl.innerHTML = '';
     for (const u of users) {
       const tr = document.createElement('tr');
@@ -246,6 +247,74 @@ export function initAdmin({ onSceneryChange, onWalletChange }) {
     }
   }
 
+  // Riders' logs: what their browsers sent, newest first, filtered by
+  // rider and level. The lines stay in English, like the rider's own Log.
+  const logsEl = document.getElementById('admin-logs');
+  const logsStatus = document.getElementById('admin-logs-status');
+  const logsRider = document.getElementById('admin-logs-rider');
+  const logsLevel = document.getElementById('admin-logs-level');
+  let logRows = [];
+
+  function fillLogRiders(users) {
+    const chosen = logsRider.value;
+    logsRider.length = 1; // keep "Everyone"
+    for (const u of users) logsRider.add(new Option(u.display_name, u.id));
+    logsRider.value = users.some((u) => String(u.id) === chosen) ? chosen : '';
+  }
+
+  async function refreshLogs() {
+    try {
+      logRows = await adminLogs({ user: logsRider.value, level: logsLevel.value, limit: 500 });
+    } catch (err) {
+      say(logsStatus, err.message, true);
+      return;
+    }
+    say(logsStatus, '');
+    logsEl.innerHTML = '';
+    if (logRows.length === 0) {
+      const li = document.createElement('li');
+      li.className = 'log-empty';
+      li.textContent = t('admin.logsEmpty');
+      logsEl.append(li);
+      return;
+    }
+    for (const r of logRows) {
+      const li = document.createElement('li');
+      li.className = `log-entry log-${r.level}`;
+      li.title = r.user_agent ?? '';
+      const time = document.createElement('time');
+      time.dateTime = r.at;
+      time.textContent = new Date(r.at).toLocaleString(locale(), {
+        month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit',
+      });
+      const who = document.createElement('span');
+      who.className = 'log-rider';
+      who.textContent = r.display_name;
+      const level = document.createElement('span');
+      level.className = 'log-level';
+      level.textContent = r.level;
+      const message = document.createElement('span');
+      message.className = 'log-message';
+      message.textContent = r.message;
+      li.append(time, who, level, message);
+      logsEl.append(li);
+    }
+  }
+
+  logsRider.addEventListener('change', refreshLogs);
+  logsLevel.addEventListener('change', refreshLogs);
+  document.getElementById('admin-logs-refresh').addEventListener('click', refreshLogs);
+  document.getElementById('admin-logs-copy').addEventListener('click', async () => {
+    const text = [...logRows].reverse()
+      .map((r) => `${r.at} ${r.username} ${r.level.toUpperCase().padEnd(5)} ${r.message}`).join('\n');
+    try {
+      await navigator.clipboard.writeText(text || '(no logs)');
+      say(logsStatus, t('log.copied'));
+    } catch (err) {
+      say(logsStatus, t('log.copyFailed', { error: err.message }), true);
+    }
+  });
+
   document.addEventListener('viewchange', (event) => {
     if (event.detail.view !== 'admin') return;
     passwordBox.hidden = true;
@@ -255,6 +324,7 @@ export function initAdmin({ onSceneryChange, onWalletChange }) {
     say(inboxStatus, '');
     refreshInbox();
     refreshReleases();
+    refreshLogs();
   });
 }
 

@@ -14,7 +14,8 @@
     "list-users": "node scripts/list-users.js",
     "backup": "node scripts/backup.js",
     "give-drachmas": "node scripts/give-drachmas.js",
-    "import-routes": "node scripts/import-routes.js"
+    "import-routes": "node scripts/import-routes.js",
+    "logs": "node scripts/logs.js"
   },
   "dependencies": {
     "better-sqlite3": "^11.3.0",

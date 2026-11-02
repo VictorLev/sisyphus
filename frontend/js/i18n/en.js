@@ -179,6 +179,7 @@ export const EN = {
   "log.copied": "Copied.",
   "log.copyFailed": "Could not copy: {error}",
   "log.cleared": "Cleared.",
+  "admin.logsEmpty": "Nothing logged yet.",
   "scenery.n": "Scenery {n}",
   "settings.sceneryTitle": "Scenery",
   "file.csvEmpty": "The CSV needs a header row and at least one segment.",

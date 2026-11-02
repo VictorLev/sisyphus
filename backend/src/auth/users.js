@@ -109,6 +109,7 @@ export function deleteUser(userId) {
     db.prepare('DELETE FROM drachma_gifts WHERE user_id = ?').run(userId);
     db.prepare('DELETE FROM workouts WHERE user_id = ?').run(userId);
     db.prepare('DELETE FROM user_config WHERE user_id = ?').run(userId);
+    db.prepare('DELETE FROM client_logs WHERE user_id = ?').run(userId);
     db.prepare('DELETE FROM auth_sessions WHERE user_id = ?').run(userId);
     db.prepare('DELETE FROM users WHERE id = ?').run(userId);
   })();
