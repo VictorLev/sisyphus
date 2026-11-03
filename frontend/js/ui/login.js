@@ -63,8 +63,9 @@ export async function requireLogin() {
 // out elsewhere, or changed their password (which ends the others). Without
 // a check, the app only finds out at its next call to the server, and the
 // screen keeps showing their data until then. So the session is checked
-// every minute and whenever the rider comes back to the tab; once it's gone,
-// the login screen covers everything. Not during a ride: the ride carries on
+// every minute while the tab is shown and whenever the rider comes back to
+// it; once it's gone, the login screen covers everything. Not during a ride:
+// the ride carries on
 // and, if its save is refused, it is kept and retried after logging in.
 const SESSION_CHECK_MS = 60_000;
 
@@ -72,7 +73,8 @@ export function watchSession(user, { isRiding = () => false } = {}) {
   if (!user) return; // the offline shell has no session to watch
   let checking = false;
   async function check() {
-    if (checking || isRiding() || document.getElementById('login-dialog').open) return;
+    // A hidden tab waits: coming back to it checks anyway.
+    if (checking || isRiding() || document.hidden || document.getElementById('login-dialog').open) return;
     checking = true;
     try {
       const me = await getMe();

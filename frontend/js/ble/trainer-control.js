@@ -11,6 +11,12 @@
 // (grade). The Fitness Machine Feature characteristic says which, and a
 // refused 0x04 says it too; either way resistance is then written as the
 // grade it stands for (resistanceToGrade).
+//
+// The browser runs one GATT operation at a time ("GATT operation already in
+// progress" otherwise), and FTMS answers one command at a time, so commands
+// queue: each waits for the previous one's indication. Targets (resistance,
+// grade, power) only matter as the latest: a target that's been overtaken
+// while it waited is skipped, so fast shifting doesn't build a backlog.
 
 const CHAR_CONTROL_POINT = 'fitness_machine_control_point'; // 0x2AD9
 const CHAR_FEATURE = 'fitness_machine_feature'; // 0x2ACC
@@ -70,6 +76,8 @@ export class TrainerControl extends EventTarget {
     this.useSimulation = false;
     this.controlPoint = null;
     this._pending = null; // { op, resolve, reject, timer }
+    this._queue = Promise.resolve();
+    this._targetSeq = 0;
     this._onIndication = this._onIndication.bind(this);
   }
 
@@ -104,7 +112,7 @@ export class TrainerControl extends EventTarget {
     if (this.useSimulation) return this.setGrade(this.resistanceToGrade(clamped));
     const raw = Math.max(0, Math.min(RESISTANCE_RAW_MAX, Math.round(clamped / 0.1)));
     try {
-      await this._command([OP_SET_TARGET_RESISTANCE, raw]);
+      await this._target([OP_SET_TARGET_RESISTANCE, raw]);
     } catch (err) {
       if (err.result !== RESULT_NOT_SUPPORTED) throw err;
       this.useSimulation = true;
@@ -115,13 +123,13 @@ export class TrainerControl extends EventTarget {
 
   // Indoor Bike Simulation: the trainer makes the grade feel like a road.
   setGrade(gradePercent) {
-    return this._command(simulationBytes(gradePercent));
+    return this._target(simulationBytes(gradePercent));
   }
 
   // ERG target, SINT16 little-endian watts.
   setPower(watts) {
     const w = Math.max(0, Math.min(4000, Math.round(watts)));
-    return this._command([OP_SET_TARGET_POWER, w & 0xff, (w >> 8) & 0xff]);
+    return this._target([OP_SET_TARGET_POWER, w & 0xff, (w >> 8) & 0xff]);
   }
 
   _onIndication(event) {
@@ -144,7 +152,24 @@ export class TrainerControl extends EventTarget {
     }
   }
 
-  _command(bytes, timeoutMs = 2000) {
+  // Every command, in order, one at a time.
+  _command(bytes) {
+    return this._enqueue(() => this._send(bytes));
+  }
+
+  // A target: sent unless a newer target was asked for while it waited.
+  _target(bytes) {
+    const ticket = ++this._targetSeq;
+    return this._enqueue(() => (ticket === this._targetSeq ? this._send(bytes) : undefined));
+  }
+
+  _enqueue(job) {
+    const run = this._queue.then(job, job);
+    this._queue = run.catch(() => {}); // a failure doesn't stop the next one
+    return run;
+  }
+
+  _send(bytes, timeoutMs = 2000) {
     const op = bytes[0];
     return new Promise((resolve, reject) => {
       const timer = setTimeout(() => {

@@ -15,12 +15,17 @@ function fakeService({ targets = null, refuses = [] } = {}) {
   const writes = [];
   const controlPoint = new EventTarget();
   controlPoint.startNotifications = async () => {};
+  let busy = false;
   controlPoint.writeValueWithResponse = async (bytes) => {
+    // Like Chrome: one GATT operation at a time (here, until the answer).
+    if (busy) throw new Error('GATT operation already in progress.');
+    busy = true;
     writes.push([...bytes]);
     const value = new DataView(Uint8Array.from([0x80, bytes[0], refuses.includes(bytes[0]) ? 2 : 1]).buffer);
     setTimeout(() => {
       const event = new Event('characteristicvaluechanged');
       Object.defineProperty(event, 'target', { value: { value } });
+      busy = false;
       controlPoint.dispatchEvent(event);
     }, 0);
   };
@@ -67,6 +72,24 @@ describe('trainer control', () => {
     const control = new TrainerControl(service);
     await control.init();
     await assert.rejects(control.setResistance(5), /op code not supported/);
+  });
+
+  test('commands asked for at once go one at a time; only the latest target is sent', async () => {
+    const service = fakeService({ targets: 1 << 2 });
+    const control = new TrainerControl(service);
+    await control.init();
+    await Promise.all([control.requestControl(), control.setResistance(5), control.setResistance(6), control.setResistance(7)]);
+    assert.deepEqual(service.writes, [[0x00], [0x04, 70]]);
+  });
+
+  test('a failed command doesn\'t block the next', async () => {
+    const service = fakeService({ targets: 1 << 2, refuses: [0x01] });
+    const control = new TrainerControl(service);
+    await control.init();
+    const [reset, resistance] = await Promise.allSettled([control.reset(), control.setResistance(4)]);
+    assert.equal(reset.status, 'rejected');
+    assert.equal(resistance.status, 'fulfilled');
+    assert.deepEqual(service.writes.at(-1), [0x04, 40]);
   });
 
   test('feature bits and simulation bytes', () => {

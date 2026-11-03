@@ -6,6 +6,15 @@
     "notes": []
   },
   {
+    "version": "v2.4.1",
+    "date": "2026-11-02",
+    "commit": null,
+    "notes": [
+      "Trainer: no more \"GATT operation already in progress\": commands to the trainer go one at a time, and quick shifts send only the latest resistance",
+      "Log: a server that can't be reached is logged once (and when it answers again), not every minute; a hidden tab no longer checks the session"
+    ]
+  },
+  {
     "version": "v2.4.0",
     "date": "2026-11-01",
     "commit": null,

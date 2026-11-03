@@ -1,18 +1,28 @@
 import { logEvent } from '../log.js';
 import { t } from '../i18n.js';
 
+// While the server is unreachable (offline, the PC asleep, a deploy), only
+// the first failure is logged, and then the moment it answers again, so a
+// tab left open overnight doesn't fill the log with the same line.
+let serverDown = false;
+
 async function request(path, options) {
   const method = options?.method ?? 'GET';
   let res;
   try {
     res = await fetch(path, options);
   } catch {
-    logEvent('error', `${method} ${path}: the server could not be reached`);
+    if (!serverDown) logEvent('error', `${method} ${path}: the server could not be reached`);
+    serverDown = true;
     // fetch rejects with a bare "Failed to fetch" for any network-level
     // failure, which reads like data loss when the shell is being served
     // from the service worker cache and only the API is unreachable. Say
     // what is actually wrong instead.
     throw new Error(t('error.unreachable', { host: window.location.host }));
+  }
+  if (serverDown) {
+    serverDown = false;
+    logEvent('info', 'The server answers again.');
   }
   if (res.status === 401 && !path.startsWith('/api/auth/')) {
     // Not logged in, or the session ran out. The login screen opens over
